@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
+# Teamdino
 
-## Project info
+## Overview
+Teamdino is a student-centric platform for GITAM Students that provides centralized access to academic resources across subjects, reducing the time students spend searching for study materials. It also includes tools like an attendance calculator to assist in academic planning.
 
-**URL**: https://lovable.dev/projects/3f9c27e0-5a0d-4499-8f76-bfa69a5af0be
+---
 
-## How can I edit this code?
+### Subject Resources Dashboard
+<img width="1845" height="916" alt="image" src="https://github.com/user-attachments/assets/854358f4-fd0b-4617-8092-74a5d89c5679" />
+<img width="1914" height="934" alt="image" src="https://github.com/user-attachments/assets/d1ef58ee-e288-468e-a63f-d9af1fcafa44" />
 
-There are several ways of editing your application.
 
-**Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3f9c27e0-5a0d-4499-8f76-bfa69a5af0be) and start prompting.
+### Attendance Calculator
+<img width="926" height="682" alt="image" src="https://github.com/user-attachments/assets/a50e3e20-2c71-4f18-a096-d140e3a50cde" />
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## Features
+- Centralized subject-wise academic resources
+- Organized dashboard for quick access to study materials
+- Attendance calculator for tracking and planning class attendance
+- Simple and user-friendly interface
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Impact
+- 830+ registered users  
+- 300–400 daily active users during exam periods  
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## How It Works
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Resource Management
+- Subjects are organized into categories
+- Users can quickly access curated resources per subject
+- Reduces time spent searching across multiple platforms
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Attendance Calculator
+- Users input timetable and attendance details
+- System calculates:
+  - Current attendance percentage
+  - Required attendance to stay above threshold
+  - Number of classes that can be skipped
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## Tech Stack
+- TypeScript (AI-assisted development)
+- Supabase (backend and database)
+- Vercel (deployment)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Setup / Access
+Visit: https://teamdino.in
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/3f9c27e0-5a0d-4499-8f76-bfa69a5af0be) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
