@@ -285,10 +285,17 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* SGPA Calculator View */}
+          {activeTab === "sgpa" && (
+            <div className="animate-fade-in max-w-4xl mx-auto">
+              <h2 className="text-2xl font-bold mb-6">SGPA Calculator</h2>
+              <SGPACalculator />
+            </div>
+          )}
+
           {/* Announcements View */}
           {activeTab === "announcements" && (
             <div className="animate-fade-in max-w-4xl mx-auto">
-              {/* <h2 className="text-2xl font-bold mb-6">Announcements & Feedback</h2> */}
               <AnnouncementsSection isAdmin={role === "admin"} />
             </div>
           )}
