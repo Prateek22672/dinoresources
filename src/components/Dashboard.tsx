@@ -35,7 +35,7 @@ export default function Dashboard() {
   const [isAddSubjectDialogOpen, setIsAddSubjectDialogOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"subjects" | "attendance" | "announcements" | "support">("subjects");
+  const [activeTab, setActiveTab] = useState<"subjects" | "attendance" | "sgpa" | "announcements" | "support">("subjects");
 
   useEffect(() => {
     checkAuth();
