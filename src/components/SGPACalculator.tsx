@@ -56,7 +56,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground text-sm shadow-xl">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground text-sm shadow-xl whitespace-nowrap">
       <AlertCircle className="w-4 h-4 shrink-0" />
       <span>{message}</span>
       <button onClick={onClose} className="ml-1 opacity-70 hover:opacity-100">
@@ -155,7 +155,7 @@ function SubjectRow({
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {GRADES.map((g) => (
-                      <SelectItem key={g} value={g} className="text-xs">{g} ({GRADE_POINTS[g]})</SelectItem>
+                      <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -292,7 +292,7 @@ export default function SGPACalculator() {
               </SelectTrigger>
               <SelectContent>
                 {GRADES.map((g) => (
-                  <SelectItem key={g} value={g} className="text-xs">{g} ({GRADE_POINTS[g]})</SelectItem>
+                  <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -375,7 +375,7 @@ export default function SGPACalculator() {
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
                     {GRADES.map((g) => (
-                      <SelectItem key={g} value={g} className="text-xs">{g} ({GRADE_POINTS[g]})</SelectItem>
+                      <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
