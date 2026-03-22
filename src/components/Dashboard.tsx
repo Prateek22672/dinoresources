@@ -12,6 +12,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { AnnouncementsSection } from "./AnnouncementsSection";
 import { SupportSection } from "./SupportSection";
 import AttendanceCalculator from "./AttendanceCalculator";
+import SGPACalculator from "./SGPACalculator";
 import dinoLogo from "@/assets/dino-logo.png";
 
 interface Profile {
