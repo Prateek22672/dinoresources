@@ -1,14 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GraduationCap, Calculator } from "lucide-react";
+import { Plus, Trash2, BookOpen, ToggleLeft, ToggleRight } from "lucide-react";
 
 /* ---------- Grade System ---------- */
 
@@ -41,440 +33,338 @@ function wgpToFinalGradePoint(wgp: number): number {
   if (wgp > 5) return 6;
   if (wgp > 4) return 5;
   if (wgp === 4) return 4;
-  return 0; // Incomplete (< 4)
+  return 0;
 }
 
 /* ---------- Types ---------- */
 
-interface RegularSubject {
+interface Subject {
   id: string;
   name: string;
   credits: number;
-  type: "regular";
-  s1Grade: Grade | "";
-  leGrade: Grade | "";
-  s2Grade: Grade | "";
+  s1Grade: Grade;
+  leGrade: Grade;
+  s2Grade: Grade;
 }
-
-interface CladSubject {
-  id: string;
-  name: string;
-  credits: 1;
-  type: "clad";
-  grade: Grade | "";
-}
-
-type Subject = RegularSubject | CladSubject;
 
 let nextId = 1;
 
-/* ---------- Component ---------- */
+/* ---------- GP color helper ---------- */
+
+function gradePointColor(gp: number): string {
+  if (gp >= 10) return "text-emerald-500";
+  if (gp >= 9)  return "text-emerald-400";
+  if (gp >= 8)  return "text-sky-400";
+  if (gp >= 7)  return "text-sky-300";
+  if (gp >= 6)  return "text-amber-400";
+  if (gp >= 5)  return "text-amber-500";
+  if (gp >= 4)  return "text-orange-500";
+  return "text-red-500";
+}
+
+/* ---------- Reusable grade select ---------- */
+
+function GradeSelect({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: Grade | "";
+  onChange: (v: Grade) => void;
+  placeholder: string;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as Grade)}>
+      <SelectTrigger className="h-8 text-xs px-2 min-w-[68px]">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {GRADES.map((g) => (
+          <SelectItem key={g} value={g} className="text-xs">
+            {g}
+            <span className="ml-1 text-muted-foreground">({GRADE_POINTS[g]})</span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/* ---------- Main Component ---------- */
 
 export default function SGPACalculator() {
-  // ── Form state ──────────────────────────────────────────────────────────────
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [subjectName, setSubjectName] = useState("");
-  const [subjectCredits, setSubjectCredits] = useState("3");
-  const [subjectType, setSubjectType] = useState<"regular" | "clad">("regular");
 
-  // Grade inputs for the "Add Subject" form
+  // Form state
+  const [name, setName] = useState("");
+  const [credits, setCredits] = useState("3");
   const [s1, setS1] = useState<Grade | "">("");
   const [le, setLE] = useState<Grade | "">("");
   const [s2, setS2] = useState<Grade | "">("");
+
+  // CLAD
+  const [hasCLAD, setHasCLAD] = useState(false);
   const [cladGrade, setCladGrade] = useState<Grade | "">("");
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-  const getFinalGradePoint = useCallback((subject: Subject): number | null => {
-    if (subject.type === "clad") {
-      return subject.grade ? GRADE_POINTS[subject.grade] : null;
-    }
-    if (!subject.s1Grade || !subject.leGrade || !subject.s2Grade) return null;
+  /* ── Helpers ─────────────────────────────── */
 
+  const getFinalGP = useCallback((sub: Subject): number => {
     const wgp =
-      GRADE_POINTS[subject.s1Grade] * 0.3 +
-      GRADE_POINTS[subject.leGrade] * 0.25 +
-      GRADE_POINTS[subject.s2Grade] * 0.45;
-
+      GRADE_POINTS[sub.s1Grade] * 0.3 +
+      GRADE_POINTS[sub.leGrade] * 0.25 +
+      GRADE_POINTS[sub.s2Grade] * 0.45;
     return wgpToFinalGradePoint(wgp);
   }, []);
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
-  const addSubject = () => {
-    const name = subjectName.trim() || `Subject ${subjects.length + 1}`;
-    const id = `s-${nextId++}`;
+  /* ── SGPA ────────────────────────────────── */
 
-    if (subjectType === "clad") {
-      if (!cladGrade) return;
-
-      setSubjects((prev) => [
-        ...prev,
-        { id, name, credits: 1, type: "clad", grade: cladGrade },
-      ]);
-    } else {
-      if (!s1 || !le || !s2) return;
-
-      const credits = parseInt(subjectCredits) || 3;
-
-      setSubjects((prev) => [
-        ...prev,
-        { id, name, credits, type: "regular", s1Grade: s1, leGrade: le, s2Grade: s2 },
-      ]);
-    }
-
-    // Reset form
-    setSubjectName("");
-    setSubjectCredits("3");
-    setSubjectType("regular");
-    setS1("");
-    setLE("");
-    setS2("");
-    setCladGrade("");
-  };
-
-  const removeSubject = (id: string) => {
-    setSubjects((prev) => prev.filter((s) => s.id !== id));
-  };
-
-  const updateSubject = (
-    id: string,
-    updates: Partial<RegularSubject> | Partial<CladSubject>
-  ) => {
-    setSubjects((prev) =>
-      prev.map((s) => (s.id === id ? ({ ...s, ...updates } as Subject) : s))
-    );
-  };
-
-  // ── SGPA calculation ─────────────────────────────────────────────────────────
-  const { sgpa, totalCredits, allComplete } = useMemo(() => {
-    if (subjects.length === 0)
-      return { sgpa: 0, totalCredits: 0, allComplete: false };
-
+  const { sgpa, totalCredits } = useMemo(() => {
     let sumProduct = 0;
     let totalCr = 0;
-    let complete = true;
 
     for (const sub of subjects) {
-      const gp = getFinalGradePoint(sub);
-      if (gp === null) {
-        complete = false;
-        continue;
-      }
+      const gp = getFinalGP(sub);
       sumProduct += gp * sub.credits;
       totalCr += sub.credits;
     }
 
+    if (hasCLAD && cladGrade) {
+      sumProduct += GRADE_POINTS[cladGrade] * 1;
+      totalCr += 1;
+    }
+
     return {
-      sgpa: totalCr > 0 ? sumProduct / totalCr : 0,
+      sgpa: totalCr > 0 ? sumProduct / totalCr : null,
       totalCredits: totalCr,
-      allComplete: complete && subjects.length > 0,
     };
-  }, [subjects, getFinalGradePoint]);
+  }, [subjects, hasCLAD, cladGrade, getFinalGP]);
 
-  // ── Derived: is the add-form ready to submit? ────────────────────────────────
-  const canAdd =
-    subjectType === "clad" ? !!cladGrade : !!(s1 && le && s2);
+  /* ── Actions ─────────────────────────────── */
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const canAdd = !!(s1 && le && s2);
+
+  const addSubject = () => {
+    if (!canAdd) return;
+    setSubjects((prev) => [
+      ...prev,
+      {
+        id: `s-${nextId++}`,
+        name: name.trim() || `Subject ${prev.length + 1}`,
+        credits: parseInt(credits) || 3,
+        s1Grade: s1 as Grade,
+        leGrade: le as Grade,
+        s2Grade: s2 as Grade,
+      },
+    ]);
+    setName("");
+    setS1("");
+    setLE("");
+    setS2("");
+  };
+
+  const removeSubject = (id: string) =>
+    setSubjects((prev) => prev.filter((s) => s.id !== id));
+
+  const updateSubject = (id: string, patch: Partial<Subject>) =>
+    setSubjects((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...patch } : s))
+    );
+
+  /* ── Render ──────────────────────────────── */
+
   return (
-    <div className="space-y-6">
-      {/* ── Add Subject Card ── */}
-      <Card className="shadow-card border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-primary" />
-            Add Subject
-          </CardTitle>
-          <CardDescription>
-            Add your semester subjects to calculate SGPA
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Name + Type row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Subject Name</Label>
-              <Input
-                placeholder="e.g. Data Structures"
-                value={subjectName}
-                onChange={(e) => setSubjectName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select
-                value={subjectType}
-                onValueChange={(v) => {
-                  setSubjectType(v as "regular" | "clad");
-                  setS1("");
-                  setLE("");
-                  setS2("");
-                  setCladGrade("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="regular">Regular Subject</SelectItem>
-                  <SelectItem value="clad">CLAD (1 Credit)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+    <div className="w-full max-w-2xl mx-auto space-y-3 font-sans text-sm">
 
-          {/* Credits — only for regular subjects */}
-          {subjectType === "regular" && (
-            <div className="space-y-2 w-full sm:w-48">
-              <Label>Credits</Label>
-              <Select value={subjectCredits} onValueChange={setSubjectCredits}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6].map((c) => (
-                    <SelectItem key={c} value={String(c)}>
-                      {c} Credit{c > 1 ? "s" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* ── CLAD Toggle ── */}
+      <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-border/60 bg-muted/30">
+        <span className="text-sm font-medium">
+          Do you have CLAD?{" "}
+          <span className="text-xs text-muted-foreground">(1 credit)</span>
+        </span>
+        <div className="flex items-center gap-2">
+          {hasCLAD && (
+            <GradeSelect
+              value={cladGrade}
+              onChange={setCladGrade}
+              placeholder="Grade"
+            />
           )}
-
-          {/* Grade selectors for Regular subjects */}
-          {subjectType === "regular" && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Sessional 1 (30%)</Label>
-                <Select value={s1} onValueChange={(v) => setS1(v as Grade)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g} ({GRADE_POINTS[g]})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Learning Engagement (25%)</Label>
-                <Select value={le} onValueChange={(v) => setLE(v as Grade)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g} ({GRADE_POINTS[g]})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Sessional 2 (45%)</Label>
-                <Select value={s2} onValueChange={(v) => setS2(v as Grade)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADES.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g} ({GRADE_POINTS[g]})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Grade selector for CLAD subjects */}
-          {subjectType === "clad" && (
-            <div className="space-y-2 w-full sm:w-48">
-              <Label>Grade</Label>
-              <Select
-                value={cladGrade}
-                onValueChange={(v) => setCladGrade(v as Grade)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GRADES.map((g) => (
-                    <SelectItem key={g} value={g}>
-                      {g} ({GRADE_POINTS[g]})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <Button onClick={addSubject} disabled={!canAdd} className="w-full sm:w-auto">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Subject
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* ── Subject List ── */}
-      {subjects.length > 0 && (
-        <div className="space-y-4">
-          {subjects.map((subject) => (
-            <Card key={subject.id} className="shadow-card border-border/50">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{subject.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {subject.credits} Credit{subject.credits > 1 ? "s" : ""} •{" "}
-                      {subject.type === "clad" ? "CLAD" : "Regular"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {getFinalGradePoint(subject) !== null && (
-                      <span className="text-lg font-bold text-primary">
-                        GP: {getFinalGradePoint(subject)}
-                      </span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeSubject(subject.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Inline grade editing */}
-                {subject.type === "clad" ? (
-                  <div className="space-y-2">
-                    <Label>Grade</Label>
-                    <Select
-                      value={subject.grade}
-                      onValueChange={(v) =>
-                        updateSubject(subject.id, { grade: v as Grade })
-                      }
-                    >
-                      <SelectTrigger className="w-full sm:w-40">
-                        <SelectValue placeholder="Select grade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {GRADES.map((g) => (
-                          <SelectItem key={g} value={g}>
-                            {g} ({GRADE_POINTS[g]})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Sessional 1 (30%)</Label>
-                      <Select
-                        value={subject.s1Grade}
-                        onValueChange={(v) =>
-                          updateSubject(subject.id, { s1Grade: v as Grade })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select grade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {GRADES.map((g) => (
-                            <SelectItem key={g} value={g}>
-                              {g} ({GRADE_POINTS[g]})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Learning Engagement (25%)</Label>
-                      <Select
-                        value={subject.leGrade}
-                        onValueChange={(v) =>
-                          updateSubject(subject.id, { leGrade: v as Grade })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select grade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {GRADES.map((g) => (
-                            <SelectItem key={g} value={g}>
-                              {g} ({GRADE_POINTS[g]})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Sessional 2 (45%)</Label>
-                      <Select
-                        value={subject.s2Grade}
-                        onValueChange={(v) =>
-                          updateSubject(subject.id, { s2Grade: v as Grade })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select grade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {GRADES.map((g) => (
-                            <SelectItem key={g} value={g}>
-                              {g} ({GRADE_POINTS[g]})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* ── SGPA Result ── */}
-      {subjects.length > 0 && (
-        <Card className="shadow-card border-border/50 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Calculator className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold">SGPA Result</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
-              <div className="p-4 rounded-lg bg-background border border-border/50">
-                <p className="text-sm text-muted-foreground">Subjects</p>
-                <p className="text-2xl font-bold">{subjects.length}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-background border border-border/50">
-                <p className="text-sm text-muted-foreground">Total Credits</p>
-                <p className="text-2xl font-bold">{totalCredits}</p>
-              </div>
-              <div className="col-span-2 sm:col-span-1 p-4 rounded-lg bg-background border border-border/50">
-                <p className="text-sm text-muted-foreground">SGPA</p>
-                <p className="text-3xl font-bold text-primary">
-                  {allComplete ? sgpa.toFixed(2) : "—"}
-                </p>
-              </div>
-            </div>
-            {!allComplete && subjects.length > 0 && (
-              <p className="text-sm text-muted-foreground mt-4 text-center">
-                Select grades for all subjects to see your SGPA
-              </p>
+          <button
+            onClick={() => {
+              setHasCLAD((v) => !v);
+              setCladGrade("");
+            }}
+            className="text-primary transition-colors"
+            aria-label="Toggle CLAD"
+          >
+            {hasCLAD ? (
+              <ToggleRight className="w-7 h-7 text-primary" />
+            ) : (
+              <ToggleLeft className="w-7 h-7 text-muted-foreground" />
             )}
-          </CardContent>
-        </Card>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Subject Table ── */}
+      <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+
+        {/* Column headers — desktop only */}
+        <div className="hidden sm:grid grid-cols-[1fr_72px_76px_76px_76px_36px] gap-x-2 px-3 pt-2 pb-1">
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Subject</span>
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Cr</span>
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">S1 30%</span>
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">LE 25%</span>
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">S2 45%</span>
+          <span />
+        </div>
+
+        {/* Input row */}
+        <div className="flex flex-wrap sm:grid sm:grid-cols-[1fr_72px_76px_76px_76px_36px] gap-2 p-3 border-b border-border/40 bg-muted/20">
+          <Input
+            className="h-8 text-xs col-span-full sm:col-span-1"
+            placeholder="Subject name (optional)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addSubject()}
+          />
+          <Select value={credits} onValueChange={setCredits}>
+            <SelectTrigger className="h-8 text-xs px-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[1, 2, 3, 4, 5, 6].map((c) => (
+                <SelectItem key={c} value={String(c)} className="text-xs">
+                  {c} cr
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <GradeSelect value={s1} onChange={setS1} placeholder="S1" />
+          <GradeSelect value={le} onChange={setLE} placeholder="LE" />
+          <GradeSelect value={s2} onChange={setS2} placeholder="S2" />
+          <Button
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={addSubject}
+            disabled={!canAdd}
+            title="Add subject"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Subject rows */}
+        {subjects.length === 0 ? (
+          <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground text-xs">
+            <BookOpen className="w-4 h-4" />
+            No subjects yet — fill in the grades above and press +
+          </div>
+        ) : (
+          <div className="divide-y divide-border/30">
+            {subjects.map((sub, idx) => {
+              const gp = getFinalGP(sub);
+              return (
+                <div
+                  key={sub.id}
+                  className="flex flex-wrap sm:grid sm:grid-cols-[1fr_72px_76px_76px_76px_36px] gap-2 items-center px-3 py-1.5 hover:bg-muted/20 transition-colors"
+                >
+                  {/* Name + GP — on mobile takes full width */}
+                  <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+                    <span className="text-[11px] text-muted-foreground w-4 shrink-0 tabular-nums">
+                      {idx + 1}.
+                    </span>
+                    <Input
+                      className="h-7 text-xs border-0 bg-transparent p-0 focus-visible:ring-0 font-medium truncate"
+                      value={sub.name}
+                      onChange={(e) =>
+                        updateSubject(sub.id, { name: e.target.value })
+                      }
+                    />
+                    <span
+                      className={`text-xs font-bold tabular-nums shrink-0 ${gradePointColor(gp)}`}
+                    >
+                      GP {gp}
+                    </span>
+                  </div>
+
+                  {/* Credits */}
+                  <Select
+                    value={String(sub.credits)}
+                    onValueChange={(v) =>
+                      updateSubject(sub.id, { credits: parseInt(v) })
+                    }
+                  >
+                    <SelectTrigger className="h-7 text-xs px-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6].map((c) => (
+                        <SelectItem key={c} value={String(c)} className="text-xs">
+                          {c} cr
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <GradeSelect
+                    value={sub.s1Grade}
+                    onChange={(v) => updateSubject(sub.id, { s1Grade: v })}
+                    placeholder="S1"
+                  />
+                  <GradeSelect
+                    value={sub.leGrade}
+                    onChange={(v) => updateSubject(sub.id, { leGrade: v })}
+                    placeholder="LE"
+                  />
+                  <GradeSelect
+                    value={sub.s2Grade}
+                    onChange={(v) => updateSubject(sub.id, { s2Grade: v })}
+                    placeholder="S2"
+                  />
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => removeSubject(sub.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Result Bar — always visible once there's data ── */}
+      {(subjects.length > 0 || (hasCLAD && cladGrade)) && (
+        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-primary/5 px-4 py-3">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span>
+              <span className="font-semibold text-foreground tabular-nums">
+                {subjects.length}
+              </span>{" "}
+              subject{subjects.length !== 1 ? "s" : ""}
+              {hasCLAD && cladGrade && " + CLAD"}
+            </span>
+            <span>
+              <span className="font-semibold text-foreground tabular-nums">
+                {totalCredits}
+              </span>{" "}
+              credits
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+              SGPA
+            </span>
+            <span className="text-2xl font-bold text-primary tabular-nums">
+              {sgpa !== null ? sgpa.toFixed(2) : "—"}
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );
