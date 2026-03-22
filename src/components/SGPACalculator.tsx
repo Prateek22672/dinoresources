@@ -96,8 +96,7 @@ function SubjectRow({
   const gp = getFinalGP(sub);
 
   return (
-    <div className="border-b border-border/30 last:border-0">
-
+    <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
       {/* Compact summary */}
       <div
         className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/20 transition-colors select-none"
@@ -107,11 +106,11 @@ function SubjectRow({
           {idx + 1}.
         </span>
 
-        {/* Two-line main content */}
+        {/* Two-line content */}
         <div className="flex-1 min-w-0 space-y-0.5">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold truncate">{sub.name}</span>
-            <span className="text-[11px] text-muted-foreground shrink-0">{sub.credits} cr</span>
+            <span className="text-[11px] text-muted-foreground shrink-0">{sub.credits} credits</span>
           </div>
           <div className="flex items-center gap-2">
             <GradeChip label="S1" grade={sub.s1Grade} />
@@ -134,7 +133,10 @@ function SubjectRow({
 
       {/* Expanded edit panel */}
       {expanded && (
-        <div className="px-3 pb-3 pt-1 space-y-2 bg-muted/10" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="px-3 pb-3 pt-1 space-y-2 bg-muted/10 border-t border-border/40"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Input
             className="h-8 text-sm"
             placeholder="Subject name"
@@ -167,7 +169,7 @@ function SubjectRow({
                 value={String(sub.credits)}
                 onValueChange={(v) => onUpdate(sub.id, { credits: parseInt(v) })}
               >
-                <SelectTrigger className="h-8 text-xs w-[72px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs w-[76px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {[1,2,3,4,5,6].map((c) => (
                     <SelectItem key={c} value={String(c)} className="text-xs">{c} cr</SelectItem>
@@ -276,7 +278,7 @@ export default function SGPACalculator() {
         <Toast key={toast.id} message={toast.msg} onClose={() => setToast(null)} />
       )}
 
-      {/* CLAD */}
+      {/* ── CLAD ── */}
       <div className="flex items-center justify-between px-3 py-2.5 border border-border/60 rounded-lg bg-muted/20">
         <span className="font-medium">
           Do you have CLAD?{" "}
@@ -305,9 +307,8 @@ export default function SGPACalculator() {
         </div>
       </div>
 
-      {/* Subject table */}
+      {/* ── Add Subject container ── */}
       <div className="border border-border/60 rounded-lg bg-card overflow-hidden">
-
         {/* Desktop headers */}
         <div className="hidden sm:grid grid-cols-[1fr_64px_72px_72px_72px_36px] gap-x-2 px-3 pt-2.5 pb-1">
           {["Subject", "Cr", "S1 30%", "LE 25%", "S2 45%", ""].map((h) => (
@@ -316,7 +317,7 @@ export default function SGPACalculator() {
         </div>
 
         {/* Desktop input row */}
-        <div className="hidden sm:grid grid-cols-[1fr_64px_72px_72px_72px_36px] gap-2 p-3 border-b border-border/40 bg-muted/20">
+        <div className="hidden sm:grid grid-cols-[1fr_64px_72px_72px_72px_36px] gap-2 p-3">
           <Input
             className="h-8 text-xs"
             placeholder="Subject name (optional)"
@@ -328,7 +329,7 @@ export default function SGPACalculator() {
             <SelectTrigger className="h-8 text-xs px-2"><SelectValue /></SelectTrigger>
             <SelectContent>
               {[1,2,3,4,5,6].map((c) => (
-                <SelectItem key={c} value={String(c)} className="text-xs">{c}cr</SelectItem>
+                <SelectItem key={c} value={String(c)} className="text-xs">{c} cr</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -354,7 +355,7 @@ export default function SGPACalculator() {
         </div>
 
         {/* Mobile input form */}
-        <div className="sm:hidden p-3 space-y-2 border-b border-border/40 bg-muted/20">
+        <div className="sm:hidden p-3 space-y-2">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Add Subject</p>
           <Input
             className="h-8 text-sm w-full"
@@ -397,27 +398,30 @@ export default function SGPACalculator() {
             </Button>
           </div>
         </div>
-
-        {/* Subject list */}
-        {subjects.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-muted-foreground text-xs">
-            No subjects added yet
-          </div>
-        ) : (
-          subjects.map((sub, idx) => (
-            <SubjectRow
-              key={sub.id}
-              sub={sub}
-              idx={idx}
-              getFinalGP={getFinalGP}
-              onUpdate={updateSubject}
-              onRemove={removeSubject}
-            />
-          ))
-        )}
       </div>
 
-      {/* Semester Summary */}
+      {/* ── Added Subjects container ── */}
+      {subjects.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-0.5">
+            Added Subjects
+          </p>
+          <div className="space-y-2">
+            {subjects.map((sub, idx) => (
+              <SubjectRow
+                key={sub.id}
+                sub={sub}
+                idx={idx}
+                getFinalGP={getFinalGP}
+                onUpdate={updateSubject}
+                onRemove={removeSubject}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Semester Summary ── */}
       {(subjects.length > 0 || (hasCLAD && cladGrade)) && (
         <div className="border border-border/60 rounded-lg px-4 py-4 bg-card">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
