@@ -4,9 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import AuthPage from "@/components/AuthPage";
 import ProfileSetup from "@/components/ProfileSetup";
 import Dashboard from "@/components/Dashboard";
+import LandingPage from "@/components/LandingPage"; // Import the new Landing Page
+
+import dinoLogo from "@/assets/image.png";
 
 const Index = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
@@ -21,27 +25,22 @@ const Index = () => {
         window.location.pathname === "/reset-password";
 
       if (isRecovery) {
-        // Recovery flow → stay on reset-password page
         setIsLoading(false);
         return;
       }
 
       if (session) {
-        // Normal login flow → check profile
         await checkProfile(session.user.id);
       } else {
-        // No session at all
         setIsLoading(false);
       }
     };
 
-    // Initial session load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       handleSession(session);
     });
 
-    // Listen to auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -54,7 +53,6 @@ const Index = () => {
 
   const checkProfile = async (userId: string) => {
     const { data } = await supabase.from("profiles").select("department, semester").eq("id", userId).single();
-
     const needsSetup = !data?.department || !data?.semester;
     setNeedsProfileSetup(needsSetup);
     setIsLoading(false);
@@ -68,23 +66,34 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center gradient-subtle">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center relative overflow-hidden font-sans">
+        <div className="text-center space-y-6 relative z-10 animate-in fade-in duration-1000">
+          <div className="w-20 h-20 rounded-3xl bg-[#121214] flex items-center justify-center shadow-2xl mx-auto animate-pulse border border-white/5 relative">
+            <div className="absolute inset-0 rounded-3xl border border-white/10" />
+            <img src={dinoLogo} alt="Team Dino Logo" className="w-12 h-12 opacity-80 rounded-xl" />
+          </div>
+          <p className="text-zinc-500 font-bold tracking-[0.2em] uppercase text-xs animate-pulse">
+            Loading Workspace
+          </p>
         </div>
       </div>
     );
   }
 
+  // ROUTING LOGIC
   if (!session) {
-    return <AuthPage />;
+    // If they explicitly go to /auth, show login. Otherwise, show Landing Page.
+    if (location.pathname === "/auth") {
+      return <AuthPage />;
+    }
+    return <LandingPage />;
   }
 
   if (needsProfileSetup || isEditMode) {
     return <ProfileSetup onProfileUpdated={refreshProfile} />;
   }
 
+  // If authenticated and on "/" or "/dashboard", show the main app
   return <Dashboard key={session.user.id} />;
 };
 
