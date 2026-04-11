@@ -118,41 +118,48 @@ export default function SubjectDrawer({
         </DrawerHeader>
 
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden bg-[#0a0a0c]">
-          
-          {/* Left Panel - Responsive Navigation */}
-          <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/5 bg-[#0d0d10] p-4 flex-shrink-0 z-10">
-            <p className="text-xs font-bold tracking-widest uppercase text-zinc-600 mb-3 hidden md:block px-2">
-              Categories
-            </p>
-            {/* Scrollable Horizontal on Mobile, Vertical on Desktop */}
-            <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-none snap-x">
-              {CATEGORIES.map((category) => {
+
+  {/* Horizontal Navigation */}
+          <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/5 bg-[#0d0d10] p-3 md:p-4 flex-shrink-0">
+            <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible scrollbar-none snap-x md:snap-none">
+
+              {[
+                "Syllabus",
+                "Unit 1",
+                "Unit 2",
+                "Unit 3",
+                "Unit 4",
+                "Unit 5",
+                "Previous Papers"
+              ].map((category) => {
                 const isActive = selectedCategory === category;
                 const count = getResourcesByCategory(category).length;
-                
+
                 return (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`shrink-0 md:w-full text-left px-4 md:px-3 py-2.5 rounded-xl transition-all duration-200 flex items-center justify-between text-sm sm:text-base border font-medium snap-start ${
+                    className={`shrink-0 md:w-full text-left px-4 py-2 md:py-3 rounded-xl transition-all duration-200 flex items-center justify-between text-sm border snap-start ${
                       isActive
-                        ? "bg-white/10 text-white border-white/5 shadow-[inset_3px_0_0_0_#fff]"
+                        ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-[inset_3px_0_0_0_#818cf8]"
                         : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5 border-transparent"
                     }`}
                   >
-                    <span>{getCategoryLabel(category)}</span>
-                    <Badge className={`ml-3 border font-normal transition-colors ${
-                      isActive 
-                        ? "bg-black/40 text-zinc-300 border-white/10" 
-                        : "bg-black/20 text-zinc-500 border-white/5"
-                    }`}>
-                      {count}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <div className={`hidden md:flex w-6 h-6 rounded-md items-center justify-center text-xs font-bold ${
+                        isActive ? "bg-indigo-500/20 text-indigo-400" : "bg-white/5 text-zinc-500"
+                      }`}>
+                        {category.includes("Unit") ? category.split(" ")[1] : ""}
+                      </div>
+                      {category}
+                    </div>
+                    
                   </button>
                 );
               })}
             </nav>
           </div>
+          
 
           {/* Right Panel - Resources */}
           <div className="flex-1 overflow-hidden bg-gradient-to-br from-[#0a0a0c] to-[#0e0e14] flex flex-col relative z-0">

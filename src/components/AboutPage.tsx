@@ -17,8 +17,8 @@ export default function AboutPage() {
       border: "border-blue-400/20",
     },
     {
-      name: "Nareen",
-      roles: ["Web Developer", "Backend Developer"],
+      name: "Naren",
+      roles: ["Backend Developer", "Product Engineer"],
       icon: Database,
       color: "text-emerald-400",
       bgSoft: "bg-emerald-400/10",
@@ -68,12 +68,12 @@ export default function AboutPage() {
         {/* Hero Section */}
         <div className="text-center space-y-6 mb-24 animate-in slide-in-from-bottom-4 fade-in duration-1000 fill-mode-both">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-sm font-medium mb-2 backdrop-blur-md">
-            About the Project
+            About the Website
           </div>
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-white leading-[1.15]">
             Built by students, <br className="hidden sm:block" />
             <span className="text-indigo-400">
-              for the students.
+              for the students
             </span>
           </h2>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal">
@@ -109,7 +109,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-lg font-semibold text-zinc-100 mb-3">Smart Tools</h3>
             <p className="text-zinc-400 text-sm leading-relaxed font-normal">
-              From calculating your SGPA to tracking your attendance accurately, we provide the utilities you need to stay ahead of the curve.
+              From tracking your attendance accurately to helping you build your own websites, we provide the utilities you need to stay ahead of the curve.
             </p>
           </div>
         </div>
