@@ -9,8 +9,23 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
 
   const allTopics = subjectTopics[activeUnit.toString()] || [];
 
+  // Helper to extract and flatten all questions
+  const getFlattenedQuestions = (questions) => {
+    if (!questions) return [];
+    if (Array.isArray(questions)) return questions;
+    return Object.values(questions).flat();
+  };
+
+  // Helper to mix all topics into a single comprehensive exam
+  const mixAllTopics = () => {
+    const allQs = allTopics.flatMap(t => getFlattenedQuestions(t.questions));
+    return { title: `Full Unit ${activeUnit} Review`, questions: allQs };
+  };
+
   const startGenerate = (topic) => {
-    setSelectedTopic(topic);
+    // Flatten the questions before setting the selected topic
+    const flatTopic = { ...topic, questions: getFlattenedQuestions(topic.questions) };
+    setSelectedTopic(flatTopic);
     setGenPhase(1);
     setRevealedAnswers({});
     setTimeout(() => setGenPhase(2), 2500);
@@ -34,13 +49,15 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-8 scrollbar-thin scrollbar-thumb-zinc-800">
+        
+        {/* Phase 0: Selection */}
         {genPhase === 0 && (
           <div className="animate-in fade-in duration-300">
             <h3 className="text-3xl font-extrabold text-white mb-2">Practice Generator</h3>
             <p className="text-zinc-400 text-base mb-8">Target specific weaknesses or simulate a full unit exam.</p>
 
             <button
-              onClick={() => startGenerate({ title: `Full Unit ${activeUnit} Review`, questions: allTopics.flatMap((t) => t.questions) })}
+              onClick={() => startGenerate(mixAllTopics())}
               className="w-full mb-8 rounded-[24px] border border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 to-purple-500/5 hover:from-indigo-500/20 hover:to-purple-500/10 p-6 sm:p-8 text-left flex items-center justify-between transition-all group shadow-xl"
             >
               <div className="flex items-center gap-4 sm:gap-6">
@@ -66,7 +83,9 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
                   <BookOpen className="w-5 h-5 text-zinc-500 mb-3" />
                   <div>
                     <p className="font-semibold text-zinc-200 text-sm sm:text-base leading-snug mb-2">{topic.title}</p>
-                    <span className="text-xs text-zinc-500 bg-white/5 px-2 py-1 rounded-md">{topic.questions?.length || 0} Questions</span>
+                    <span className="text-xs text-zinc-500 bg-white/5 px-2 py-1 rounded-md">
+                      {getFlattenedQuestions(topic.questions).length} Questions
+                    </span>
                   </div>
                 </button>
               ))}
@@ -74,6 +93,7 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
           </div>
         )}
 
+        {/* Phase 1: Loading Animation */}
         {genPhase === 1 && (
           <div className="flex flex-col items-center justify-center min-h-[400px] animate-in fade-in duration-300">
             <div className="w-24 h-24 rounded-full border-4 border-indigo-500/20 flex items-center justify-center relative mb-8">
@@ -85,6 +105,7 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
           </div>
         )}
 
+        {/* Phase 2: Flat Results */}
         {genPhase === 2 && selectedTopic && (
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 pb-10">
             <div className="flex items-center gap-2 mb-3">
@@ -106,7 +127,8 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
               ))}
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            {/* Action Buttons */}
+            <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => { setGenPhase(0); setSelectedTopic(null); }}
                 className="flex-1 py-3.5 rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 font-semibold transition-colors"
@@ -115,7 +137,7 @@ export function GeneratePanel({ activeUnit, subjectName, subjectTopics, onClose 
               </button>
               <button
                 onClick={() => setRevealedAnswers(Object.fromEntries((selectedTopic.questions || []).map((_, i) => [i, true])))}
-                className="flex-1 py-3.5 rounded-full bg-white text-black hover:bg-zinc-200 font-bold transition-transform hover:scale-105"
+                className="flex-1 py-3.5 rounded-full bg-white text-black hover:bg-zinc-200 font-bold transition-transform hover:scale-105 shadow-lg"
               >
                 Reveal All Answers
               </button>
