@@ -3,7 +3,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, Dr
 import { Button } from "@/components/ui/button";
 import { X, Sparkles } from "lucide-react";
 
-// Import extracted components
 import { aiSyllabus } from "@/data/aiSyllabus";
 import { TopicGrid } from "./TopicGrid";
 import { TopicDetail } from "./TopicDetail";
@@ -15,8 +14,17 @@ export default function SubjectDrawerAi({ open, onOpenChange, subjectName }) {
   const [activeTopic, setActiveTopic] = useState(null);
   const [showGenerate, setShowGenerate] = useState(false);
 
+  // 1. ADD THIS: State to track live progress updates
+  const [liveProgress, setLiveProgress] = useState({});
+
   const subjectTopics = aiSyllabus[subjectName] || {};
-  const currentTopics = subjectTopics[activeUnit.toString()] || [];
+  
+  // 2. UPDATE THIS: Merge static syllabus data with live progress
+  const currentTopics = (subjectTopics[activeUnit.toString()] || []).map(topic => ({
+    ...topic,
+    progress: liveProgress[topic.id]?.progress ?? topic.progress,
+    status: liveProgress[topic.id]?.status ?? topic.status
+  }));
 
   const handleUnitChange = (unit) => {
     setActiveUnit(unit);
@@ -30,6 +38,14 @@ export default function SubjectDrawerAi({ open, onOpenChange, subjectName }) {
     } else {
       setActiveTopic(null);
     }
+  };
+
+  // 3. ADD THIS: Function to receive real-time updates
+  const updateTopicProgress = (topicId, progress, status) => {
+    setLiveProgress(prev => ({
+      ...prev,
+      [topicId]: { progress, status }
+    }));
   };
 
   const isTopicView = !!activeTopic;
@@ -57,14 +73,12 @@ export default function SubjectDrawerAi({ open, onOpenChange, subjectName }) {
             AI Study Tools for {subjectName}
           </DrawerDescription>
 
-          {/* Header */}
           <DrawerHeader className="relative shrink-0 border-b border-white/5 bg-[#0a0a0c] z-20 pb-4 pt-5 flex flex-col items-center">
             <DrawerClose asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="absolute right-4 top-4 z-50 text-zinc-400 hover:bg-white/10 hover:text-white rounded-full h-10 w-10 transition-colors"
-                aria-label="Close modal"
               >
                 <X className="h-6 w-6" />
               </Button>
@@ -79,10 +93,7 @@ export default function SubjectDrawerAi({ open, onOpenChange, subjectName }) {
             </DrawerTitle>
           </DrawerHeader>
 
-          {/* Body Layout */}
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden bg-[#0a0a0c]">
-
-            {/* Nav: Horizontal pill list on Mobile, Vertical list on Desktop */}
             <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/5 bg-[#0d0d10] p-4 flex-shrink-0 z-10">
               <p className="text-xs font-bold tracking-widest uppercase text-zinc-600 mb-3 hidden md:block px-2">
                 Curriculum
@@ -112,7 +123,6 @@ export default function SubjectDrawerAi({ open, onOpenChange, subjectName }) {
               </nav>
             </div>
 
-            {/* Content Panel */}
             <div className="flex-1 overflow-hidden bg-gradient-to-br from-[#0a0a0c] to-[#0e0e14] flex flex-col relative z-0">
               {isTopicView ? (
                 <TopicDetail
@@ -122,6 +132,7 @@ export default function SubjectDrawerAi({ open, onOpenChange, subjectName }) {
                   currentTopics={currentTopics}
                   onBack={handleTopicBack}
                   subjectName={subjectName}
+                  onUpdateProgress={updateTopicProgress} // 4. ADD THIS: Pass down the updater
                 />
               ) : isGenerateView ? (
                 <GeneratePanel
