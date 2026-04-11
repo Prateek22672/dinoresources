@@ -1,7 +1,11 @@
 import { Heart, Zap, Shield, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function Footer() {
+
+  const navigate = useNavigate();
   return (
     <footer className="mt-20 border-t border-white/5 bg-[#09090b]/80 backdrop-blur-xl pt-16 pb-8 relative overflow-hidden">
       {/* Subtle ambient glow */}
@@ -44,12 +48,22 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-white font-semibold tracking-wide">Get Involved</h4>
-            <p className="text-sm text-zinc-500 leading-relaxed">
-              Have notes, PYQs, or resources to share? Contribute to your semester's database and help your peers succeed.
-            </p>
-          </div>
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-3">
+                Support Us
+              </h3>
+
+              <Button
+                onClick={() => navigate("/?tab=support")}
+                className="rounded-full px-5 py-2 bg-white/5 border border-white/10 text-zinc-300 hover:bg-white hover:text-black transition-all"
+              >
+                ☕ Support the project
+              </Button>
+
+              <p className="text-xs text-zinc-500 mt-3 max-w-[220px] leading-relaxed">
+                If we helped you, consider supporting us to keep building better tools for students.
+              </p>
+            </div>
         </div>
 
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">

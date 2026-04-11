@@ -27,12 +27,13 @@ import SubjectDrawer from "./SubjectDrawer";
 import SubjectDrawerAi from "./ai/SubjectDrawerAi"; 
 import AddSubjectDialog from "./AddSubjectDialog";
 import { useUserRole } from "@/hooks/useUserRole";
-import { AnnouncementsSection } from "./AnnouncementsSection";
+// import { AnnouncementsSection } from "./AnnouncementsSection";
 import { SupportSection } from "./SupportSection";
 import AttendanceCalculator from "./AttendanceCalculator";
-import SGPACalculator from "./SGPACalculator";
+// import SGPACalculator from "./SGPACalculator";
 import dinoLogo from "@/assets/dinosaurBlack.png";
 import Footer from "./Footer"; 
+import { useLocation } from "react-router-dom";
 
 interface Profile {
   department: string;
@@ -46,6 +47,7 @@ interface Subject {
 }
 
 export default function Dashboard() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { isContributor, userId, role, isLoading: roleLoading } = useUserRole();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -57,7 +59,7 @@ export default function Dashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<"subjects" | "ai_subjects" | "attendance" | "sgpa" | "announcements" | "support">("subjects");
+  const [activeTab, setActiveTab] = useState<"subjects" | "ai_subjects" | "attendance" | "support">("subjects");
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const contentAreaRef = useRef<HTMLDivElement>(null);
@@ -73,6 +75,15 @@ export default function Dashboard() {
       loadSubjects();
     }
   }, [profile]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+
+    if (tab === "support") {
+      setActiveTab("support");
+    }
+  }, [location]);
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -245,39 +256,7 @@ export default function Dashboard() {
       externalLink: "https://www.foliofyx.in",
       buttonText: "Create Now Free"
     },
-    { 
-      id: "sgpa", 
-      overline: "PERFORMANCE", 
-      title: "SGPA Calc", 
-      desc: "Estimate your semester grades easily.", 
-      icon: Calculator,
-      bgGradient: "from-violet-900/40 to-purple-900/40",
-      iconTint: "text-purple-400/20",
-      glow: "shadow-[0_0_30px_-5px_rgba(168,85,247,0.15)]",
-      buttonText: "Start Checking Now"
-    },
-    { 
-      id: "announcements", 
-      overline: "UPDATES", 
-      title: "Announcements", 
-      desc: "Stay informed with campus news.", 
-      icon: Megaphone,
-      bgGradient: "from-amber-900/40 to-orange-900/40",
-      iconTint: "text-orange-400/20",
-      glow: "shadow-[0_0_30px_-5px_rgba(249,115,22,0.15)]",
-      buttonText: "View Updates"
-    },
-    { 
-      id: "support", 
-      overline: "DONATE", 
-      title: "Support Us", 
-      desc: "Buy the team a coffee ☕", 
-      icon: Coffee,
-      bgGradient: "from-rose-900/40 to-pink-900/40",
-      iconTint: "text-rose-400/20",
-      glow: "shadow-[0_0_30px_-5px_rgba(244,63,94,0.15)]",
-      buttonText: "Show Support"
-    },
+
   ] as const;
 
   return (
@@ -404,6 +383,29 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+
+          {/* Mobile Scroll Arrows */}
+          <div className="flex md:hidden justify-end gap-2 px-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-zinc-900/50 border-white/10 text-white"
+              onClick={() => scroll("left")}
+              disabled={!canScrollLeft}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-zinc-900/50 border-white/10 text-white"
+              onClick={() => scroll("right")}
+              disabled={!canScrollRight}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           
           <div className="relative animate-in slide-in-from-bottom-8 fade-in duration-700 delay-150 fill-mode-both">
             <div 
@@ -425,7 +427,7 @@ export default function Dashboard() {
                         handleTabClick(card.id as typeof activeTab);
                       }
                     }}
-                    className={`snap-center shrink-0 w-[280px] h-[360px] rounded-[32px] p-8 flex flex-col justify-between cursor-pointer transition-all duration-500 relative overflow-hidden group border
+                    className={`snap-center shrink-0 w-[230px] h-[310px] rounded-[32px] sm:w-[280px] sm:h-[360px] p-8 flex flex-col justify-between cursor-pointer transition-all duration-500 relative overflow-hidden group border
                       ${isActive
                         ? `bg-white border-transparent text-black scale-[1.02] ${card.glow}` 
                         : `bg-gradient-to-br ${card.bgGradient} border-white/10 text-white hover:border-white/20 hover:scale-[1.02]`
@@ -587,7 +589,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {activeTab === "sgpa" && (
+          {/* {activeTab === "sgpa" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
               <div className="mb-8">
                 <h2 className="text-2xl font-bold tracking-tight text-white">SGPA Calculator</h2>
@@ -597,9 +599,9 @@ export default function Dashboard() {
                 <SGPACalculator />
               </div>
             </div>
-          )}
+          )} */}
 
-          {activeTab === "announcements" && (
+          {/* {activeTab === "announcements" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
               <div className="mb-8">
                 <h2 className="text-2xl font-bold tracking-tight text-white">Announcements</h2>
@@ -609,7 +611,7 @@ export default function Dashboard() {
                 <AnnouncementsSection isAdmin={role === "admin"} />
               </div>
             </div>
-          )}
+          )} */}
 
           {activeTab === "support" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">

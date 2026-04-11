@@ -24,27 +24,29 @@ export function SupportSection() {
   return (
     <div className="flex justify-center">
       <Card className="shadow-card border-border/50 w-full max-w-md">
-        <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+        <CardContent className="p-6 flex flex-col items-center text-center space-y-5">
 
-          {/* Mission text */}
+          {/* Title */}
+          <h2 className="text-lg font-semibold text-white">
+            Support the Project
+          </h2>
+
+          {/* Description */}
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Our domain and database costs are increasing.
             If Team Dino has helped you in your exam preparation,
             consider supporting us so we can keep everything free
             for all students.
           </p>
 
-          {/* QR Code */}
-          <div className="rounded-xl overflow-hidden bg-background p-3 shadow-lg">
-            <img
-              src={gpayQr}
-              alt="UPI QR Code"
-              className="w-56 h-56 sm:w-64 sm:h-64 object-contain"
-            />
-          </div>
+          {/* QR Code (clean, no extra card) */}
+          <img
+            src={gpayQr}
+            alt="UPI QR Code"
+            className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-lg border border-white/10"
+          />
 
-          {/* UPI ID with copy */}
-          <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-4 py-3 w-full justify-center">
+          {/* UPI ID */}
+          <div className="flex items-center gap-2 bg-muted/40 rounded-lg px-4 py-3 w-full justify-center">
             <span className="font-mono text-sm sm:text-base break-all">
               {UPI_ID}
             </span>
@@ -63,13 +65,11 @@ export function SupportSection() {
           </div>
 
           {/* Helper text */}
-          <p className="text-sm text-muted-foreground">
-            Copy the UPI ID and paste it in your preferred UPI app
-            to complete your support.
+          <p className="text-xs text-muted-foreground">
+            Scan the QR or copy the UPI ID to support.
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-

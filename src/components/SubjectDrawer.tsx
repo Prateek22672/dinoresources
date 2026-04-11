@@ -103,82 +103,48 @@ export default function SubjectDrawer({
         </DrawerHeader>
 
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden bg-[#0a0a0c]">
-          
-          {/* Left Panel - Navigation */}
-          <div
-            className="w-full md:w-72 border-r border-white/5 bg-[#0e0e11] p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent"
-            style={{ touchAction: "pan-y" }}
-          >
-            <nav className="space-y-1.5">
-              <button
-                onClick={() => setSelectedCategory("Syllabus")}
-                className={`${navItemBaseStyle} ${selectedCategory === "Syllabus" ? navItemActiveStyle : navItemInactiveStyle}`}
-              >
-                Syllabus
-                <Badge className="bg-black/50 text-zinc-400 border border-white/10 font-normal hover:bg-black/50">
-                  {getResourcesByCategory("Syllabus").length}
-                </Badge>
-              </button>
 
-              <Accordion type="single" collapsible defaultValue="units">
-                <AccordionItem value="units" className="border-0">
-                  <AccordionTrigger className={`px-4 py-3 rounded-xl hover:bg-white/5 hover:text-zinc-200 hover:no-underline text-sm sm:text-base transition-colors ${selectedCategory.startsWith("Unit") ? "text-white" : "text-zinc-400"}`}>
-                    Course Units
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-0 pt-1">
-                    <div className="space-y-1 pl-4 border-l border-white/5 ml-4 mt-1">
-                      {[1, 2, 3, 4, 5].map((unitNum) => {
-                        const category = `Unit ${unitNum}`;
-                        const count = getResourcesByCategory(category).length;
-                        return (
-                          <button
-                            key={unitNum}
-                            onClick={() => setSelectedCategory(category)}
-                            className={`${navItemBaseStyle} py-2.5 ${selectedCategory === category ? navItemActiveStyle : navItemInactiveStyle}`}
-                          >
-                            Unit {unitNum}
-                            <Badge className="bg-black/50 text-zinc-400 border border-white/10 font-normal hover:bg-black/50">
-                              {count}
-                            </Badge>
-                          </button>
-                        );
-                      })}
+  {/* Horizontal Navigation */}
+          <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/5 bg-[#0d0d10] p-3 md:p-4 flex-shrink-0">
+            <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible scrollbar-none snap-x md:snap-none">
+
+              {[
+                "Syllabus",
+                "Unit 1",
+                "Unit 2",
+                "Unit 3",
+                "Unit 4",
+                "Unit 5",
+                "Previous Papers"
+              ].map((category) => {
+                const isActive = selectedCategory === category;
+                const count = getResourcesByCategory(category).length;
+
+                return (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`shrink-0 md:w-full text-left px-4 py-2 md:py-3 rounded-xl transition-all duration-200 flex items-center justify-between text-sm border snap-start ${
+                      isActive
+                        ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-[inset_3px_0_0_0_#818cf8]"
+                        : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`hidden md:flex w-6 h-6 rounded-md items-center justify-center text-xs font-bold ${
+                        isActive ? "bg-indigo-500/20 text-indigo-400" : "bg-white/5 text-zinc-500"
+                      }`}>
+                        {category.includes("Unit") ? category.split(" ")[1] : ""}
+                      </div>
+                      {category}
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              <button
-                onClick={() => setSelectedCategory("Previous Papers")}
-                className={`${navItemBaseStyle} ${selectedCategory === "Previous Papers" ? navItemActiveStyle : navItemInactiveStyle}`}
-              >
-                PYQs
-                <Badge className="bg-black/50 text-zinc-400 border border-white/10 font-normal hover:bg-black/50">
-                  {getResourcesByCategory("Previous Papers").length}
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => setSelectedCategory("All Units Resources")}
-                className={`${navItemBaseStyle} ${selectedCategory === "All Units Resources" ? navItemActiveStyle : navItemInactiveStyle}`}
-              >
-                All Units Resources
-                <Badge className="bg-black/50 text-zinc-400 border border-white/10 font-normal hover:bg-black/50">
-                  {getResourcesByCategory("All Units Resources").length}
-                </Badge>
-              </button>
-
-              <button
-                onClick={() => setSelectedCategory("Additional Resources")}
-                className={`${navItemBaseStyle} ${selectedCategory === "Additional Resources" ? navItemActiveStyle : navItemInactiveStyle}`}
-              >
-                Additional Resources
-                <Badge className="bg-black/50 text-zinc-400 border border-white/10 font-normal hover:bg-black/50">
-                  {getResourcesByCategory("Additional Resources").length}
-                </Badge>
-              </button>
+                    
+                  </button>
+                );
+              })}
             </nav>
           </div>
+          
 
           {/* Right Panel - Resources */}
           <div
