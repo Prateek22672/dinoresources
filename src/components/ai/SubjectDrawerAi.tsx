@@ -91,7 +91,8 @@ export default function SubjectDrawerAi({
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
           className="h-[100dvh] sm:h-[92vh] max-h-[100dvh] sm:max-h-[92vh] w-full mx-auto rounded-none sm:rounded-t-[40px] overflow-hidden bg-[#0a0a0c] border-t border-indigo-500/20 text-zinc-100 shadow-[0_-20px_60px_-20px_rgba(99,102,241,0.18)] flex flex-col"
-          style={{ touchAction: "manipulation" }}
+          style={{ pointerEvents: "auto" }}
+
         >
           <DrawerDescription className="hidden">
             AI Study Tools for {subjectName}

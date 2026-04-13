@@ -126,3 +126,14 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-hover);
   }
 }
+
+/* Razorpay modal fix */
+iframe[src*="razorpay"] {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+/* Prevent Drawer overlay from blocking Razorpay */
+[data-radix-dialog-overlay] {
+  pointer-events: none !important;
+}

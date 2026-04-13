@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Lock, Sparkles, AlertCircle, RefreshCw } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { supabase } from "@/integrations/supabase/client"; // adjust path if needed
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 declare global {
@@ -43,7 +43,6 @@ function ensureRazorpaySDK(): Promise<void> {
 
     const existing = document.querySelector('script[src*="checkout.razorpay.com"]');
     if (existing) {
-      // Script tag exists but may still be loading
       existing.addEventListener("load",  () => resolve());
       existing.addEventListener("error", () => reject(new Error("Razorpay SDK failed to load")));
       return;
@@ -57,6 +56,32 @@ function ensureRazorpaySDK(): Promise<void> {
   });
 }
 
+// ── Temporarily unlock touch-action so Razorpay's iframe buttons are tappable.
+// The parent Drawer can set touch-action: manipulation which silently blocks
+// all button taps / text-field focus inside the Razorpay iframe overlay.
+// We snapshot the current values, set them to "auto" while the modal is open,
+// then restore when it closes (success / dismiss / failure).
+function overrideTouchAction(): () => void {
+  const html = document.documentElement;
+  const body = document.body;
+
+  const prevHtmlTouch = html.style.touchAction;
+  const prevBodyTouch = body.style.touchAction;
+  const prevPointerEvents = body.style.pointerEvents;
+
+  html.style.touchAction = "auto";
+  body.style.touchAction = "auto";
+
+  // 🔥 Critical fix
+  body.style.pointerEvents = "auto";
+
+  return () => {
+    html.style.touchAction = prevHtmlTouch;
+    body.style.touchAction = prevBodyTouch;
+    body.style.pointerEvents = prevPointerEvents;
+  };
+}
+
 export function PracticeCard({
   q,
   index,
@@ -65,7 +90,7 @@ export function PracticeCard({
   isSubscribed = false,
   onPaymentSuccess,
 }: PracticeCardProps) {
-  const [mode, setMode]               = useState<"detailed" | "simplified">("detailed");
+  const [mode, setMode]                 = useState<"detailed" | "simplified">("detailed");
   const [paymentState, setPaymentState] = useState<PaymentState>("idle");
   const [errorMsg, setErrorMsg]         = useState<string | null>(null);
 
@@ -102,7 +127,6 @@ export function PracticeCard({
       });
 
       if (res.error || !res.data?.order_id) {
-        // "Already subscribed" edge case
         if (res.data?.error === "Already subscribed") {
           toast.success("You're already subscribed! Refreshing...");
           onPaymentSuccess?.();
@@ -122,15 +146,20 @@ export function PracticeCard({
     // ── 4. Open Razorpay checkout ─────────────────────────────────────────
     setPaymentState("checkout_open");
 
+    // Override touch-action on <html> and <body> so every button / input
+    // inside the Razorpay iframe overlay responds to taps normally.
+    // restoreTouchAction() MUST be called in every exit path below.
+    const restoreTouchAction = overrideTouchAction();
+
     await new Promise<void>((resolveCheckout) => {
       const options = {
-        key:      keyId,
-        order_id: orderId,
-        amount:   4900,
-        currency: "INR",
-        name:     "StudyAI Pro",
+        key:         keyId,
+        order_id:    orderId,
+        amount:      4900,
+        currency:    "INR",
+        name:        "StudyAI Pro",
         description: "Unlock all questions & parts",
-        theme:    { color: "#6366f1" },
+        theme:       { color: "#6366f1" },
 
         // ── Payment successful ─────────────────────────────────────────────
         handler: async (response: {
@@ -139,6 +168,7 @@ export function PracticeCard({
           razorpay_signature:  string;
         }) => {
           resolveCheckout();
+          restoreTouchAction(); // ✅ restore before any async work
           setPaymentState("verifying");
 
           try {
@@ -155,7 +185,6 @@ export function PracticeCard({
               throw new Error(verifyRes.data?.error ?? "Verification failed");
             }
 
-            // ── All good ───────────────────────────────────────────────────
             setPaymentState("success");
             try { localStorage.setItem("studyai_subscribed", "true"); } catch { /* ok */ }
             toast.success("🎉 Unlocked! All answers are now available.");
@@ -175,26 +204,23 @@ export function PracticeCard({
         modal: {
           ondismiss: () => {
             resolveCheckout();
-            // Only reset if we haven't already moved to verifying/success
+            restoreTouchAction(); // ✅ restore on dismiss
             setPaymentState((prev) =>
               prev === "checkout_open" ? "idle" : prev
             );
           },
-          // Prevent accidental back-navigation from closing the modal silently
-          escape: false,
+          escape:        false,
           backdropclose: false,
-          animation: true,
+          animation:     true,
         },
-
-        // ── Payment failed inside checkout ─────────────────────────────────
-        // Razorpay fires handler on success and ondismiss on close.
-        // For explicit failure events we capture via the checkout object.
       };
 
       const rzp = new window.Razorpay(options);
 
+      // ── Explicit payment failure inside checkout ────────────────────────
       rzp.on("payment.failed", (response: any) => {
         resolveCheckout();
+        restoreTouchAction(); // ✅ restore on failure
         setPaymentState("failed");
         const desc = response?.error?.description ?? "Unknown error";
         const code = response?.error?.code        ?? "";
@@ -205,7 +231,7 @@ export function PracticeCard({
     });
   };
 
-  // ── Status label helpers ──────────────────────────────────────────────────
+  // ── Status label helpers ───────────────────────────────────────────────────
   const paymentButtonLabel: Record<PaymentState, string> = {
     idle:           `Unlock All for ${PRICE_LABEL}`,
     creating_order: "Preparing payment…",
@@ -281,7 +307,7 @@ export function PracticeCard({
                 >
                   {paymentState === "verifying" || paymentState === "creating_order"
                     ? <RefreshCw className="w-4 h-4 animate-spin" />
-                    : <Sparkles className="w-4 h-4" />
+                    : <Sparkles  className="w-4 h-4" />
                   }
                   {paymentButtonLabel[paymentState]}
                 </button>
