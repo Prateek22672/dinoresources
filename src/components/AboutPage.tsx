@@ -33,7 +33,7 @@ export default function AboutPage() {
     },
     {
       name: "Vishnu",
-      roles: ["Web Developer", "R&D Guide"],
+      roles: ["CMO", "R&D Guide", "Web 3 Specialist"],
       icon: Lightbulb,
       color: "text-amber-400",
       bgSoft: "bg-amber-400/10", // Added this back
