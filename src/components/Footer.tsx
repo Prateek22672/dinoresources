@@ -7,8 +7,22 @@ import dinoLogo from "@/assets/dinosaurBlack.png";
 import genai from "@/assets/aiWhite.png";
 
 export default function Footer() {
-  const navigate = useNavigate();
-  
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(UPI_ID);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="mt-20 border-t border-white/5 bg-[#09090b]/80 backdrop-blur-xl pt-16 pb-8 relative overflow-hidden">
       {/* Subtle ambient glow */}
@@ -18,10 +32,10 @@ export default function Footer() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12 text-center md:text-left">
           
-          <div className="md:col-span-1 flex flex-col items-center md:items-start">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
-              {/* Wrapped the black logo in a soft white container so it's visible on the dark background */}
-              <div className="w-8 h-8 rounded-lg bg-zinc-200 flex items-center justify-center p-1 shadow-sm">
+          {/* Left: Brand & Tagline */}
+          <div className="max-w-sm text-left">
+            <Link to="/" onClick={scrollToTop} className="flex items-center gap-3 mb-3 hover:opacity-90 transition-opacity w-fit">
+              <div className="w-8 h-8 rounded-lg bg-zinc-200 flex items-center justify-center p-1 shadow-sm shrink-0">
                 <img src={dinoLogo} alt="Team Dino" className="w-full h-full object-contain" />
               </div>
               Team Dino
@@ -33,7 +47,8 @@ export default function Footer() {
             {/* Link to About Page */}
             <Link 
               to="/about" 
-              className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white text-sm font-medium transition-all"
+              onClick={scrollToTop}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white text-sm font-medium transition-all"
             >
               Meet the Team 
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -78,7 +93,7 @@ export default function Footer() {
           <div className="flex items-center gap-4 text-zinc-500 text-xs font-medium">
             <p>© {new Date().getFullYear()} Team Dino. All rights reserved.</p>
             <span className="hidden md:inline">•</span>
-            <Link to="/about" className="hover:text-zinc-300 transition-colors">About Us</Link>
+            <Link to="/about" onClick={scrollToTop} className="hover:text-zinc-400 transition-colors">About Us</Link>
           </div>
           <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-medium">
             <span>Crafted with</span>
