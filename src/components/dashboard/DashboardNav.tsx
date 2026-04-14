@@ -1,8 +1,10 @@
 // src/components/dashboard/DashboardNav.tsx
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, BookOpen, CalendarDays, Globe, Calculator, Megaphone, X, EyeOff } from "lucide-react";
+import { ChevronLeft,Lock, ChevronRight, BookOpen, CalendarDays, Globe, Calculator, Megaphone, X, EyeOff } from "lucide-react";
 import genai from "@/assets/aiWhite.png";
+import { PremiumUnlockDialog } from "../premiumUnlockDialog";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface DashboardNavProps {
   firstName: string;
@@ -25,6 +27,7 @@ const navCards = [
     iconTint: "text-blue-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.15)]",
     buttonText: "Start Studying Now",
+    requiresSubscription: false,
   },
   {
     id: "ai_subjects",
@@ -36,6 +39,7 @@ const navCards = [
     iconTint: "opacity-10 grayscale",
     glow: "shadow-[0_0_30px_-5px_rgba(99,102,241,0.15)]",
     buttonText: "Get AI Assistance",
+    requiresSubscription: false,
   },
   {
     id: "foliofyx",
@@ -48,6 +52,7 @@ const navCards = [
     glow: "shadow-[0_0_30px_-5px_rgba(217,70,239,0.15)]",
     externalLink: "https://www.foliofyx.in",
     buttonText: "Create Now Free",
+    requiresSubscription: false,
   },
   {
     id: "announcements",
@@ -59,6 +64,7 @@ const navCards = [
     iconTint: "text-orange-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(249,115,22,0.15)]",
     buttonText: "View Updates",
+    requiresSubscription: false,
   },
   {
     id: "attendance",
@@ -69,7 +75,8 @@ const navCards = [
     bgGradient: "from-teal-900/40 to-emerald-900/40",
     iconTint: "text-emerald-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.15)]",
-    buttonText: "Start Checking Now",
+    buttonText: "Unlock to Access",
+    requiresSubscription: true,
   },
   {
     id: "sgpa",
@@ -80,7 +87,8 @@ const navCards = [
     bgGradient: "from-violet-900/40 to-purple-900/40",
     iconTint: "text-purple-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(168,85,247,0.15)]",
-    buttonText: "Start Checking Now",
+    buttonText: "Unlock to Access",
+    requiresSubscription: true,
   },
 ];
 
@@ -88,9 +96,31 @@ export function DashboardNav({ firstName, activeTab, handleTabClick }: Dashboard
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const aiCardRef = useRef<HTMLDivElement>(null);
 
+  const { isSubscribed, refresh: refreshSubscription } = useSubscription();
+
+  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState("premium feature");
+
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  const handleProtectedCardClick = (card: any) => {
+      const isExternal = "externalLink" in card;
+
+      if (isExternal) {
+        window.open(card.externalLink, "_blank");
+        return;
+      }
+
+      if (card.requiresSubscription && !isSubscribed) {
+        setLockedFeatureName(card.title);
+        setIsPremiumDialogOpen(true);
+        return;
+      }
+
+      handleTabClick(card.id);
+    };
 
   // ── ONBOARDING TUTORIAL LOGIC ──
   useEffect(() => {
@@ -216,6 +246,8 @@ export function DashboardNav({ firstName, activeTab, handleTabClick }: Dashboard
           className="flex overflow-x-auto pt-8 pb-[200px] sm:py-12 -mt-8 -mb-[200px] sm:-my-8 -mx-4 px-4 sm:px-6 gap-4 sm:gap-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {navCards.map((card) => {
+
+            const isLocked = !!card.requiresSubscription && !isSubscribed;
             const isExternal = "externalLink" in card;
             const isActive = activeTab === card.id && !isExternal;
             const isAiCard = card.id === "ai_subjects";
@@ -292,12 +324,20 @@ export function DashboardNav({ firstName, activeTab, handleTabClick }: Dashboard
                 {/* ── THE CARD ITSELF ── */}
                 <div
                   onClick={() => {
-                    if (isDimmed) return;
-                    if (isSpotlit) { mutePermanently(); handleTabClick(card.id); }
-                    if (!showTutorial) {
-                      isExternal ? window.open((card as any).externalLink, "_blank") : handleTabClick(card.id);
-                    }
-                  }}
+                          if (isDimmed) return;
+
+                          if (isSpotlit) {
+                            mutePermanently();
+                            handleTabClick(card.id);
+                            return;
+                          }
+
+                          if (!showTutorial) {
+                            handleProtectedCardClick(card);
+                          }
+                        }}
+                
+                
                   className={`
                     w-[240px] sm:w-[280px] h-[300px] sm:h-[360px]
                     rounded-[24px] sm:rounded-[32px] p-6 sm:p-8
@@ -310,6 +350,13 @@ export function DashboardNav({ firstName, activeTab, handleTabClick }: Dashboard
                     ${isSpotlit ? "ring-2 sm:ring-4 ring-white/30 border-transparent shadow-[0_0_80px_rgba(255,255,255,0.15)] scale-[1.05]" : ""}
                   `}
                 >
+                  {isLocked && (
+                      <div className="absolute top-4 right-4 z-20 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 border border-white/10 text-zinc-200 text-[10px] font-bold tracking-widest uppercase backdrop-blur-md">
+                        <Lock className="w-3 h-3" />
+                        Locked
+                      </div>
+                    )}
+
                   <div className="z-10 flex flex-col h-full">
                     <div>
                       <p className={`text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3 ${isActive ? "text-zinc-500" : "text-zinc-300"}`}>
@@ -326,13 +373,16 @@ export function DashboardNav({ firstName, activeTab, handleTabClick }: Dashboard
                     <div className="mt-auto pt-4 relative z-20">
                       <Button
                         className={`w-full rounded-full font-bold shadow-none py-5 sm:py-6 text-xs sm:text-sm transition-all duration-300
-                          ${isActive
-                            ? "bg-black text-white hover:bg-zinc-800 hover:scale-[1.02]"
-                            : "bg-white/10 text-white hover:bg-white/20 hover:scale-[1.02]"
+                          ${
+                            isLocked
+                              ? "bg-white/10 text-white hover:bg-white/15"
+                              : isActive
+                                ? "bg-black text-white hover:bg-zinc-800 hover:scale-[1.02]"
+                                : "bg-white/10 text-white hover:bg-white/20 hover:scale-[1.02]"
                           }
                         `}
                       >
-                        {card.buttonText}
+                        {isLocked ? "Unlock for ₹11" : card.buttonText}
                       </Button>
                     </div>
                   </div>
@@ -348,6 +398,18 @@ export function DashboardNav({ firstName, activeTab, handleTabClick }: Dashboard
           })}
         </div>
       </div>
+      <PremiumUnlockDialog
+            open={isPremiumDialogOpen}
+            onOpenChange={setIsPremiumDialogOpen}
+            title="Unlock Premium Access"
+            description="Pay ₹11 once to unlock the full website, including premium calculators, advanced units, and other locked features."
+            featureName={lockedFeatureName}
+            priceLabel="₹11"
+            onPaymentSuccess={async () => {
+              await refreshSubscription();
+              setIsPremiumDialogOpen(false);
+            }}
+          />
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerClose } from "@/components/ui/drawer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { List, LayoutGrid, X, BookOpen } from "lucide-react";
+import { List, LayoutGrid, X, BookOpen, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ResourceCard from "./ResourceCard";
 import { UserRole } from "@/hooks/useUserRole";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PremiumUnlockDialog } from "./premiumUnlockDialog";
 
 interface Resource {
   id: string;
@@ -40,6 +41,10 @@ export default function SubjectDrawer({
   const [selectedCategory, setSelectedCategory] = useState<string>("Syllabus");
   const [viewMode, setViewMode] = useState<"list" | "expanded">("list");
 
+  const { isSubscribed, refresh: refreshSubscription } = useSubscription();
+  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState("premium resources");
+
   useEffect(() => {
     if (open && subjectId) {
       loadResources();
@@ -67,24 +72,38 @@ export default function SubjectDrawer({
 
   const getCategoryLabel = (category: string) => {
     if (category === "Previous Papers") return "PYQs";
-    if (category === "All Units Resources") return "All Units";
     return category;
   };
 
   const selectedResources = getResourcesByCategory(selectedCategory);
 
-  // Flattened categories for the responsive horizontal/vertical menu
-  const CATEGORIES = [
-    "Syllabus",
-    "Unit 1",
-    "Unit 2",
-    "Unit 3",
-    "Unit 4",
-    "Unit 5",
-    "Previous Papers",
-    "All Units Resources",
-    "Additional Resources"
-  ];
+      const isLockedCategory = (category: string) => {
+            if (isSubscribed) return false;
+            return category === "Unit 4" || category === "Unit 5" || category === "Previous Papers";
+          };
+
+        const handleCategoryClick = (category: string) => {
+          if (isLockedCategory(category)) {
+            setLockedFeatureName(category === "Previous Papers" ? "Previous Papers" : category);
+            setIsPremiumDialogOpen(true);
+            return;
+          }
+
+          setSelectedCategory(category);
+        };
+
+  // // Flattened categories for the responsive horizontal/vertical menu
+  // const CATEGORIES = [
+  //   "Syllabus",
+  //   "Unit 1",
+  //   "Unit 2",
+  //   "Unit 3",
+  //   "Unit 4",
+  //   "Unit 5",
+  //   "Previous Papers",
+  //   "All Units Resources",
+  //   "Additional Resources"
+  // ];
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -123,7 +142,7 @@ export default function SubjectDrawer({
           <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/5 bg-[#0d0d10] p-3 md:p-4 flex-shrink-0">
             <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible scrollbar-none snap-x md:snap-none">
 
-              {[
+                            {[
                 "Syllabus",
                 "Unit 1",
                 "Unit 2",
@@ -133,12 +152,12 @@ export default function SubjectDrawer({
                 "Previous Papers"
               ].map((category) => {
                 const isActive = selectedCategory === category;
-                const count = getResourcesByCategory(category).length;
+                const isLocked = isLockedCategory(category);
 
                 return (
                   <button
                     key={category}
-                    onClick={() => setSelectedCategory(category)}
+                    onClick={() => handleCategoryClick(category)}
                     className={`shrink-0 md:w-full text-left px-4 py-2 md:py-3 rounded-xl transition-all duration-200 flex items-center justify-between text-sm border snap-start ${
                       isActive
                         ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-[inset_3px_0_0_0_#818cf8]"
@@ -151,9 +170,15 @@ export default function SubjectDrawer({
                       }`}>
                         {category.includes("Unit") ? category.split(" ")[1] : ""}
                       </div>
-                      {category}
+                      <span>{category}</span>
                     </div>
-                    
+
+                    {isLocked && (
+                      <div className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-zinc-300 bg-black/30 border border-white/10 rounded-full px-2 py-1">
+                        <Lock className="w-3 h-3" />
+                        Locked
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -234,6 +259,19 @@ export default function SubjectDrawer({
           </div>
         </div>
       </DrawerContent>
+
+            <PremiumUnlockDialog
+              open={isPremiumDialogOpen}
+              onOpenChange={setIsPremiumDialogOpen}
+              title="Unlock Premium Access"
+              description="Pay ₹11 once to unlock the full website, including premium units, previous papers, calculators, and other locked features."
+              featureName={lockedFeatureName}
+              priceLabel="₹11"
+              onPaymentSuccess={async () => {
+                await refreshSubscription();
+                setIsPremiumDialogOpen(false);
+              }}
+            />
     </Drawer>
   );
 }
