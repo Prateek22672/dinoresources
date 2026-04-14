@@ -1,6 +1,7 @@
 import { Heart, Zap, Shield, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
+import { useState } from "react";
 
 // Import your custom logos
 import dinoLogo from "@/assets/dinosaurBlack.png";
@@ -8,6 +9,8 @@ import genai from "@/assets/aiWhite.png";
 
 export default function Footer() {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
+  const UPI_ID = "narenbachina22@okhdfcbank";
 
   const handleCopy = async () => {
     try {
@@ -38,8 +41,10 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-lg bg-zinc-200 flex items-center justify-center p-1 shadow-sm shrink-0">
                 <img src={dinoLogo} alt="Team Dino" className="w-full h-full object-contain" />
               </div>
-              Team Dino
-            </h3>
+              <h3 className="text-white font-semibold text-lg">
+                Team Dino
+              </h3>
+            </Link>
             <p className="text-zinc-400 text-sm leading-relaxed mb-6">
               Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking. Stop searching for notes, start mastering your subjects.
             </p>

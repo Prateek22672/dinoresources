@@ -187,6 +187,19 @@ function LineBlock({
   isLast: boolean;
   isTyping: boolean;
 }) {
+
+  if (line.startsWith("> ")) {
+      return (
+        <blockquote className="border-l-4 border-indigo-500/50 pl-4 py-1 my-3 bg-indigo-950/20 rounded-r-lg">
+          <p className="text-zinc-400 italic text-sm">{renderInline(line.slice(2))}</p>
+        </blockquote>
+      );
+    }
+    
+    if (line.trim() === "---") {
+        return <hr className="border-white/10 my-6" />;
+      }
+
   if (!line.trim()) return <div className="h-4" />;
 
   if (line.startsWith("### ")) {
