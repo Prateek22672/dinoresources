@@ -21,6 +21,7 @@ import dinoLogo from "@/assets/dinosaurWhite.png";
 
 export default function AuthPage() {
   const navigate = useNavigate();
+console.log("Navigate initialized:", navigate);
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);

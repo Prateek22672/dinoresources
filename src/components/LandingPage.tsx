@@ -17,6 +17,7 @@ const PHRASES = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+console.log("Navigate initialized:", navigate);
   const [phraseIndex, setPhraseIndex] = useState(0);
 
   // Cycles the text every 2.5 seconds
