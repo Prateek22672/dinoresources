@@ -27,10 +27,6 @@ const UPI_ID = "narenbachina22@okhdfcbank";
 export default function Footer() {
 
   const [copied, setCopied] = useState(false);
-  const navigate = useNavigate();
-  const UPI_ID = "narenbachina22@okhdfcbank";
-
-
 
   const handleCopy = async () => {
 
@@ -315,4 +311,3 @@ export default function Footer() {
   );
 
 }
-
