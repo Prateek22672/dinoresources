@@ -60,6 +60,7 @@ const navCards = [
     iconTint: "text-purple-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(168,85,247,0.15)]",
     buttonText: "Unlock to Access",
+    unlockedText: "Open Calculator",
     requiresSubscription: true,
   },
   {
@@ -85,6 +86,7 @@ const navCards = [
     iconTint: "text-emerald-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.15)]",
     buttonText: "Unlock to Access",
+    unlockedText: "Check Attendance",
     requiresSubscription: true,
   },
   {
@@ -415,7 +417,9 @@ export function DashboardNav({
                           }
                         `}
                       >
-                        {isLocked ? "Unlock for ₹11" : card.buttonText}
+                        {isLocked
+                              ? "Unlock for ₹11"
+                              : (card as any).unlockedText || card.buttonText}
                       </Button>
                     </div>
                   </div>

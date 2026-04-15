@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { X, Sparkles, PanelLeftClose, PanelLeftOpen, Layers } from "lucide-react";
 
+import { getAiSubject } from "@/data/aiSyllabus";
 import { aiSyllabus } from "@/data/aiSyllabus";
 import { TopicGrid } from "./TopicGrid";
 import { TopicDetail } from "./TopicDetail";
@@ -44,7 +45,7 @@ export default function SubjectDrawerAi({
     refreshSubscription();
   };
 
-  const subjectTopics = aiSyllabus[subjectName] || {};
+  const subjectTopics = getAiSubject(subjectName) || {};
 
   const availableUnits = [1, 2, 3, 4, 5].filter(
     (unit) => subjectTopics[unit.toString()] && subjectTopics[unit.toString()].length > 0

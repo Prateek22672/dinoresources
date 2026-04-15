@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
+import { aiSyllabus, getAiSubject } from "@/data/aiSyllabus";
 
 // Refactored Components
 import { DashboardHeader } from "./dashboard/DashboardHeader";
@@ -150,7 +151,13 @@ export default function Dashboard() {
   }
 
   // 🔥 Using our new Smart Search to filter subjects 🔥
-  const filteredSubjects = subjects.filter((s) => smartSearch(s.name, searchQuery));
+  const filteredSubjects = subjects.filter((s) => {
+        const matchesSearch = smartSearch(s.name, searchQuery);
+        const hasAiContent = !!getAiSubject(s.name);
+        return activeTab === "ai_subjects"
+          ? matchesSearch && hasAiContent
+          : matchesSearch;
+      });
   const firstName = profile?.full_name?.trim() ? profile.full_name.split(" ")[0] : "Buddy";
 
   return (

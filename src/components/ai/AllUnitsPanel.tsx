@@ -19,7 +19,7 @@ export function AllUnitsPanel({
   // Track revealed answers per question: key = `${unitNum}-${topicIdx}-${questionIdx}`
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
   // Track whether all answers are revealed globally
-  const [revealAll, setRevealAll] = useState(false);
+  const [allUnitsExpanded, setAllUnitsExpanded] = useState(false);
 
   const availableUnits = [1, 2, 3, 4, 5].filter(
     (u) => subjectTopics[u.toString()]?.length > 0
@@ -37,29 +37,33 @@ export function AllUnitsPanel({
   }, 0);
 
   const toggleUnit = (unitNum: number) =>
-    setCollapsedUnits((prev) => ({ ...prev, [unitNum]: !prev[unitNum] }));
+        setCollapsedUnits((prev) => ({
+          ...prev,
+          [unitNum]: !(prev[unitNum] ?? true),
+        }));
 
   const toggleAnswer = (key: string) =>
     setRevealedAnswers((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleRevealAll = () => {
-    if (revealAll) {
-      setRevealedAnswers({});
-      setRevealAll(false);
-    } else {
-      const all: Record<string, boolean> = {};
-      availableUnits.forEach((unitNum) => {
-        const topics = subjectTopics[unitNum.toString()] || [];
-        topics.forEach((topic, tIdx) => {
-          getFlattenedQuestions(topic.questions).forEach((_, qIdx) => {
-            all[`${unitNum}-${tIdx}-${qIdx}`] = true;
-          });
+      if (allUnitsExpanded) {
+        const collapsedState: Record<number, boolean> = {};
+        availableUnits.forEach((unitNum) => {
+          collapsedState[unitNum] = true;
         });
-      });
-      setRevealedAnswers(all);
-      setRevealAll(true);
-    }
-  };
+
+        setCollapsedUnits(collapsedState);
+        setAllUnitsExpanded(false);
+      } else {
+        const expandedState: Record<number, boolean> = {};
+        availableUnits.forEach((unitNum) => {
+          expandedState[unitNum] = false;
+        });
+
+        setCollapsedUnits(expandedState);
+        setAllUnitsExpanded(true);
+      }
+    };
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -81,12 +85,12 @@ export function AllUnitsPanel({
         <button
           onClick={handleRevealAll}
           className={`flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full transition-all border shrink-0 ${
-            revealAll
-              ? "bg-white/10 text-white border-white/20 hover:bg-white/15"
-              : "bg-indigo-500/10 text-indigo-300 border-indigo-500/25 hover:bg-indigo-500/20"
-          }`}
+              allUnitsExpanded
+                ? "bg-white/10 text-white border-white/20 hover:bg-white/15"
+                : "bg-indigo-500/10 text-indigo-300 border-indigo-500/25 hover:bg-indigo-500/20"
+            }`}
         >
-          {revealAll ? (
+          {allUnitsExpanded ? (
             <>
               <EyeOff className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Hide All</span>
@@ -107,7 +111,7 @@ export function AllUnitsPanel({
         <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-20">
           {availableUnits.map((unitNum) => {
             const topics = subjectTopics[unitNum.toString()] || [];
-            const isCollapsed = !!collapsedUnits[unitNum];
+            const isCollapsed = collapsedUnits[unitNum] ?? true;
             const unitTotalQ = topics.reduce(
               (s, t) => s + getFlattenedQuestions(t.questions).length,
               0

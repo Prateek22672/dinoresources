@@ -20,11 +20,28 @@ export interface AiTopic {
 }
 
 import { artificialIntelligence } from "./subjects/artificialIntelligence";
-import { compilerDesign }         from "./subjects/compilerDesign";
+import { cns } from "./subjects/cns";
+import { digitalForensics } from "./subjects/digitalForensics";
+import { oose } from "./subjects/oose";
 import { webAppDevelopment } from "./subjects/webAppDevelopment";
 
 export const aiSyllabus: Record<string, Record<string, AiTopic[]>> = {
+  "Web Application Development and Software Frameworks(WAD)": webAppDevelopment,
   "Artificial intelligence": artificialIntelligence,
-  "Compiler Design":         compilerDesign,
-  "Web Application Development and Software Frameworks(WAD)": webAppDevelopment
+  "Cryptography and Network Security": cns,
+  "Digital Forensics": digitalForensics,
+  "OOSE Based Application Development":oose,
+  
+  
+};
+
+export const normalize = (value: string) =>
+  value.toLowerCase().replace(/\s+/g, " ").trim();
+
+export const getAiSubject = (subjectName: string) => {
+  const entry = Object.entries(aiSyllabus).find(
+    ([key]) => normalize(key) === normalize(subjectName)
+  );
+
+  return entry ? entry[1] : undefined;
 };
