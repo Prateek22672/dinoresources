@@ -12,15 +12,17 @@ import {
 import genai from "@/assets/aiWhite.png";
 
 export function SubjectCard({ subject, index, activeTab, onClick }: any) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLButtonElement>(null);
   const isAi = subject.is_ai || activeTab === "ai_subjects";
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     const card = cardRef.current;
     if (!card) return;
+
     const rect = card.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width - 0.5) * 10;
     const y = ((e.clientY - rect.top) / rect.height - 0.5) * 10;
+
     card.style.setProperty("--rx", `${y}deg`);
     card.style.setProperty("--ry", `${x}deg`);
     card.style.setProperty(
@@ -34,22 +36,26 @@ export function SubjectCard({ subject, index, activeTab, onClick }: any) {
   };
 
   const handleMouseLeave = () => {
-    if (cardRef.current) {
-      cardRef.current.style.setProperty("--rx", "0deg");
-      cardRef.current.style.setProperty("--ry", "0deg");
-    }
+    const card = cardRef.current;
+    if (!card) return;
+
+    card.style.setProperty("--rx", "0deg");
+    card.style.setProperty("--ry", "0deg");
   };
 
   return (
     <div
-      ref={cardRef}
-      onClick={onClick}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="subject-card group relative cursor-pointer"
+      className="subject-card group relative"
       style={{ animationDelay: `${index * 40}ms` } as React.CSSProperties}
     >
-      <div className="relative rounded-[20px] h-[220px] card-inner border border-zinc-800 bg-[#09090b] transition-all duration-300 group-hover:border-zinc-500 overflow-hidden flex flex-col p-6 justify-between">
+      <button
+        type="button"
+        ref={cardRef}
+        onClick={onClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="relative rounded-[20px] h-[220px] w-full card-inner border border-zinc-800 bg-[#09090b] transition-all duration-300 group-hover:border-zinc-500 overflow-hidden flex flex-col p-6 justify-between text-left cursor-pointer"
+      >
         <div className="shine-overlay absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100" />
 
         <div className="flex justify-between items-start z-10">
@@ -67,10 +73,11 @@ export function SubjectCard({ subject, index, activeTab, onClick }: any) {
             )}
             {isAi ? "AI DRIVEN" : "RESOURCES"}
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-200 transition-colors" />
+
+          <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-200 transition-colors pointer-events-none" />
         </div>
 
-        <div className="z-10">
+        <div className="z-10 pointer-events-none">
           <h3 className="text-lg font-semibold text-zinc-100 leading-tight mb-2 group-hover:text-white transition-colors">
             {subject.name}
           </h3>
@@ -80,7 +87,7 @@ export function SubjectCard({ subject, index, activeTab, onClick }: any) {
               : "Access course materials"}
           </p>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
@@ -114,6 +121,7 @@ export function SubjectGrid({
           transform-style: preserve-3d;
           transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
           transition: transform 0.1s ease-out, border-color 0.3s ease;
+          will-change: transform;
         }
         .shine-overlay {
           background: radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 50%), rgba(255,255,255,0.08) 0%, transparent 70%);
@@ -143,7 +151,7 @@ export function SubjectGrid({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 300)}
+              onBlur={() => setIsSearchFocused(false)}
               placeholder="Search subjects..."
               className="bg-transparent border-none outline-none text-zinc-200 text-sm flex-1 min-w-0 w-full placeholder:text-zinc-600 focus:ring-0"
             />
@@ -175,8 +183,8 @@ export function SubjectGrid({
                   return (
                     <button
                       key={sub.id}
-                      onMouseDown={() => handleSubjectClick(sub)}
-                      onTouchStart={() => handleSubjectClick(sub)}
+                      type="button"
+                      onClick={() => handleSubjectClick(sub)}
                       className="w-full flex items-center justify-between p-2.5 hover:bg-zinc-800/50 rounded-lg transition-all text-left group"
                     >
                       <div className="flex items-center gap-3">
