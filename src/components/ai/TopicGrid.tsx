@@ -1,96 +1,109 @@
-// src/components/ai/TopicGrid.tsx
-import { CheckCircle2, PlayCircle, Lock, BrainCircuit, Sparkles } from "lucide-react";
+
+import { CheckCircle2, PlayCircle, Circle, BrainCircuit, ArrowRight } from "lucide-react";
+import genai from "@/assets/ai.png";
 
 export function TopicGrid({ topics, activeUnit, subjectName, onSelectTopic, onGenerate }) {
-  const statusIcon = {
-    completed:     <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
-    "in-progress": <PlayCircle   className="w-5 h-5 text-indigo-400" />,
-    locked:        <Lock         className="w-5 h-5 text-zinc-600" />,
+
+  const statusConfig = {
+    completed:     { icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />, label: "Done" },
+    "in-progress": { icon: <PlayCircle   className="w-4 h-4 text-sky-400" />,     label: "In progress" },
+    locked:        { icon: <Circle       className="w-4 h-4 text-neutral-700" />, label: "Not started" },
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-right-4 duration-400 p-4 sm:p-6">
-      <div className="mb-6">
-        <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1">
-          Unit {activeUnit} Pathway
+    <div className="p-4 sm:p-6">
+
+      {/* Header */}
+      <div className="mb-5">
+        <h3 className="text-xl sm:text-2xl font-bold text-neutral-100 mb-1">
+          Unit {activeUnit}
         </h3>
-        <p className="text-zinc-400 text-sm sm:text-base">
-          {topics.length} part{topics.length !== 1 ? "s" : ""} required to master this unit.
+        <p className="text-neutral-500 text-sm">
+          {topics.length} part{topics.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {topics.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-white/10 rounded-3xl bg-[#111113]">
-          <Sparkles className="w-10 h-10 text-zinc-600 mb-4" />
-          <p className="text-zinc-400 font-medium text-center px-6">
+        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-neutral-800 rounded-xl">
+          <p className="text-neutral-600 text-sm text-center px-6">
             No parts assigned to Unit {activeUnit} yet.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-          {topics.map((topic, idx) => (
-            <button
-              key={topic.id}
-              onClick={() => onSelectTopic(topic)}
-              className="group text-left bg-[#111113] border border-white/5 hover:border-indigo-500/40 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:bg-[#18181b] hover:shadow-[0_12px_40px_-12px_rgba(99,102,241,0.15)] relative overflow-hidden flex flex-col"
-            >
-              <div className="flex items-start gap-3 mb-5">
-                <div className="shrink-0 mt-0.5">
-                  {statusIcon[topic.status] || statusIcon.locked}
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-zinc-500 mb-0.5 block">
-                    Part {String(idx + 1).padStart(2, "0")}
-                  </span>
-                  <h4 className="text-base sm:text-lg font-semibold text-white leading-snug pr-4">
-                    {topic.title}
-                  </h4>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
 
-              <div className="mt-auto space-y-1.5 w-full">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className={topic.progress > 0 ? "text-indigo-400" : "text-zinc-600"}>
-                    {topic.progress > 0 ? `${topic.progress}% Complete` : "Not Started"}
-                  </span>
-                  <span className="text-zinc-500">
-                    {topic.questions?.length || 0} framed Qs
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-black/50 rounded-full overflow-hidden border border-white/5">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
-                    style={{ width: `${topic.progress}%` }}
-                  />
-                </div>
-              </div>
-            </button>
-          ))}
+          {topics.map((topic, idx) => {
+            const statusKey = topic.status in statusConfig ? topic.status : "locked";
+            const { icon } = statusConfig[statusKey];
 
-          {/* ── Generate All Framed Questions CTA ── */}
+            return (
+              <button
+                key={topic.id}
+                onClick={() => onSelectTopic(topic)}
+                className="group text-left bg-[#141414] border border-neutral-800 hover:border-neutral-700 rounded-xl p-4 sm:p-5 cursor-pointer transition-all duration-200 hover:bg-[#191919] flex flex-col"
+              >
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="shrink-0 mt-0.5">{icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-neutral-600 mb-0.5">
+                      Part {String(idx + 1).padStart(2, "0")}
+                    </p>
+                    <h4 className="text-sm font-medium text-neutral-200 leading-snug group-hover:text-neutral-100 transition-colors">
+                      {topic.title}
+                    </h4>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-neutral-700 group-hover:text-neutral-500 shrink-0 mt-1 transition-colors" />
+                </div>
+
+                <div className="mt-auto space-y-1.5 w-full">
+                  <div className="flex justify-between text-xs">
+                    <span className={topic.progress > 0 ? "text-neutral-400" : "text-neutral-700"}>
+                      {topic.progress > 0 ? `${topic.progress}%` : "Not started"}
+                    </span>
+                    <span className="text-neutral-700">
+                      {Array.isArray(topic.questions) ? topic.questions.length : 0} Q{(!Array.isArray(topic.questions) || topic.questions.length !== 1) ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="h-1 w-full bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        topic.progress === 100
+                          ? "bg-emerald-500"
+                          : topic.progress > 0
+                          ? "bg-sky-500"
+                          : "bg-transparent"
+                      }`}
+                      style={{ width: `${topic.progress}%` }}
+                    />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+
+          {/* Generate CTA */}
           <button
             onClick={onGenerate}
-            className="xl:col-span-2 group relative rounded-2xl p-px overflow-hidden cursor-pointer mt-3 focus:outline-none"
+            className="xl:col-span-2 group rounded-xl border border-neutral-800 hover:border-neutral-700 bg-[#141414] hover:bg-[#191919] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-200 mt-1 text-left"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-20 group-hover:opacity-60 transition-opacity duration-500" />
-            <div className="relative bg-[#111113] rounded-[calc(1rem-1px)] p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-white/5">
-              <div className="text-left">
-                <div className="flex items-center gap-2 mb-1.5 text-purple-400">
-                  <BrainCircuit className="w-4 h-4" />
-                  <span className="font-bold tracking-widest text-xs uppercase">Confidence Booster</span>
-                </div>
-                <h4 className="text-lg sm:text-xl font-extrabold text-white mb-1">
-                  Generate All Framed Questions
-                </h4>
-                <p className="text-zinc-400 text-sm max-w-xl">
-                  Get all exam-framed questions across every part in Unit {activeUnit} — practice them all in one go.
-                </p>
+            <div>
+              <div className="flex items-center gap-2 mb-1.5 text-neutral-500">
+                <BrainCircuit className="w-3.5 h-3.5" />
+                <span className="font-semibold tracking-widest text-[10px] uppercase">Practice Mode</span>
               </div>
-              <div className="shrink-0 flex items-center gap-2 bg-white text-black font-bold px-5 py-3 rounded-full shadow-lg group-hover:scale-105 transition-transform w-full sm:w-auto justify-center text-sm">
-                Generate Now <Sparkles className="w-4 h-4" />
-              </div>
+              <h4 className="text-sm font-medium text-neutral-200 mb-0.5 group-hover:text-neutral-100 transition-colors">
+                Generate All Framed Questions
+              </h4>
+              <p className="text-neutral-600 text-xs max-w-sm">
+                Practice all exam-framed questions across every part in Unit {activeUnit}.
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-2 bg-neutral-800 group-hover:bg-neutral-700 text-neutral-200 font-medium px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto justify-center">
+              Generate
+              <img src={genai} alt="AI" className="w-3.5 h-3.5 opacity-70" />
             </div>
           </button>
+
         </div>
       )}
     </div>

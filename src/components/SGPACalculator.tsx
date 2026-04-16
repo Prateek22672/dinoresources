@@ -354,6 +354,7 @@ export default function SGPACalculator() {
 
       {/* ── Add Subject container ── */}
       <div className="border border-border/60 rounded-lg bg-card overflow-hidden">
+      
         {/* Desktop headers */}
         <div className="hidden sm:grid grid-cols-[1fr_64px_72px_72px_72px_36px] gap-x-2 px-3 pt-2.5 pb-1">
           {["Subject", "Cr", "S1 30%", "LE 25%", "S2 45%", ""].map((h) => (
