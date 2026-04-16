@@ -1,0 +1,686 @@
+import { useEffect, useRef, useState, useCallback } from "react";
+import { X } from "lucide-react";
+import genai from "@/assets/aiWhite.png";
+import { PremiumUnlockDialog } from "../premiumUnlockDialog";
+import { useSubscription } from "@/hooks/useSubscription";
+
+interface DashboardNavProps {
+  firstName: string;
+  activeTab: string;
+  handleTabClick: (tab: any) => void;
+}
+
+/* ── Inline SVG icons — no Lucide, no cheap feel ── */
+const icons = {
+  subjects: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+  ),
+  sgpa: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12h6m-3-3v6"/>
+    </svg>
+  ),
+  foliofyx: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  ),
+  attendance: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18m-9 4 2 2 4-4"/>
+    </svg>
+  ),
+  announcements: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+      <rect x="3" y="7" width="10" height="8" rx="2"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/>
+    </svg>
+  ),
+  chevronLeft: (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 5l-5 5 5 5"/>
+    </svg>
+  ),
+  chevronRight: (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 5l5 5-5 5"/>
+    </svg>
+  ),
+  close: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <path d="M4 4l8 8M12 4l-8 8"/>
+    </svg>
+  ),
+  externalLink: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9"/><path d="M10 2h4v4m0-4L9 7"/>
+    </svg>
+  ),
+};
+
+const navCards = [
+  {
+    id: "subjects",
+    overline: "LEARNING",
+    title: "Your Subjects",
+    desc: "Access all your organized course materials and resources.",
+    icon: "subjects",
+    color: { spot: "rgba(56,189,248,0.18)", accent: "rgba(56,189,248,1)", glow: "rgba(56,189,248,0.2)" },
+    bgFrom: "rgba(10,20,32,0.95)",
+    bgTo: "rgba(8,14,24,0.98)",
+    buttonText: "Start Studying",
+    requiresSubscription: false,
+  },
+  {
+    id: "ai_subjects",
+    overline: "AI LEARNING",
+    title: "Study with AI",
+    desc: "Smart summaries, concept breakdowns, and personalized help.",
+    icon: "ai",
+    color: { spot: "rgba(34,211,238,0.18)", accent: "rgba(34,211,238,1)", glow: "rgba(34,211,238,0.2)" },
+    bgFrom: "rgba(8,18,22,0.95)",
+    bgTo: "rgba(6,14,18,0.98)",
+    buttonText: "Get AI Help",
+    requiresSubscription: false,
+  },
+  {
+    id: "sgpa",
+    overline: "PERFORMANCE",
+    title: "SGPA Calc",
+    desc: "Estimate your semester grades with ease.",
+    icon: "sgpa",
+    color: { spot: "rgba(192,132,252,0.18)", accent: "rgba(192,132,252,1)", glow: "rgba(192,132,252,0.2)" },
+    bgFrom: "rgba(14,8,22,0.95)",
+    bgTo: "rgba(10,6,18,0.98)",
+    buttonText: "Unlock to Access",
+    unlockedText: "Open Calculator",
+    requiresSubscription: true,
+  },
+  {
+    id: "foliofyx",
+    overline: "PORTFOLIO",
+    title: "FolioFYX",
+    desc: "Build a professional portfolio website. Free, fast, yours.",
+    icon: "foliofyx",
+    color: { spot: "rgba(236,72,153,0.18)", accent: "rgba(236,72,153,1)", glow: "rgba(236,72,153,0.2)" },
+    bgFrom: "rgba(20,6,18,0.95)",
+    bgTo: "rgba(14,4,14,0.98)",
+    externalLink: "https://www.foliofyx.in",
+    buttonText: "Create for Free",
+    requiresSubscription: false,
+  },
+  {
+    id: "attendance",
+    overline: "TRACKING",
+    title: "Attendance",
+    desc: "Calculate attendance and plan your classes smartly.",
+    icon: "attendance",
+    color: { spot: "rgba(16,185,129,0.18)", accent: "rgba(16,185,129,1)", glow: "rgba(16,185,129,0.2)" },
+    bgFrom: "rgba(6,18,14,0.95)",
+    bgTo: "rgba(4,12,10,0.98)",
+    buttonText: "Unlock to Access",
+    unlockedText: "Check Attendance",
+    requiresSubscription: true,
+  },
+  {
+    id: "announcements",
+    overline: "UPDATES",
+    title: "Announcements",
+    desc: "Stay current with campus news and important updates.",
+    icon: "announcements",
+    color: { spot: "rgba(249,115,22,0.18)", accent: "rgba(249,115,22,1)", glow: "rgba(249,115,22,0.2)" },
+    bgFrom: "rgba(20,12,4,0.95)",
+    bgTo: "rgba(14,8,2,0.98)",
+    buttonText: "View Updates",
+    requiresSubscription: false,
+  },
+];
+
+export function DashboardNav({ firstName, activeTab, handleTabClick }: DashboardNavProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const aiCardRef = useRef<HTMLDivElement>(null);
+  const { isSubscribed, refresh: refreshSubscription } = useSubscription();
+
+  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState("premium feature");
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  const handleProtectedCardClick = (card: any) => {
+    if ("externalLink" in card) {
+      window.open(card.externalLink, "_blank");
+      return;
+    }
+    if (card.requiresSubscription && !isSubscribed) {
+      setLockedFeatureName(card.title);
+      setIsPremiumDialogOpen(true);
+      return;
+    }
+    handleTabClick(card.id);
+  };
+
+  useEffect(() => {
+    const hasSeenPermanent = localStorage.getItem("has_seen_ai_onboarding_v5") === "true";
+    const hasSeenSession = sessionStorage.getItem("hide_ai_tutorial_session") === "true";
+    if (hasSeenPermanent || hasSeenSession) return;
+
+    const timer = setTimeout(() => {
+      setShowTutorial(true);
+      if (aiCardRef.current && scrollContainerRef.current) {
+        const rect = aiCardRef.current.getBoundingClientRect();
+        const containerRect = scrollContainerRef.current.getBoundingClientRect();
+        const scrollLeft = aiCardRef.current.offsetLeft - containerRect.width / 2 + rect.width / 2;
+        scrollContainerRef.current.scrollTo({ left: scrollLeft, behavior: "smooth" });
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = showTutorial ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [showTutorial]);
+
+  const dismissTutorial = () => {
+    localStorage.setItem("has_seen_ai_onboarding_v5", "true");
+    setShowTutorial(false);
+  };
+
+  const muteForSession = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    sessionStorage.setItem("hide_ai_tutorial_session", "true");
+    setShowTutorial(false);
+  };
+
+  const checkScroll = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 4);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 4);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [checkScroll]);
+
+  const scroll = (dir: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const isMobile = window.innerWidth < 640;
+      scrollContainerRef.current.scrollBy({
+        left: dir === "left" ? (isMobile ? -260 : -320) : (isMobile ? 260 : 320),
+        behavior: "smooth",
+      });
+    }
+  };
+
+  return (
+    <div className="dn-root space-y-5 relative">
+      <style>{`
+        .dn-root {
+          --card-w-sm: 234px;
+          --card-w-lg: 272px;
+          --card-h-sm: 296px;
+          --card-h-lg: 352px;
+          --card-radius: 26px;
+          --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* ── Heading entrance ── */
+        @keyframes dn-heading-in {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .dn-heading { animation: dn-heading-in 0.55s var(--ease-spring) both; }
+
+        /* ── Card entrance (stagger via --ci) ── */
+        @keyframes dn-card-in {
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .dn-card {
+          animation: dn-card-in 0.55s var(--ease-spring) both;
+          animation-delay: calc(var(--ci, 0) * 60ms + 120ms);
+          will-change: transform, opacity;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+
+        /* ── Card hover / press ── */
+        @media (hover: hover) and (pointer: fine) {
+          .dn-card-inner {
+            transition:
+              transform 0.42s var(--ease-spring),
+              box-shadow 0.32s ease,
+              border-color 0.25s ease;
+          }
+          .dn-card:hover .dn-card-inner {
+            transform: translateY(-5px);
+          }
+          .dn-card-inner:active {
+            transform: scale(0.97);
+            transition: transform 0.12s ease;
+          }
+
+          /* Shine on hover */
+          .dn-shine {
+            opacity: 0;
+            transition: opacity 0.28s ease;
+          }
+          .dn-card:hover .dn-shine { opacity: 1; }
+
+          /* Sweep animation */
+          .dn-sweep {
+            transform: translateX(-120%);
+            transition: transform 0.75s ease;
+          }
+          .dn-card:hover .dn-sweep { transform: translateX(120%); }
+        }
+
+        @media (hover: none), (pointer: coarse) {
+          .dn-card-inner {
+            transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+          }
+          .dn-card-inner:active { transform: scale(0.974); }
+          .dn-shine, .dn-sweep { display: none; }
+        }
+
+        /* ── Icon decoration ── */
+        .dn-deco-icon {
+          transition: transform 0.55s var(--ease-spring), opacity 0.3s ease;
+        }
+        .dn-card:hover .dn-deco-icon {
+          transform: scale(1.1) rotate(-5deg);
+        }
+
+        /* ── CTA button ── */
+        .dn-cta {
+          transition: background-color 0.2s ease, transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+          backdrop-filter: blur(12px);
+        }
+        .dn-cta:hover { transform: scale(1.02); }
+        .dn-cta:active { transform: scale(0.96); }
+
+        /* ── Scroll nav arrows ── */
+        .dn-arrow {
+          transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s var(--ease-spring), opacity 0.2s ease;
+        }
+        .dn-arrow:not(:disabled):hover {
+          background: rgba(255,255,255,0.94);
+          color: #000;
+          transform: scale(1.06);
+        }
+        .dn-arrow:not(:disabled):active { transform: scale(0.93); }
+        .dn-arrow:disabled { opacity: 0.22; pointer-events: none; }
+
+        /* ── Edge fade ── */
+        .dn-fade-l, .dn-fade-r {
+          position: absolute; top: 0; bottom: 0; width: 48px;
+          pointer-events: none; z-index: 15;
+        }
+        .dn-fade-l { left: 0; background: linear-gradient(to right, rgba(9,9,11,0.95), transparent); }
+        .dn-fade-r { right: 0; background: linear-gradient(to left, rgba(9,9,11,0.95), transparent); }
+
+        /* ── Tutorial tooltip ── */
+        @keyframes dn-tooltip-in {
+          from { opacity: 0; transform: translateY(8px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .dn-tooltip {
+          animation: dn-tooltip-in 0.3s var(--ease-spring) both;
+          backdrop-filter: blur(24px);
+        }
+
+        /* ── Active card glow pulse ── */
+        @keyframes dn-active-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+          50%       { box-shadow: 0 0 28px -6px var(--card-accent, rgba(56,189,248,0.4)); }
+        }
+        .dn-card-active-glow {
+          animation: dn-active-pulse 3s ease-in-out infinite;
+        }
+
+        /* ── Lock badge ── */
+        @keyframes dn-lock-in {
+          from { opacity: 0; transform: scale(0.85); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        .dn-lock { animation: dn-lock-in 0.3s var(--ease-spring) both; }
+
+        /* ── Noise texture ── */
+        .dn-noise {
+          position: absolute; inset: 0; border-radius: inherit;
+          opacity: 0.025; pointer-events: none;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-size: 150px;
+        }
+
+        /* ── Border inset gradient ── */
+        .dn-card-border {
+          position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+          background: linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+          -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor; mask-composite: exclude;
+          padding: 1px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .dn-card, .dn-heading, .dn-tooltip { animation: none !important; }
+          .dn-card-inner, .dn-cta, .dn-arrow, .dn-deco-icon { transition: none !important; }
+        }
+      `}</style>
+
+      {/* ── Tutorial overlay ── */}
+      {showTutorial && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/60"
+          style={{ backdropFilter: "blur(8px)", animation: "dn-card-in 0.4s ease both" }}
+          onClick={dismissTutorial}
+        />
+      )}
+
+      {/* ── Section heading + scroll arrows ── */}
+      <div className="dn-heading flex items-start sm:items-center justify-between px-2 gap-4 relative z-[50]">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
+            Hey {firstName},{" "}
+            <span className="text-zinc-500 font-medium block sm:inline">
+              explore your tools.
+            </span>
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 pt-1 sm:pt-0">
+          <button
+            className="dn-arrow w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.8)",
+            }}
+            onClick={() => scroll("left")}
+            disabled={!canScrollLeft}
+          >
+            <span className="w-4 h-4 sm:w-5 sm:h-5">{icons.chevronLeft}</span>
+          </button>
+          <button
+            className="dn-arrow w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.8)",
+            }}
+            onClick={() => scroll("right")}
+            disabled={!canScrollRight}
+          >
+            <span className="w-4 h-4 sm:w-5 sm:h-5">{icons.chevronRight}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Scroll track ── */}
+      <div className={`relative ${showTutorial ? "z-[65]" : "z-10"}`}>
+        {!showTutorial && canScrollLeft && <div className="dn-fade-l" />}
+        {!showTutorial && canScrollRight && <div className="dn-fade-r" />}
+
+        <div
+          ref={scrollContainerRef}
+          onScroll={checkScroll}
+          className="flex overflow-x-auto pt-5 pb-[260px] sm:pb-10 -mx-4 px-4 sm:px-6 gap-4 snap-x snap-mandatory mb-[-260px] sm:mb-0 items-start overflow-y-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+        >
+          {navCards.map((card, i) => {
+            const isLocked = !!card.requiresSubscription && !isSubscribed;
+            const isExternal = "externalLink" in card;
+            const isActive = activeTab === card.id && !isExternal;
+            const isAiCard = card.id === "ai_subjects";
+            const isDimmed = showTutorial && !isAiCard;
+            const isSpotlit = showTutorial && isAiCard;
+
+            return (
+              <div
+                key={card.id}
+                ref={isAiCard ? aiCardRef : null}
+                className={`dn-card snap-center shrink-0 relative ${isDimmed ? "opacity-20 blur-sm scale-95 pointer-events-none" : "z-20"} ${isSpotlit ? "z-[100]" : ""}`}
+                style={{ ["--ci" as any]: i }}
+              >
+                {/* Tutorial tooltip */}
+                {isSpotlit && (
+                  <div
+                    className="dn-tooltip absolute top-[calc(100%+18px)] left-1/2 -translate-x-1/2 sm:left-[calc(100%+20px)] sm:top-0 sm:translate-x-0 w-[280px] sm:w-[310px] z-[110] pointer-events-auto"
+                    style={{
+                      background: "linear-gradient(170deg, rgba(16,16,20,0.98), rgba(11,11,15,0.99))",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "24px",
+                      padding: "20px",
+                      boxShadow: "0 32px 64px rgba(0,0,0,0.8)",
+                    }}
+                  >
+                    {/* Arrow for desktop */}
+                    <div className="hidden sm:block absolute left-[-6px] top-10 w-3.5 h-3.5 rotate-[-45deg]"
+                      style={{ background: "rgba(16,16,20,0.98)", border: "1px solid rgba(255,255,255,0.1)", borderRight: "none", borderBottom: "none", borderRadius: "2px" }}
+                    />
+
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
+                        style={{ background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.2)", color: "rgba(103,232,249,1)" }}>
+                        <img src={genai} alt="" className="w-3.5 h-3.5" />
+                        Introducing
+                      </div>
+                      <button
+                        onClick={dismissTutorial}
+                        className="w-7 h-7 flex items-center justify-center rounded-full transition-colors"
+                        style={{ color: "rgba(113,113,122,1)" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <span className="w-4 h-4">{icons.close}</span>
+                      </button>
+                    </div>
+
+                    <h4 className="text-white font-bold text-lg mb-1.5">AI Study Buddy</h4>
+                    <p className="text-sm leading-relaxed mb-5" style={{ color: "rgba(113,113,122,1)" }}>
+                      Get instant concept breakdowns and personalized summaries for your subjects.
+                    </p>
+
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => { dismissTutorial(); handleTabClick("ai_subjects"); }}
+                        className="w-full h-11 rounded-2xl font-bold text-sm transition-all active:scale-95"
+                        style={{ background: "rgba(34,211,238,1)", color: "#000" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(103,232,249,1)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "rgba(34,211,238,1)")}
+                      >
+                        Try it now
+                      </button>
+                      <button
+                        onClick={muteForSession}
+                        className="w-full text-center text-[11px] py-1 transition-colors"
+                        style={{ color: "rgba(82,82,91,1)" }}
+                        onMouseEnter={e => (e.currentTarget.style.color = "rgba(161,161,170,1)")}
+                        onMouseLeave={e => (e.currentTarget.style.color = "rgba(82,82,91,1)")}
+                      >
+                        Don't show again this session
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Card ── */}
+                <div
+                  onClick={() => {
+                    if (isDimmed) return;
+                    if (isSpotlit) { dismissTutorial(); handleTabClick(card.id); return; }
+                    if (!showTutorial) handleProtectedCardClick(card);
+                  }}
+                  className={`dn-card-inner relative overflow-hidden cursor-pointer flex flex-col justify-between
+                    ${isActive ? "dn-card-active-glow" : ""}
+                    ${isSpotlit ? "ring-2 ring-white/25" : ""}
+                  `}
+                  style={{
+                    width: "var(--card-w-sm)",
+                    height: "var(--card-h-sm)",
+                    borderRadius: "var(--card-radius)",
+                    padding: "clamp(18px, 4vw, 24px)",
+                    background: isActive
+                      ? "linear-gradient(160deg, rgba(255,255,255,0.97), rgba(240,240,245,0.97))"
+                      : `linear-gradient(160deg, ${card.bgFrom}, ${card.bgTo})`,
+                    border: isActive
+                      ? "1px solid rgba(255,255,255,0.9)"
+                      : "1px solid rgba(255,255,255,0.07)",
+                    boxShadow: isActive
+                      ? `0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.15)`
+                      : `0 8px 32px rgba(0,0,0,0.25)`,
+                    ["--card-accent" as any]: card.color.accent,
+                  }}
+                >
+                  {/* SM: wider on sm+ */}
+                  <style>{`
+                    @media (min-width: 640px) {
+                      [data-card-id="${card.id}"] { width: var(--card-w-lg) !important; height: var(--card-h-lg) !important; }
+                    }
+                  `}</style>
+                  <div data-card-id={card.id} style={{ display: "contents" }} />
+
+                  {/* Border gradient inset */}
+                  <div className="dn-card-border" />
+                  {/* Noise texture */}
+                  <div className="dn-noise" />
+
+                  {/* Ambient color spot */}
+                  <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full pointer-events-none"
+                    style={{ background: card.color.spot, filter: "blur(36px)", opacity: isActive ? 0 : 1, transition: "opacity 0.3s ease" }}
+                  />
+
+                  {/* Shine */}
+                  <div className="dn-shine absolute inset-0 pointer-events-none rounded-[inherit]"
+                    style={{
+                      background: "radial-gradient(circle at var(--mx,50%) var(--my,30%), rgba(255,255,255,0.07), transparent 60%)",
+                    }}
+                  />
+                  {/* Sweep */}
+                  <div className="dn-sweep absolute inset-0 pointer-events-none rounded-[inherit]"
+                    style={{ background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.04) 48%, transparent 65%)" }}
+                  />
+
+                  {/* Top edge highlight */}
+                  <div className="absolute inset-x-0 top-0 h-px pointer-events-none rounded-t-[inherit]"
+                    style={{
+                      background: isActive
+                        ? "rgba(255,255,255,0.6)"
+                        : `linear-gradient(to right, transparent, ${card.color.accent}55, transparent)`,
+                    }}
+                  />
+
+                  {/* Lock badge */}
+                  {isLocked && (
+                    <div className="dn-lock absolute top-4 right-4 z-20 flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase"
+                      style={{ background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(212,212,216,1)", backdropFilter: "blur(8px)" }}>
+                      <span className="w-2.5 h-2.5">{icons.lock}</span>
+                      Locked
+                    </div>
+                  )}
+
+                  {/* External badge */}
+                  {isExternal && (
+                    <div className="absolute top-4 right-4 z-20 w-7 h-7 flex items-center justify-center rounded-full"
+                      style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(161,161,170,1)" }}>
+                      <span className="w-3.5 h-3.5">{icons.externalLink}</span>
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div>
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-2"
+                        style={{ color: isActive ? "rgba(82,82,91,1)" : `${card.color.accent}99` }}>
+                        {card.overline}
+                      </p>
+                      <h3 className="text-2xl font-semibold tracking-tight leading-tight mb-3"
+                        style={{ color: isActive ? "rgba(9,9,11,1)" : "rgba(244,244,245,1)", letterSpacing: "-0.02em" }}>
+                        {card.title}
+                      </h3>
+                      <p className="text-xs leading-relaxed"
+                        style={{ color: isActive ? "rgba(82,82,91,1)" : "rgba(113,113,122,1)" }}>
+                        {card.desc}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto pt-4">
+                      <div
+                        className="dn-cta w-full h-10 rounded-full flex items-center justify-center text-xs font-semibold"
+                        style={{
+                          background: isLocked
+                            ? "rgba(255,255,255,0.07)"
+                            : isActive
+                              ? "rgba(9,9,11,0.9)"
+                              : `${card.color.accent}18`,
+                          border: isLocked
+                            ? "1px solid rgba(255,255,255,0.1)"
+                            : isActive
+                              ? "none"
+                              : `1px solid ${card.color.accent}35`,
+                          color: isLocked
+                            ? "rgba(161,161,170,1)"
+                            : isActive
+                              ? "rgba(255,255,255,1)"
+                              : card.color.accent,
+                        }}
+                      >
+                        {isLocked ? "Unlock for ₹11" : ((card as any).unlockedText || card.buttonText)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Decorative background icon */}
+                  <div
+                    className="dn-deco-icon absolute -bottom-5 -right-5 w-36 h-36 pointer-events-none"
+                    style={{
+                      color: isActive ? "rgba(9,9,11,0.06)" : `${card.color.accent}14`,
+                    }}
+                  >
+                    {card.icon === "ai"
+                      ? <img src={genai} alt="" className="w-full h-full opacity-100" style={{ filter: `drop-shadow(0 0 20px ${card.color.accent}40)`, mixBlendMode: isActive ? "multiply" : "normal" }} />
+                      : icons[card.icon as keyof typeof icons] && (
+                          <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Re-render each icon's paths */}
+                            {card.icon === "subjects" && <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>}
+                            {card.icon === "sgpa" && <><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12h6m-3-3v6"/></>}
+                            {card.icon === "foliofyx" && <><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>}
+                            {card.icon === "attendance" && <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18m-9 4 2 2 4-4"/></>}
+                            {card.icon === "announcements" && <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>}
+                          </svg>
+                        )
+                    }
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <PremiumUnlockDialog
+        open={isPremiumDialogOpen}
+        onOpenChange={setIsPremiumDialogOpen}
+        title="Unlock Premium Access"
+        description="Pay ₹11 once to unlock the full website, including premium calculators, advanced units, and other locked features."
+        featureName={lockedFeatureName}
+        priceLabel="₹11"
+        onPaymentSuccess={async () => {
+          await refreshSubscription();
+          setIsPremiumDialogOpen(false);
+        }}
+      />
+    </div>
+  );
+}

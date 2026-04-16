@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, ChevronDown, ChevronUp, AlertCircle, X, Lock } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
-import { PremiumUnlockDialog } from "./premiumUnlockDialog";
+import { PremiumUnlockDialog } from "./PremiumUnlockDialog";
 /* ---------- Grade System ---------- */
 
 const GRADES = ["O", "A+", "A", "B+", "B", "C", "P"] as const;

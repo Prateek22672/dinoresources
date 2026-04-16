@@ -1,102 +1,102 @@
-import { User, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { User, LogOut, ShieldCheck, ArrowUpRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import dinoLogo from "@/assets/dinosaurWhite.png";
-import genai from "@/assets/aiWhite.png";
-import aiText from "@/assets/genaiWhite.png";
-
-interface DashboardHeaderProps {
-    profile: { department: string; semester: number } | null;
-    activeTab: string;
-    handleTabClick: (tab: any) => void;
-    handleSignOut: () => void;
-}
 
 export function DashboardHeader({
-    profile,
-    activeTab,
-    handleTabClick,
-    handleSignOut,
-}: DashboardHeaderProps) {
-    const navigate = useNavigate();
+  profile,
+  activeTab,
+  handleTabClick,
+  handleSignOut,
+  onUpgradeClick,
+}) {
+  const navigate = useNavigate();
+  const isPro = profile?.is_pro;
 
-    return (
-        <header className="border-b border-white/5 bg-[#09090b]/80 backdrop-blur-xl sticky top-0 z-20">
-            {/* Reduced horizontal padding on mobile (px-3) vs desktop (px-4) */}
-            <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
-                {/* Reduced gap on mobile to prevent overflow */}
-                <div className="flex items-center justify-between gap-2 sm:gap-4">
-                    
-                    {/* Logo Area */}
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[#0b0b0d]/80 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        
+        {/* LEFT: Branding & Student Info */}
+        <div className="flex items-center gap-4">
+          <div
+            onClick={() => navigate("/")}
+            className="group relative w-10 h-10 flex items-center justify-center bg-zinc-900 border border-white/10 rounded-xl cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg"
+          >
+            <img src={dinoLogo} className="w-6 h-6 object-contain" alt="Logo" />
+            <div className="absolute inset-0 rounded-xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
 
-                        {/* Logo Container - Scaled down for mobile */}
-                        <div className="relative">
-                            <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/10 blur-xl opacity-20"></div>
-                            <div className="relative w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center rounded-3xl sm:rounded-2xl bg-white/5 border border-white/20 backdrop-blur-md">
-                                <img src={dinoLogo} className="w-6 h-6 sm:w-10 sm:h-10 opacity-90" />
-                            </div>
-                        </div>
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold tracking-tight text-zinc-100">
+                Team Dino
+              </h1>
 
-                        {/* Text Section */}
-                        <div className="flex flex-col leading-tight">
-                            <h1 className="text-base sm:text-xl font-semibold text-white tracking-tight">
-                                Team Dino
-                            </h1>
-
-                            {profile && (
-                                <p className="text-[9px] sm:text-xs text-zinc-400 uppercase tracking-wider mt-0.5">
-                                    <span className="hidden sm:inline">{profile.department} • </span>
-                                    {/* On very small screens, we just show "SEM X" to save space if needed, or keep it short */}
-                                    <span className="sm:hidden">{profile.department.substring(0, 3)} • </span> 
-                                    SEM {profile.semester}
-                                </p>
-                            )}
-                        </div>
-
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-1.5 sm:gap-3 shrink-0 items-center">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleTabClick("ai_subjects")}
-                            // Adjusted padding for mobile (px-2.5) vs desktop (px-4)
-                            className={`bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/20 hover:text-indigo-100 rounded-full px-2.5 sm:px-4 transition-all duration-300 ${
-                                activeTab === "ai_subjects" ? "border-indigo-500/60 shadow-[0_0_15px_-3px_rgba(99,102,241,0.4)]" : ""
-                            }`}
-                        >
-                            {/* MOBILE ICON: Shows only on mobile */}
-                            <img src={genai} alt="AI" className="w-4 h-4 sm:hidden" />
-                            
-                            {/* DESKTOP CONTENT: Shows only on larger screens */}
-                            <img src={aiText} alt="GenAI" className="hidden sm:inline w-auto h-5 mr-1.5" />
-                            <span className="hidden sm:inline font-medium tracking-wide">Study Now</span>
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-zinc-900/50 border-white/10 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-full px-2.5 sm:px-4 transition-colors"
-                            onClick={() => navigate("/setup?edit=true")}
-                        >
-                            <User className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline font-medium">Profile</span>
-                        </Button>
-
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleSignOut}
-                            className="text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded-full px-2.5 sm:px-4 transition-colors"
-                        >
-                            <LogOut className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline font-medium">Log Out</span>
-                        </Button>
-                    </div>
+              {isPro ? (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-md">
+                  <ShieldCheck className="w-3 h-3 text-amber-500" />
+                  <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pro</span>
                 </div>
+              ) : (
+                <button
+                  onClick={() => onUpgradeClick?.()}
+                  className="group flex items-center gap-1 px-2 py-0.5 bg-zinc-800/40 border border-zinc-700/50 rounded-md hover:bg-zinc-100 transition-all duration-300"
+                >
+                  <span className="text-[10px] font-medium text-zinc-400 group-hover:text-black transition-colors">
+                    Upgrade
+                  </span>
+                  <ArrowUpRight className="w-3 h-3 text-zinc-500 group-hover:text-black transition-colors" />
+                </button>
+              )}
             </div>
-        </header>
-    );
+
+            {profile && (
+              <p className="text-[11px] font-medium text-zinc-500 leading-none mt-1">
+                {profile.department} <span className="mx-1 opacity-20">|</span> Sem {profile.semester}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: Actions */}
+        <div className="flex items-center gap-3">
+          
+          {/* AI STUDY BUTTON - White Background Style */}
+          <button
+            onClick={() => handleTabClick("ai_subjects")}
+            className={`hidden md:flex items-center gap-2 px-5 h-9 rounded-full text-[12px] font-bold transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]
+              ${
+                activeTab === "ai_subjects"
+                  ? "bg-white text-black ring-4 ring-white/10"
+                  : "bg-white text-black hover:bg-zinc-200 border border-white"
+              }`}
+          >
+            Try AI Study
+          </button>
+
+          <div className="h-6 w-[1px] bg-white/10 mx-1 hidden sm:block" />
+
+          <div className="flex items-center gap-1.5">
+            {/* Profile Edit Icon */}
+            <button
+              onClick={() => navigate("/setup?edit=true")}
+              className="p-2.5 rounded-lg bg-zinc-900/50 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-white/10 transition-all"
+              title="Edit Profile"
+            >
+              <User className="w-4.5 h-4.5" />
+            </button>
+
+            {/* Sign Out Icon */}
+            <button
+              onClick={handleSignOut}
+              className="p-2.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
+              title="Sign Out"
+            >
+              <LogOut className="w-4.5 h-4.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }

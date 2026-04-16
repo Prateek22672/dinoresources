@@ -20,7 +20,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
-import { PremiumUnlockDialog } from "./premiumUnlockDialog";
+import { PremiumUnlockDialog } from "./PremiumUnlockDialog";
 
 /* ------------------ Types ------------------ */
 

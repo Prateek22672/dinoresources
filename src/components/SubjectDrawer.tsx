@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import ResourceCard from "./ResourceCard";
 import { UserRole } from "@/hooks/useUserRole";
 import { useSubscription } from "@/hooks/useSubscription";
-import { PremiumUnlockDialog } from "./premiumUnlockDialog";
+import { PremiumUnlockDialog } from "./PremiumUnlockDialog";
 
 interface Resource {
   id: string;

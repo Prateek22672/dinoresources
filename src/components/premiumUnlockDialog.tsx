@@ -1,9 +1,21 @@
-import { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Sparkles, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Lock,
+  RefreshCw,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+} from "lucide-react";
 import { usePremiumAccess } from "./usePremiumAccess";
-
 
 interface PremiumUnlockDialogProps {
   open: boolean;
@@ -19,11 +31,13 @@ export function PremiumUnlockDialog({
   open,
   onOpenChange,
   title = "Unlock Premium Access",
-  description = "Pay once to unlock the full website — AI tools, premium units, calculators, and more.",
-  featureName = "this feature",
+  description = "Access all study tools and AI-powered features.",
+  featureName,
   priceLabel = "₹11",
   onPaymentSuccess,
 }: PremiumUnlockDialogProps) {
+  const [showFeatures, setShowFeatures] = useState(false);
+
   const {
     paymentState,
     errorMsg,
@@ -34,9 +48,9 @@ export function PremiumUnlockDialog({
   } = usePremiumAccess({
     amountInPaise: 1100,
     priceLabel,
-    productName: "Team Dino Premium",
-    description: "Unlock all premium features across the website",
-    themeColor: "#6366f1",
+    productName: "Premium Access",
+    description: "Unlock all study tools and AI features",
+    themeColor: "#ffffff",
     onPaymentSuccess: async () => {
       await onPaymentSuccess?.();
       onOpenChange(false);
@@ -46,65 +60,123 @@ export function PremiumUnlockDialog({
   useEffect(() => {
     if (!open) {
       resetPaymentState();
+      setShowFeatures(false);
     }
   }, [open, resetPaymentState]);
 
-  const handleUnlock = async () => {
-    await startPremiumUnlock();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#0e0e11] border border-white/10 text-zinc-100 rounded-3xl">
-        <DialogHeader>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-            <Lock className="w-5 h-5 text-indigo-400" />
-          </div>
+      <DialogContent className="w-[94%] sm:max-w-[400px] bg-[#0b0b0d] border border-zinc-800 text-zinc-100 rounded-xl p-0 shadow-lg max-h-[90vh] overflow-hidden">
 
-          <DialogTitle className="text-xl font-bold text-white">
-            {title}
-          </DialogTitle>
+        <div className="overflow-y-auto p-5">
 
-          <DialogDescription className="text-zinc-400 leading-relaxed">
-            {description}
-          </DialogDescription>
-        </DialogHeader>
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-zinc-300" />
+              </div>
 
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-            <p className="text-sm text-zinc-300">
-              <span className="font-semibold text-white">{featureName}</span> is part of premium access.
-            </p>
-            <p className="text-xs text-zinc-500 mt-1">
-              One-time payment · unlock everything on the website
-            </p>
-          </div>
+              <span className="text-[11px] text-zinc-400">
+                Premium
+              </span>
+            </div>
 
-          {errorMsg && (
-            <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-2xl p-3">
-              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-red-300 leading-relaxed">{errorMsg}</p>
+            <DialogTitle className="text-lg font-semibold text-white">
+              {title}
+            </DialogTitle>
+
+            <DialogDescription className="text-zinc-500 text-xs mt-1 leading-relaxed">
+              {description}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Feature Context */}
+          {featureName && (
+            <div className="mt-3 border border-zinc-800 bg-zinc-900/30 rounded-md px-3 py-2">
+              <p className="text-[10px] text-zinc-500">
+                Locked feature
+              </p>
+              <p className="text-[12px] text-white font-medium">
+                {featureName}
+              </p>
             </div>
           )}
 
-          <Button
-            onClick={handleUnlock}
-            disabled={isButtonDisabled}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-6 rounded-full text-sm transition-all shadow-lg hover:shadow-indigo-500/30"
+          {/* Dropdown */}
+          <button
+            onClick={() => setShowFeatures(!showFeatures)}
+            className="mt-5 w-full flex items-center justify-between px-3 py-2.5 bg-zinc-900/30 border border-zinc-800 rounded-md hover:bg-zinc-900/50 transition"
           >
-            {paymentState === "verifying" || paymentState === "creating_order" ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
+            <span className="text-[10px] text-zinc-400 uppercase tracking-wide">
+              What’s included
+            </span>
+            {showFeatures ? (
+              <ChevronUp className="w-4 h-4 text-zinc-500" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <ChevronDown className="w-4 h-4 text-zinc-500" />
             )}
-            {paymentButtonLabel[paymentState]}
-          </Button>
+          </button>
 
-          <p className="text-center text-xs text-zinc-600">
-            Secure payment via Razorpay · No recurring subscription
+          {/* Dropdown Content */}
+          {showFeatures && (
+            <div className="mt-3 max-h-[220px] overflow-y-auto pr-1 space-y-2">
+
+              <FeatureCard title="Your Subjects" desc="Access all materials." />
+              <FeatureCard title="Study with AI" desc="AI help and summaries." />
+              <FeatureCard title="SGPA Calculator" desc="Estimate grades." />
+              <FeatureCard title="Attendance Tracking" desc="Track classes." />
+              <FeatureCard title="All Study Resources" desc="Unlock everything." />
+
+            </div>
+          )}
+
+          {/* Error */}
+          {errorMsg && (
+            <div className="mt-4 flex items-start gap-2 border border-red-500/20 bg-red-500/5 rounded-md p-2.5">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 mt-0.5" />
+              <p className="text-[11px] text-red-400">{errorMsg}</p>
+            </div>
+          )}
+
+          {/* CTA */}
+          <div className="mt-5">
+            <Button
+              onClick={startPremiumUnlock}
+              disabled={isButtonDisabled}
+              className="w-full h-10 flex items-center justify-center gap-2 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-sm rounded-md"
+            >
+              {paymentState === "verifying" || paymentState === "creating_order" ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ArrowRight className="w-4 h-4" />
+              )}
+
+              Unlock all for {priceLabel}
+            </Button>
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-[10px] text-zinc-600 mt-3">
+            Secure payment via Razorpay
           </p>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* Feature Card */
+function FeatureCard({
+  title,
+  desc,
+}: {
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="border border-zinc-800 bg-zinc-900/20 rounded-md p-2.5">
+      <h4 className="text-[12px] text-zinc-200">{title}</h4>
+      <p className="text-[10px] text-zinc-500 mt-0.5">{desc}</p>
+    </div>
   );
 }

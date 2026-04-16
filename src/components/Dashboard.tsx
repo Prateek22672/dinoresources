@@ -21,26 +21,21 @@ import SGPACalculator from "./SGPACalculator";
 import Footer from "./Footer";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
+// 🔥 PREMIUM IMPORT
+import { PremiumUnlockDialog } from "./PremiumUnlockDialog";
+
 type TabType = "subjects" | "ai_subjects" | "attendance" | "sgpa" | "announcements" | "support";
 
-// 🔥 SMART SEARCH LOGIC 🔥
+// 🔥 SMART SEARCH LOGIC
 const smartSearch = (subjectName: string, query: string) => {
   const name = subjectName.toLowerCase();
   const q = query.toLowerCase().trim();
-
   if (!q) return true;
-
-  // 1. Direct match (e.g. typing "artific" matches "Artificial Intelligence")
   if (name.includes(q)) return true;
-
-  // 2. Remove spaces match (e.g. typing "machinelearning" matches "Machine Learning")
   if (name.replace(/\s+/g, '').includes(q.replace(/\s+/g, ''))) return true;
-
-  // 3. Acronym match (e.g. "Artificial Intelligence" becomes "ai", so searching "ai" works)
   const acronym = name.split(/[\s_.-]+/).map(w => w[0]).join('');
   if (acronym.includes(q)) return true;
 
-  // 4. Common Alias matching (Catching specific tech slang)
   const aliases: Record<string, string[]> = {
     "ai": ["artificial intelligence"],
     "ml": ["machine learning"],
@@ -55,13 +50,13 @@ const smartSearch = (subjectName: string, query: string) => {
   };
 
   if (aliases[q] && aliases[q].some(alias => name.includes(alias))) return true;
-
   return false;
 };
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { isContributor, userId, role, isLoading: roleLoading } = useUserRole();
+  
   const [profile, setProfile] = useState<{ department: string; semester: number; full_name?: string } | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<any | null>(null);
@@ -71,6 +66,10 @@ export default function Dashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("subjects");
+
+  // 🔥 PREMIUM STATE
+  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState("Premium Feature");
 
   const contentAreaRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +86,20 @@ export default function Dashboard() {
 
   const handleTabClick = (tabId: TabType) => {
     setActiveTab(tabId);
-    setTimeout(() => contentAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+
+    // 🔥 AUTO SET LOCKED FEATURE NAME BASED ON TAB
+    if (tabId === "sgpa") setLockedFeatureName("SGPA Calculator");
+    if (tabId === "attendance") setLockedFeatureName("Attendance Tracking");
+    if (tabId === "ai_subjects") setLockedFeatureName("AI Study Tools");
+
+    setTimeout(() => {
+      contentAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const handleUpgradeClick = () => {
+    setLockedFeatureName("Premium Access");
+    setIsPremiumDialogOpen(true);
   };
 
   const checkLatestAnnouncement = async () => {
@@ -119,7 +131,7 @@ export default function Dashboard() {
       if (profileError) return navigate("/auth");
       if (!profileData?.department || !profileData?.semester) return navigate("/setup");
 
-      setProfile({ department: profileData.department, semester: profileData.semester, full_name: " " });
+      setProfile({ department: profileData.department, semester: profileData.semester,  });
       setIsLoading(false);
     } catch (err) {
       navigate("/auth");
@@ -150,66 +162,88 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 Using our new Smart Search to filter subjects 🔥
   const filteredSubjects = subjects.filter((s) => {
-        const matchesSearch = smartSearch(s.name, searchQuery);
-        const hasAiContent = !!getAiSubject(s.name);
-        return activeTab === "ai_subjects"
-          ? matchesSearch && hasAiContent
-          : matchesSearch;
-      });
+    const matchesSearch = smartSearch(s.name, searchQuery);
+    const hasAiContent = !!getAiSubject(s.name);
+    return activeTab === "ai_subjects" ? matchesSearch && hasAiContent : matchesSearch;
+  });
+
   const firstName = profile?.full_name?.trim() ? profile.full_name.split(" ")[0] : "Buddy";
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-white/20 flex flex-col">
-
       <DashboardHeader
         profile={profile}
         activeTab={activeTab}
         handleTabClick={handleTabClick}
         handleSignOut={handleSignOut}
+        onUpgradeClick={handleUpgradeClick}
       />
 
       <main className="container mx-auto px-4 py-8 space-y-12 flex-1">
-
         <DashboardNav firstName={firstName} activeTab={activeTab} handleTabClick={handleTabClick} />
 
         <div ref={contentAreaRef} className="bg-[#121214] border border-white/5 rounded-[40px] p-6 sm:p-10 min-h-[500px] scroll-mt-24 transition-all duration-500 animate-in slide-in-from-bottom-12 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-          {/* TAB RENDERER */}
+          {/* SUBJECTS & AI SUBJECTS */}
           {(activeTab === "subjects" || activeTab === "ai_subjects") && (
             <SubjectGrid 
               activeTab={activeTab} 
               isContributor={isContributor} 
               searchQuery={searchQuery} 
-              
               setSearchQuery={setSearchQuery} 
               filteredSubjects={filteredSubjects} 
               setIsAddSubjectDialogOpen={setIsAddSubjectDialogOpen} 
               setIsUploadDialogOpen={setIsUploadDialogOpen} 
-              handleSubjectClick={(sub) => { setSelectedSubject(sub); setIsDrawerOpen(true); }} 
+              handleSubjectClick={(sub) => { 
+                setSelectedSubject(sub); 
+                setIsDrawerOpen(true); 
+              }} 
             />
           )}
 
+          {/* ATTENDANCE SECTION (LOCKED) */}
           {activeTab === "attendance" && (
-            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8"><h2 className="text-2xl font-bold text-white">Attendance Calculator</h2><p className="text-zinc-400 mt-2">Only for 2nd/3rd Year Students.</p></div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5"><AttendanceCalculator /></div>
+            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto text-center py-12">
+              <h2 className="text-2xl font-bold text-white mb-4">Attendance Tracking</h2>
+              <p className="text-zinc-400 mb-8">Keep track of your classes and bunk responsibly.</p>
+              <button
+                onClick={() => {
+                  setLockedFeatureName("Attendance Tracking");
+                  setIsPremiumDialogOpen(true);
+                }}
+                className="px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-colors shadow-xl shadow-white/5"
+              >
+                Unlock Attendance Calculator
+              </button>
             </div>
           )}
 
+          {/* SGPA SECTION (LOCKED) */}
           {activeTab === "sgpa" && (
-            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8"><h2 className="text-2xl font-bold text-white">SGPA Calculator</h2><p className="text-zinc-400 mt-2">Estimate semester grades.</p></div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5"><SGPACalculator /></div>
+            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto text-center py-12">
+              <h2 className="text-2xl font-bold text-white mb-4">SGPA Calculator</h2>
+              <p className="text-zinc-400 mb-8">Estimate your semester results based on credits.</p>
+              <button
+                onClick={() => {
+                  setLockedFeatureName("SGPA Calculator");
+                  setIsPremiumDialogOpen(true);
+                }}
+                className="px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-colors shadow-xl shadow-white/5"
+              >
+                Unlock SGPA Calculator
+              </button>
             </div>
           )}
 
+          {/* ANNOUNCEMENTS */}
           {activeTab === "announcements" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
               <div className="mb-8"><h2 className="text-2xl font-bold text-white">Announcements</h2><p className="text-zinc-400 mt-2">Latest updates.</p></div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5"><AnnouncementsSection isAdmin={role === "admin"} /></div>
+              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
+                <AnnouncementsSection isAdmin={role === "admin"} />
+              </div>
             </div>
           )}
         </div>
@@ -217,11 +251,62 @@ export default function Dashboard() {
 
       <Footer />
 
+      {/* 🔥 PREMIUM POPUP */}
+      <PremiumUnlockDialog
+        open={isPremiumDialogOpen}
+        onOpenChange={setIsPremiumDialogOpen}
+        title="Unlock Premium Access"
+        description="Pay ₹11 once to unlock AI tools, calculators, and all study features."
+        featureName={lockedFeatureName}
+        priceLabel="₹11"
+        onPaymentSuccess={async () => {
+          setIsPremiumDialogOpen(false);
+          toast.success("Welcome to Premium!");
+          // Here you would typically refresh user role or session
+        }}
+      />
+
       {/* DRAWERS & DIALOGS */}
-      {selectedSubject && activeTab === "subjects" && <SubjectDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} subjectId={selectedSubject.id} subjectName={selectedSubject.name} userRole={role} userId={userId} />}
-      {selectedSubject && activeTab === "ai_subjects" && <SubjectDrawerAi open={isDrawerOpen} onOpenChange={setIsDrawerOpen} subjectId={selectedSubject.id} subjectName={selectedSubject.name} userRole={role} userId={userId} />}
-      {isContributor && subjects.length > 0 && <UploadResourceDialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen} subjects={subjects} onResourceUploaded={() => setIsUploadDialogOpen(false)} />}
-      {isContributor && profile && <AddSubjectDialog open={isAddSubjectDialogOpen} onOpenChange={setIsAddSubjectDialogOpen} currentDepartment={profile.department} currentSemester={profile.semester} onSubjectAdded={loadSubjects} />}
+      {selectedSubject && activeTab === "subjects" && (
+        <SubjectDrawer 
+          open={isDrawerOpen} 
+          onOpenChange={setIsDrawerOpen} 
+          subjectId={selectedSubject.id} 
+          subjectName={selectedSubject.name} 
+          userRole={role} 
+          userId={userId} 
+        />
+      )}
+      
+      {selectedSubject && activeTab === "ai_subjects" && (
+        <SubjectDrawerAi 
+          open={isDrawerOpen} 
+          onOpenChange={setIsDrawerOpen} 
+          subjectId={selectedSubject.id} 
+          subjectName={selectedSubject.name} 
+          userRole={role} 
+          userId={userId} 
+        />
+      )}
+
+      {isContributor && subjects.length > 0 && (
+        <UploadResourceDialog 
+          open={isUploadDialogOpen} 
+          onOpenChange={setIsUploadDialogOpen} 
+          subjects={subjects} 
+          onResourceUploaded={() => setIsUploadDialogOpen(false)} 
+        />
+      )}
+
+      {isContributor && profile && (
+        <AddSubjectDialog 
+          open={isAddSubjectDialogOpen} 
+          onOpenChange={setIsAddSubjectDialogOpen} 
+          currentDepartment={profile.department} 
+          currentSemester={profile.semester} 
+          onSubjectAdded={loadSubjects} 
+        />
+      )}
     </div>
   );
 }
