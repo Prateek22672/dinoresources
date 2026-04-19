@@ -1,6 +1,6 @@
 
 import { CheckCircle2, PlayCircle, Circle, BrainCircuit, ArrowRight } from "lucide-react";
-import genai from "@/assets/ai.png";
+import genai from "@/assets/aiWhite.png";
 
 export function TopicGrid({ topics, activeUnit, subjectName, onSelectTopic, onGenerate }) {
 

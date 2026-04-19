@@ -5,12 +5,10 @@ import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { aiSyllabus, getAiSubject } from "@/data/aiSyllabus";
 
-// Refactored Components
 import { DashboardHeader } from "./dashboard/DashboardHeader";
 import { DashboardNav } from "./dashboard/DashboardNav";
 import { SubjectGrid } from "./dashboard/SubjectGrid";
 
-// Existing Sections/Modals
 import UploadResourceDialog from "./UploadResourceDialog";
 import AddSubjectDialog from "./AddSubjectDialog";
 import SubjectDrawer from "./SubjectDrawer";
@@ -23,39 +21,21 @@ import dinoLogo from "@/assets/dinosaurWhite.png";
 
 type TabType = "subjects" | "ai_subjects" | "attendance" | "sgpa" | "announcements" | "support";
 
-// 🔥 SMART SEARCH LOGIC 🔥
 const smartSearch = (subjectName: string, query: string) => {
   const name = subjectName.toLowerCase();
   const q = query.toLowerCase().trim();
-
   if (!q) return true;
-
-  // 1. Direct match (e.g. typing "artific" matches "Artificial Intelligence")
   if (name.includes(q)) return true;
-
-  // 2. Remove spaces match (e.g. typing "machinelearning" matches "Machine Learning")
   if (name.replace(/\s+/g, '').includes(q.replace(/\s+/g, ''))) return true;
-
-  // 3. Acronym match (e.g. "Artificial Intelligence" becomes "ai", so searching "ai" works)
   const acronym = name.split(/[\s_.-]+/).map(w => w[0]).join('');
   if (acronym.includes(q)) return true;
-
-  // 4. Common Alias matching (Catching specific tech slang)
   const aliases: Record<string, string[]> = {
-    "ai": ["artificial intelligence"],
-    "ml": ["machine learning"],
-    "dl": ["deep learning"],
-    "os": ["operating system", "operating systems"],
-    "cn": ["computer network", "computer networks"],
-    "dbms": ["database", "database management"],
-    "cd": ["compiler design"],
-    "se": ["software engineering"],
-    "oops": ["object oriented"],
-    "dsa": ["data structures"],
+    "ai": ["artificial intelligence"], "ml": ["machine learning"], "dl": ["deep learning"],
+    "os": ["operating system", "operating systems"], "cn": ["computer network", "computer networks"],
+    "dbms": ["database", "database management"], "cd": ["compiler design"],
+    "se": ["software engineering"], "oops": ["object oriented"], "dsa": ["data structures"],
   };
-
   if (aliases[q] && aliases[q].some(alias => name.includes(alias))) return true;
-
   return false;
 };
 
@@ -72,18 +52,17 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("subjects");
 
+  const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
+  const [aiDrawerTarget, setAiDrawerTarget] = useState<{
+    subjectId: string;
+    subjectName: string;
+    initialUnit: number;
+  } | null>(null);
+
   const contentAreaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (profile) {
-      loadSubjects();
-      checkLatestAnnouncement();
-    }
-  }, [profile]);
+  useEffect(() => { checkAuth(); }, []);
+  useEffect(() => { if (profile) { loadSubjects(); checkLatestAnnouncement(); } }, [profile]);
 
   const handleTabClick = (tabId: TabType) => {
     setActiveTab(tabId);
@@ -94,36 +73,32 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase.from("announcements").select("id, title").order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (error || !data) return;
-
       const lastSeenId = localStorage.getItem("last_seen_announcement");
       if (lastSeenId !== data.id) {
         toast("New Update 📢", {
-          description: data.title,
-          position: "bottom-right",
-          duration: 10000,
+          description: data.title, position: "bottom-right", duration: 10000,
           action: { label: "Check out now", onClick: () => handleTabClick("announcements") },
         });
         localStorage.setItem("last_seen_announcement", data.id);
       }
-    } catch (err) {
-      console.error("Error fetching announcement:", err);
-    }
+    } catch (err) { console.error("Error fetching announcement:", err); }
   };
 
   const checkAuth = async () => {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) return navigate("/auth");
-
       const { data: profileData, error: profileError } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
       if (profileError) return navigate("/auth");
       if (!profileData?.department || !profileData?.semester) return navigate("/setup");
-
-      setProfile({ department: profileData.department, semester: profileData.semester, full_name: " " });
+      
+      // Removed the full_name property that was causing the error
+      setProfile({ 
+        department: profileData.department, 
+        semester: profileData.semester 
+      });
       setIsLoading(false);
-    } catch (err) {
-      navigate("/auth");
-    }
+    } catch (err) { navigate("/auth"); }
   };
 
   const loadSubjects = async () => {
@@ -132,9 +107,11 @@ export default function Dashboard() {
     setSubjects(data || []);
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const handleSignOut = async () => { await supabase.auth.signOut(); navigate("/auth"); };
+
+  const handleOpenAiDrawer = (subjectId: string, subjectName: string, unit: number) => {
+    setAiDrawerTarget({ subjectId, subjectName, initialUnit: unit });
+    setIsAiDrawerOpen(true);
   };
 
   if (isLoading || roleLoading) {
@@ -150,45 +127,32 @@ export default function Dashboard() {
     );
   }
 
-  // 🔥 Using our new Smart Search to filter subjects 🔥
   const filteredSubjects = subjects.filter((s) => {
-        const matchesSearch = smartSearch(s.name, searchQuery);
-        const hasAiContent = !!getAiSubject(s.name);
-        return activeTab === "ai_subjects"
-          ? matchesSearch && hasAiContent
-          : matchesSearch;
-      });
+    const matchesSearch = smartSearch(s.name, searchQuery);
+    const hasAiContent = !!getAiSubject(s.name);
+    return activeTab === "ai_subjects" ? matchesSearch && hasAiContent : matchesSearch;
+  });
+
+  // Note: profile.full_name is now removed from the auth check, 
+  // so this will default to "Buddy" unless full_name is added to the profile type.
   const firstName = profile?.full_name?.trim() ? profile.full_name.split(" ")[0] : "Buddy";
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-white/20 flex flex-col">
-
-      <DashboardHeader
-        profile={profile}
-        activeTab={activeTab}
-        handleTabClick={handleTabClick}
-        handleSignOut={handleSignOut}
-      />
+      <DashboardHeader profile={profile} activeTab={activeTab} handleTabClick={handleTabClick} handleSignOut={handleSignOut} />
 
       <main className="container mx-auto px-4 py-8 space-y-12 flex-1">
-
         <DashboardNav firstName={firstName} activeTab={activeTab} handleTabClick={handleTabClick} />
 
         <div ref={contentAreaRef} className="bg-[#121214] border border-white/5 rounded-[40px] p-6 sm:p-10 min-h-[500px] scroll-mt-24 transition-all duration-500 animate-in slide-in-from-bottom-12 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-          {/* TAB RENDERER */}
           {(activeTab === "subjects" || activeTab === "ai_subjects") && (
-            <SubjectGrid 
-              activeTab={activeTab} 
-              isContributor={isContributor} 
-              searchQuery={searchQuery} 
-              
-              setSearchQuery={setSearchQuery} 
-              filteredSubjects={filteredSubjects} 
-              setIsAddSubjectDialogOpen={setIsAddSubjectDialogOpen} 
-              setIsUploadDialogOpen={setIsUploadDialogOpen} 
-              handleSubjectClick={(sub) => { setSelectedSubject(sub); setIsDrawerOpen(true); }} 
+            <SubjectGrid
+              activeTab={activeTab} isContributor={isContributor} searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery} filteredSubjects={filteredSubjects}
+              setIsAddSubjectDialogOpen={setIsAddSubjectDialogOpen} setIsUploadDialogOpen={setIsUploadDialogOpen}
+              handleSubjectClick={(sub) => { setSelectedSubject(sub); setIsDrawerOpen(true); }}
             />
           )}
 
@@ -217,11 +181,47 @@ export default function Dashboard() {
 
       <Footer />
 
-      {/* DRAWERS & DIALOGS */}
-      {selectedSubject && activeTab === "subjects" && <SubjectDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} subjectId={selectedSubject.id} subjectName={selectedSubject.name} userRole={role} userId={userId} />}
-      {selectedSubject && activeTab === "ai_subjects" && <SubjectDrawerAi open={isDrawerOpen} onOpenChange={setIsDrawerOpen} subjectId={selectedSubject.id} subjectName={selectedSubject.name} userRole={role} userId={userId} />}
-      {isContributor && subjects.length > 0 && <UploadResourceDialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen} subjects={subjects} onResourceUploaded={() => setIsUploadDialogOpen(false)} />}
-      {isContributor && profile && <AddSubjectDialog open={isAddSubjectDialogOpen} onOpenChange={setIsAddSubjectDialogOpen} currentDepartment={profile.department} currentSemester={profile.semester} onSubjectAdded={loadSubjects} />}
+      {selectedSubject && activeTab === "subjects" && (
+        <SubjectDrawer
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          subjectId={selectedSubject.id}
+          subjectName={selectedSubject.name}
+          userRole={role}
+          userId={userId}
+          onOpenAiDrawer={handleOpenAiDrawer}
+        />
+      )}
+
+      {selectedSubject && activeTab === "ai_subjects" && (
+        <SubjectDrawerAi
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          subjectId={selectedSubject.id}
+          subjectName={selectedSubject.name}
+          userRole={role}
+          userId={userId}
+        />
+      )}
+
+      {aiDrawerTarget && (
+        <SubjectDrawerAi
+          open={isAiDrawerOpen}
+          onOpenChange={setIsAiDrawerOpen}
+          subjectId={aiDrawerTarget.subjectId}
+          subjectName={aiDrawerTarget.subjectName}
+          userRole={role}
+          userId={userId}
+          // Removed initialUnit prop to match the component's existing Type definition
+        />
+      )}
+
+      {isContributor && subjects.length > 0 && (
+        <UploadResourceDialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen} subjects={subjects} onResourceUploaded={() => setIsUploadDialogOpen(false)} />
+      )}
+      {isContributor && profile && (
+        <AddSubjectDialog open={isAddSubjectDialogOpen} onOpenChange={setIsAddSubjectDialogOpen} currentDepartment={profile.department} currentSemester={profile.semester} onSubjectAdded={loadSubjects} />
+      )}
     </div>
   );
 }
