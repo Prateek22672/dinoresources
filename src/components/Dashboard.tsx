@@ -42,7 +42,7 @@ const smartSearch = (subjectName: string, query: string) => {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { isContributor, userId, role, isLoading: roleLoading } = useUserRole();
-  const [profile, setProfile] = useState<{ department: string; semester: number; full_name?: string } | null>(null);
+  const [profile, setProfile] = useState<{ department: string; semester: string } | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,52 +62,55 @@ export default function Dashboard() {
   const contentAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { checkAuth(); }, []);
-  useEffect(() => { if (profile) { loadSubjects(); checkLatestAnnouncement(); } }, [profile]);
+  useEffect(() => { if (profile) { loadSubjects(); } }, [profile]);
 
   const handleTabClick = (tabId: TabType) => {
     setActiveTab(tabId);
     setTimeout(() => contentAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
-  const checkLatestAnnouncement = async () => {
-    try {
-      const { data, error } = await supabase.from("announcements").select("id, title").order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (error || !data) return;
-      const lastSeenId = localStorage.getItem("last_seen_announcement");
-      if (lastSeenId !== data.id) {
-        toast("New Update 📢", {
-          description: data.title, position: "bottom-right", duration: 10000,
-          action: { label: "Check out now", onClick: () => handleTabClick("announcements") },
-        });
-        localStorage.setItem("last_seen_announcement", data.id);
-      }
-    } catch (err) { console.error("Error fetching announcement:", err); }
-  };
+  
 
   const checkAuth = async () => {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) return navigate("/auth");
-      const { data: profileData, error: profileError } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
-      if (profileError) return navigate("/auth");
-      if (!profileData?.department || !profileData?.semester) return navigate("/setup");
-      
-      // Removed the full_name property that was causing the error
-      setProfile({ 
-        department: profileData.department, 
-        semester: profileData.semester 
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("department, semester")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profileError || !profileData) return navigate("/auth");
+      if (!profileData.department || !profileData.semester) return navigate("/setup");
+
+      setProfile({
+        department: profileData.department,
+        semester: profileData.semester,
       });
+
       setIsLoading(false);
-    } catch (err) { navigate("/auth"); }
+    } catch (err) {
+      navigate("/auth");
+    }
   };
 
   const loadSubjects = async () => {
     if (!profile) return;
-    const { data } = await supabase.from("subjects").select("*").eq("department", profile.department).eq("semester", profile.semester).order("order_index", { ascending: true });
+    const { data } = await supabase
+      .from("subjects")
+      .select("*")
+      .eq("department", profile.department)
+      .eq("semester", profile.semester)
+      .order("order_index", { ascending: true });
     setSubjects(data || []);
   };
 
-  const handleSignOut = async () => { await supabase.auth.signOut(); navigate("/auth"); };
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const handleOpenAiDrawer = (subjectId: string, subjectName: string, unit: number) => {
     setAiDrawerTarget({ subjectId, subjectName, initialUnit: unit });
@@ -133,47 +136,70 @@ export default function Dashboard() {
     return activeTab === "ai_subjects" ? matchesSearch && hasAiContent : matchesSearch;
   });
 
-  // Note: profile.full_name is now removed from the auth check, 
-  // so this will default to "Buddy" unless full_name is added to the profile type.
-  const firstName = profile?.full_name?.trim() ? profile.full_name.split(" ")[0] : "Buddy";
-
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-white/20 flex flex-col">
-      <DashboardHeader profile={profile} activeTab={activeTab} handleTabClick={handleTabClick} handleSignOut={handleSignOut} />
+      <DashboardHeader
+        profile={profile}
+        activeTab={activeTab}
+        handleTabClick={handleTabClick}
+        handleSignOut={handleSignOut}
+      />
 
       <main className="container mx-auto px-4 py-8 space-y-12 flex-1">
-        <DashboardNav firstName={firstName} activeTab={activeTab} handleTabClick={handleTabClick} />
+        <DashboardNav activeTab={activeTab} handleTabClick={handleTabClick} />
 
-        <div ref={contentAreaRef} className="bg-[#121214] border border-white/5 rounded-[40px] p-6 sm:p-10 min-h-[500px] scroll-mt-24 transition-all duration-500 animate-in slide-in-from-bottom-12 shadow-2xl relative overflow-hidden">
+        <div
+          ref={contentAreaRef}
+          className="bg-[#121214] border border-white/5 rounded-[40px] p-6 sm:p-10 min-h-[500px] scroll-mt-24 transition-all duration-500 animate-in slide-in-from-bottom-12 shadow-2xl relative overflow-hidden"
+        >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
           {(activeTab === "subjects" || activeTab === "ai_subjects") && (
             <SubjectGrid
-              activeTab={activeTab} isContributor={isContributor} searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery} filteredSubjects={filteredSubjects}
-              setIsAddSubjectDialogOpen={setIsAddSubjectDialogOpen} setIsUploadDialogOpen={setIsUploadDialogOpen}
+              activeTab={activeTab}
+              isContributor={isContributor}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              filteredSubjects={filteredSubjects}
+              setIsAddSubjectDialogOpen={setIsAddSubjectDialogOpen}
+              setIsUploadDialogOpen={setIsUploadDialogOpen}
               handleSubjectClick={(sub) => { setSelectedSubject(sub); setIsDrawerOpen(true); }}
             />
           )}
 
           {activeTab === "attendance" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8"><h2 className="text-2xl font-bold text-white">Attendance Calculator</h2><p className="text-zinc-400 mt-2">Only for 2nd/3rd Year Students.</p></div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5"><AttendanceCalculator /></div>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-white">Attendance Calculator</h2>
+                <p className="text-zinc-400 mt-2">Only for 2nd/3rd Year Students.</p>
+              </div>
+              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
+                <AttendanceCalculator />
+              </div>
             </div>
           )}
 
           {activeTab === "sgpa" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8"><h2 className="text-2xl font-bold text-white">SGPA Calculator</h2><p className="text-zinc-400 mt-2">Estimate semester grades.</p></div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5"><SGPACalculator /></div>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-white">SGPA Calculator</h2>
+                <p className="text-zinc-400 mt-2">Estimate semester grades.</p>
+              </div>
+              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
+                <SGPACalculator />
+              </div>
             </div>
           )}
 
           {activeTab === "announcements" && (
             <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8"><h2 className="text-2xl font-bold text-white">Announcements</h2><p className="text-zinc-400 mt-2">Latest updates.</p></div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5"><AnnouncementsSection isAdmin={role === "admin"} /></div>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-white">Announcements</h2>
+                <p className="text-zinc-400 mt-2">Latest updates.</p>
+              </div>
+              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
+                <AnnouncementsSection isAdmin={role === "admin"} />
+              </div>
             </div>
           )}
         </div>
@@ -187,6 +213,7 @@ export default function Dashboard() {
           onOpenChange={setIsDrawerOpen}
           subjectId={selectedSubject.id}
           subjectName={selectedSubject.name}
+          subjectPrice={Math.floor((selectedSubject.price_paise ?? 2900) / 100)}
           userRole={role}
           userId={userId}
           onOpenAiDrawer={handleOpenAiDrawer}
@@ -212,15 +239,26 @@ export default function Dashboard() {
           subjectName={aiDrawerTarget.subjectName}
           userRole={role}
           userId={userId}
-          // Removed initialUnit prop to match the component's existing Type definition
         />
       )}
 
       {isContributor && subjects.length > 0 && (
-        <UploadResourceDialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen} subjects={subjects} onResourceUploaded={() => setIsUploadDialogOpen(false)} />
+        <UploadResourceDialog
+          open={isUploadDialogOpen}
+          onOpenChange={setIsUploadDialogOpen}
+          subjects={subjects}
+          onResourceUploaded={() => setIsUploadDialogOpen(false)}
+        />
       )}
+
       {isContributor && profile && (
-        <AddSubjectDialog open={isAddSubjectDialogOpen} onOpenChange={setIsAddSubjectDialogOpen} currentDepartment={profile.department} currentSemester={profile.semester} onSubjectAdded={loadSubjects} />
+        <AddSubjectDialog
+          open={isAddSubjectDialogOpen}
+          onOpenChange={setIsAddSubjectDialogOpen}
+          currentDepartment={profile.department}
+          currentSemester={profile.semester}
+          onSubjectAdded={loadSubjects}
+        />
       )}
     </div>
   );

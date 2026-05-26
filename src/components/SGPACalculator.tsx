@@ -8,9 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, ChevronDown, ChevronUp, AlertCircle, X, Lock } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
-import { PremiumUnlockDialog } from "./premiumUnlockDialog";
+import { Plus, Trash2, ChevronDown, ChevronUp, AlertCircle, X } from "lucide-react";
 
 /* ---------- Grade System ---------- */
 
@@ -200,8 +198,6 @@ function SubjectRow({
 let toastId = 0;
 
 export default function SGPACalculator() {
-  const { isSubscribed, refresh: refreshSubscription } = useSubscription();
-  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [name, setName] = useState("");
   const [credits, setCredits] = useState("3");
@@ -281,47 +277,7 @@ export default function SGPACalculator() {
   const removeSubject = (id: string) =>
         setSubjects((prev) => prev.filter((s) => s.id !== id));
 
-        if (!isSubscribed) {
-        return (
-          <>
-            <div className="rounded-3xl border border-white/10 bg-[#0e0e11] p-6 sm:p-8 text-zinc-100 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.45)]">
-              <div className="max-w-lg">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                  <Lock className="w-5 h-5 text-indigo-400" />
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                  SGPA Calculator
-                </h2>
-
-                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed mb-6">
-                  This feature is part of premium access. Pay ₹11 once to unlock the full website, including calculators, premium units, and other locked tools.
-                </p>
-
-                <Button
-                  onClick={() => setIsPremiumDialogOpen(true)}
-                  className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold px-6 py-3"
-                >
-                  Unlock for ₹11
-                </Button>
-              </div>
-            </div>
-
-            <PremiumUnlockDialog
-              open={isPremiumDialogOpen}
-              onOpenChange={setIsPremiumDialogOpen}
-              title="Unlock Premium Access"
-              description="Pay ₹11 once to unlock the full website, including premium calculators, advanced units, and other locked features."
-              featureName="SGPA Calculator"
-              priceLabel="₹11"
-              onPaymentSuccess={async () => {
-                await refreshSubscription();
-                setIsPremiumDialogOpen(false);
-              }}
-            />
-          </>
-        );
-      }
+        
 
   /* ── Render ── */
   return (

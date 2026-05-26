@@ -10,7 +10,13 @@ import dinoLogo from "@/assets/dinosaurBlack.png";
 import Footer from "./Footer";
 
 const DEPARTMENTS = ["CSE", "ECE", "Mechanical Engineering"];
-const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
+const academicOptions = [
+  "1st Year",
+  "2nd Year",
+  "3rd Year",
+  "4th Year",
+  "Supplementary"
+]
 
 interface ProfileSetupProps {
   onProfileUpdated?: () => void;
@@ -60,7 +66,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
       .from("profiles")
       .update({
         department,
-        semester: parseInt(semester),
+        semester: semester,
       })
       .eq("id", user.id);
 
@@ -155,7 +161,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
 
               {/* Semester Field */}
               <div className="space-y-2 relative">
-                <Label htmlFor="semester" className="text-zinc-400 font-medium pl-1">Current Semester</Label>
+                <Label htmlFor="semester" className="text-zinc-400 font-medium pl-1">Academic Year</Label>
                 <div className="relative">
                   <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 z-10" />
                   <Select value={semester} onValueChange={setSemester} required>
@@ -163,9 +169,9 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
                       <SelectValue placeholder="Select your semester" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#121214] border-white/10 text-white rounded-2xl shadow-xl">
-                      {SEMESTERS.map((s) => (
-                        <SelectItem key={s} value={s.toString()} className="focus:bg-white/10 focus:text-white rounded-xl cursor-pointer py-3">
-                          Semester {s}
+                      {academicOptions.map((s) => (
+                        <SelectItem key={s} value={s} className="focus:bg-white/10 focus:text-white rounded-xl cursor-pointer py-3">
+                          {s}
                         </SelectItem>
                       ))}
                     </SelectContent>

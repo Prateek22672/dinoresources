@@ -12,7 +12,7 @@ interface AddSubjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentDepartment: string;
-  currentSemester: number;
+  currentSemester: string;
   onSubjectAdded: () => void;
 }
 
@@ -25,7 +25,16 @@ export default function AddSubjectDialog({
 }: AddSubjectDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [subjectName, setSubjectName] = useState("");
-  const [semester, setSemester] = useState<string>(currentSemester.toString());
+  const [semester, setSemester] = useState<string>(
+  currentSemester || "Supplementary"
+);
+  const academicYears = [
+  "1st Year",
+  "2nd Year",
+  "3rd Year",
+  "4th Year",
+  "Supplementary"
+];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +59,7 @@ export default function AddSubjectDialog({
       .from("subjects")
       .select("order_index")
       .eq("department", currentDepartment)
-      .eq("semester", parseInt(semester))
+      .eq("semester", semester)
       .order("order_index", { ascending: false })
       .limit(1);
 
@@ -60,7 +69,7 @@ export default function AddSubjectDialog({
 
     const { error } = await supabase.from("subjects").insert({
       name: subjectName.trim(),
-      semester: parseInt(semester),
+      semester: semester,
       department: currentDepartment,
       order_index: nextOrderIndex,
     });
@@ -73,7 +82,7 @@ export default function AddSubjectDialog({
     } else {
       toast.success("Subject added successfully!");
       setSubjectName("");
-      setSemester(currentSemester.toString());
+      setSemester(currentSemester);
       onSubjectAdded();
       onOpenChange(false);
     }
@@ -88,7 +97,7 @@ export default function AddSubjectDialog({
             Add New Subject
           </DialogTitle>
           <DialogDescription>
-            Create a new subject for students to access. The subject will be added to the selected semester.
+            Create a new subject for students to access. The subject will be added to the selected academic year.
           </DialogDescription>
         </DialogHeader>
 
@@ -105,15 +114,15 @@ export default function AddSubjectDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="semester">Semester</Label>
+            <Label htmlFor="semester">Academic Year</Label>
             <Select value={semester} onValueChange={setSemester}>
               <SelectTrigger id="semester">
-                <SelectValue placeholder="Select semester" />
+                <SelectValue placeholder="Academic Year" />
               </SelectTrigger>
               <SelectContent>
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                  <SelectItem key={sem} value={sem.toString()}>
-                    Semester {sem}
+                {academicYears.map((sem) => (
+                  <SelectItem key={sem} value={sem}>
+                    {sem}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -2,21 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
-  Lock,
   ChevronRight,
   BookOpen,
   CalendarDays,
   Globe,
   Calculator,
   Megaphone,
-  X,
 } from "lucide-react";
 import genai from "@/assets/aiWhite.png";
-import { PremiumUnlockDialog } from "../premiumUnlockDialog";
-import { useSubscription } from "@/hooks/useSubscription";
 
 interface DashboardNavProps {
-  firstName: string;
+  firstName?: string;
   activeTab: string;
   handleTabClick: (tab: any) => void;
 }
@@ -36,7 +32,7 @@ const navCards = [
     iconTint: "text-blue-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.15)]",
     buttonText: "Start Studying Now",
-    requiresSubscription: false,
+    externalLink: undefined as string | undefined,
   },
   {
     id: "ai_subjects",
@@ -48,7 +44,7 @@ const navCards = [
     iconTint: "opacity-10 grayscale",
     glow: "shadow-[0_0_30px_-5px_rgba(99,102,241,0.15)]",
     buttonText: "Get AI Assistance",
-    requiresSubscription: false,
+    externalLink: undefined as string | undefined,
   },
   {
     id: "sgpa",
@@ -59,22 +55,20 @@ const navCards = [
     bgGradient: "from-violet-900/40 to-purple-900/40",
     iconTint: "text-purple-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(168,85,247,0.15)]",
-    buttonText: "Unlock to Access",
-    unlockedText: "Open Calculator",
-    requiresSubscription: true,
+    buttonText: "Open Calculator",
+    externalLink: undefined as string | undefined,
   },
   {
     id: "foliofyx",
-    overline: "Create Your Website",
+    overline: "CREATE YOUR WEBSITE",
     title: "FolioFYX",
     desc: "Create a professional portfolio website! Share it to stand out.",
     icon: Globe,
     bgGradient: "from-fuchsia-900/40 to-pink-900/40",
     iconTint: "text-fuchsia-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(217,70,239,0.15)]",
-    externalLink: "https://www.foliofyx.in",
     buttonText: "Create Now Free",
-    requiresSubscription: false,
+    externalLink: "https://www.foliofyx.in",
   },
   {
     id: "attendance",
@@ -85,9 +79,8 @@ const navCards = [
     bgGradient: "from-teal-900/40 to-emerald-900/40",
     iconTint: "text-emerald-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.15)]",
-    buttonText: "Unlock to Access",
-    unlockedText: "Check Attendance",
-    requiresSubscription: true,
+    buttonText: "Check Attendance",
+    externalLink: undefined as string | undefined,
   },
   {
     id: "announcements",
@@ -99,98 +92,30 @@ const navCards = [
     iconTint: "text-orange-400/20",
     glow: "shadow-[0_0_30px_-5px_rgba(249,115,22,0.15)]",
     buttonText: "View Updates",
-    requiresSubscription: false,
+    externalLink: undefined as string | undefined,
   },
 ];
 
 export function DashboardNav({
-  firstName,
+  firstName = "Buddy",
   activeTab,
   handleTabClick,
 }: DashboardNavProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const aiCardRef = useRef<HTMLDivElement>(null);
-
-  const { isSubscribed, refresh: refreshSubscription } = useSubscription();
-
-  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
-  const [lockedFeatureName, setLockedFeatureName] = useState("premium feature");
-
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [showTutorial, setShowTutorial] = useState(false);
 
-  const handleProtectedCardClick = (card: any) => {
-    const isExternal = "externalLink" in card;
-
-    if (isExternal) {
+  const handleCardClick = (card: (typeof navCards)[number]) => {
+    if (card.externalLink) {
       window.open(card.externalLink, "_blank");
       return;
     }
-
-    if (card.requiresSubscription && !isSubscribed) {
-      setLockedFeatureName(card.title);
-      setIsPremiumDialogOpen(true);
-      return;
-    }
-
     handleTabClick(card.id);
-  };
-
-  // ── AI TUTORIAL POPUP LOGIC (updated from second file, keeping live structure intact) ──
-  useEffect(() => {
-    const hasSeenPermanent =
-      localStorage.getItem("has_seen_ai_onboarding_v5") === "true";
-    const hasSeenSession =
-      sessionStorage.getItem("hide_ai_tutorial_session") === "true";
-
-    if (hasSeenPermanent || hasSeenSession) return;
-
-    const timer = setTimeout(() => {
-      setShowTutorial(true);
-
-      if (aiCardRef.current && scrollContainerRef.current) {
-        const rect = aiCardRef.current.getBoundingClientRect();
-        const containerRect = scrollContainerRef.current.getBoundingClientRect();
-        const scrollLeft =
-          aiCardRef.current.offsetLeft -
-          containerRect.width / 2 +
-          rect.width / 2;
-
-        scrollContainerRef.current.scrollTo({
-          left: scrollLeft,
-          behavior: "smooth",
-        });
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (showTutorial) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "unset";
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [showTutorial]);
-
-  const dismissTutorial = () => {
-    localStorage.setItem("has_seen_ai_onboarding_v5", "true");
-    setShowTutorial(false);
-  };
-
-  const muteForSession = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    sessionStorage.setItem("hide_ai_tutorial_session", "true");
-    setShowTutorial(false);
   };
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        scrollContainerRef.current;
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
     }
@@ -207,30 +132,16 @@ export function DashboardNav({
       const isMobile = window.innerWidth < 640;
       const scrollAmount =
         direction === "left"
-          ? isMobile
-            ? -260
-            : -320
-          : isMobile
-            ? 260
-            : 320;
-
-      scrollContainerRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth",
-      });
+          ? isMobile ? -260 : -320
+          : isMobile ? 260 : 320;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
   };
 
   return (
     <div className="space-y-4 relative">
-      {showTutorial && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-md animate-in fade-in duration-500"
-          onClick={dismissTutorial}
-        />
-      )}
-
-      <div className="flex items-start sm:items-center justify-between px-2 animate-in slide-in-from-bottom-4 fade-in duration-700 gap-4 relative z-[50]">
+      {/* Header row */}
+      <div className="flex items-start sm:items-center justify-between px-2 animate-in slide-in-from-bottom-4 fade-in duration-700 gap-4">
         <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
           Hey {firstName},{" "}
           <span className="text-zinc-500 font-medium block sm:inline">
@@ -260,100 +171,23 @@ export function DashboardNav({
         </div>
       </div>
 
-      <div
-        className={`relative animate-in slide-in-from-bottom-8 fade-in duration-700 delay-150 fill-mode-both ${
-          showTutorial ? "z-[65]" : "z-10"
-        }`}
-      >
+      {/* Cards */}
+      <div className="relative animate-in slide-in-from-bottom-8 fade-in duration-700 delay-150 fill-mode-both z-10">
         <div
           ref={scrollContainerRef}
           onScroll={checkScroll}
           className="flex overflow-x-auto pt-6 pb-[260px] sm:pb-12 -mx-4 px-4 sm:px-6 gap-5 snap-x snap-mandatory mb-[-260px] sm:mb-0 items-start overflow-y-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {navCards.map((card) => {
-            const isLocked = !!card.requiresSubscription && !isSubscribed;
-            const isExternal = "externalLink" in card;
-            const isActive = activeTab === card.id && !isExternal;
-            const isAiCard = card.id === "ai_subjects";
-
-            const isDimmed = showTutorial && !isAiCard;
-            const isSpotlit = showTutorial && isAiCard;
+            const isActive = activeTab === card.id && !card.externalLink;
 
             return (
               <div
                 key={card.id}
-                ref={isAiCard ? aiCardRef : null}
-                className={`snap-center shrink-0 relative transition-all duration-500 will-change-transform
-                  ${isDimmed ? "opacity-20 blur-sm scale-95 pointer-events-none" : "z-20"}
-                  ${isSpotlit ? "z-[100]" : ""}
-                `}
+                className="snap-center shrink-0 relative z-20"
+                onClick={() => handleCardClick(card)}
               >
-                {isSpotlit && (
-                  <div className="absolute top-[calc(100%+20px)] left-1/2 -translate-x-1/2 w-[290px] sm:w-[320px] sm:left-[calc(100%+24px)] sm:top-0 sm:translate-x-0 z-[110] animate-in zoom-in-95 fade-in slide-in-from-top-2 duration-300 pointer-events-auto">
-                    <div className="bg-[#121218]/95 backdrop-blur-3xl border border-white/20 rounded-[28px] p-5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded-full border border-white/20">
-                          <img src={genai} alt="AI" className="w-4 h-4" />
-                          <span className="text-[10px] tracking-widest text-indigo-200 uppercase">
-                            Introducing
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={dismissTutorial}
-                          className="p-1.5 hover:bg-white/10 rounded-full text-zinc-500 hover:text-white transition-all"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <h4 className="text-white font-bold text-lg mb-1 leading-tight">
-                        AI Study Buddy
-                      </h4>
-
-                      <p className="text-zinc-400 text-xs leading-relaxed mb-5 opacity-90">
-                        Get instant concept breakdowns and personalized summaries
-                        for your specific subjects.
-                      </p>
-
-                      <div className="space-y-2">
-                        <Button
-                          onClick={() => {
-                            dismissTutorial();
-                            handleTabClick("ai_subjects");
-                          }}
-                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl h-12 transition-all active:scale-95 shadow-lg shadow-indigo-600/20"
-                        >
-                          Try it now
-                        </Button>
-
-                        <button
-                          onClick={muteForSession}
-                          className="w-full text-center text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors py-1"
-                        >
-                          Don&apos;t show again this session
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="hidden sm:block absolute left-[-6px] top-10 w-4 h-4 bg-[#121218] border-l border-t border-white/20 rotate-[-45deg]" />
-                  </div>
-                )}
-
                 <div
-                  onClick={() => {
-                    if (isDimmed) return;
-
-                    if (isSpotlit) {
-                      dismissTutorial();
-                      handleTabClick(card.id);
-                      return;
-                    }
-
-                    if (!showTutorial) {
-                      handleProtectedCardClick(card);
-                    }
-                  }}
                   className={`
                     w-[240px] sm:w-[280px] h-[300px] sm:h-[360px]
                     rounded-[24px] sm:rounded-[32px] p-6 sm:p-8
@@ -364,20 +198,8 @@ export function DashboardNav({
                         ? `bg-white border-transparent text-black scale-[1.02] ${card.glow}`
                         : `bg-gradient-to-br ${card.bgGradient} border-white/10 text-white hover:border-white/20 hover:scale-[1.02]`
                     }
-                    ${
-                      isSpotlit
-                        ? "ring-2 ring-white/40 shadow-2xl scale-[1.03]"
-                        : ""
-                    }
                   `}
                 >
-                  {isLocked && (
-                    <div className="absolute top-4 right-4 z-20 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 border border-white/10 text-zinc-200 text-[10px] font-bold tracking-widest uppercase backdrop-blur-md">
-                      <Lock className="w-3 h-3" />
-                      Locked
-                    </div>
-                  )}
-
                   <div className="z-10 flex flex-col h-full">
                     <div>
                       <p
@@ -409,17 +231,13 @@ export function DashboardNav({
                       <Button
                         className={`w-full rounded-full font-bold shadow-none py-5 sm:py-6 text-xs sm:text-sm transition-all duration-300
                           ${
-                            isLocked
-                              ? "bg-white/10 text-white hover:bg-white/15"
-                              : isActive
-                                ? "bg-black text-white hover:bg-zinc-800 hover:scale-[1.02]"
-                                : "bg-white/10 text-white hover:bg-white/20 hover:scale-[1.02]"
+                            isActive
+                              ? "bg-black text-white hover:bg-zinc-800 hover:scale-[1.02]"
+                              : "bg-white/10 text-white hover:bg-white/20 hover:scale-[1.02]"
                           }
                         `}
                       >
-                        {isLocked
-                              ? "Unlock for ₹11"
-                              : (card as any).unlockedText || card.buttonText}
+                        {card.buttonText}
                       </Button>
                     </div>
                   </div>
@@ -435,20 +253,6 @@ export function DashboardNav({
           })}
         </div>
       </div>
-
-      <PremiumUnlockDialog
-        open={isPremiumDialogOpen}
-        onOpenChange={setIsPremiumDialogOpen}
-        title="Unlock Premium Access"
-        description="Pay ₹11 once to unlock the full website, including premium calculators, advanced units, and other locked features."
-        featureName={lockedFeatureName}
-        priceLabel="₹11"
-        onPaymentSuccess={async () => {
-          await refreshSubscription();
-          setIsPremiumDialogOpen(false);
-        }}
-      />
-
     </div>
   );
 }
