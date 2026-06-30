@@ -54,22 +54,22 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 240 10% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 217 33% 17%;
+    --card: 240 6% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 17%;
+    --popover: 240 6% 11%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%;
+    --secondary: 240 6% 11%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
+    --muted: 240 6% 11%;
     --muted-foreground: 215 20% 65%;
 
     --accent: 262 83% 58%;
@@ -78,8 +78,8 @@ All colors MUST be HSL.
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 240 6% 11%;
+    --input: 240 6% 11%;
     --ring: 217 91% 60%;
     
     --toast: 200 90% 35%;
@@ -105,7 +105,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1, "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
   }
 }
 
@@ -113,17 +117,101 @@ All colors MUST be HSL.
   .gradient-primary {
     background: var(--gradient-primary);
   }
-  
+
   .gradient-subtle {
     background: var(--gradient-subtle);
   }
-  
+
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
-  
+
   .shadow-hover {
     box-shadow: var(--shadow-hover);
+  }
+
+  /* ── TeamDino premium design system (monochrome-first) ───────────── */
+  /* Layered surfaces on the near-black base. */
+  /* Dark palette — ChatGPT-style greys (#212121 family). */
+  .td-base    { background: #212121; }
+  .td-surface { background: #2a2a2a; border: 1px solid rgba(255,255,255,0.08); }
+  .td-surface-2 { background: #363636; border: 1px solid rgba(255,255,255,0.08); }
+  .td-hairline { border: 1px solid rgba(255,255,255,0.10); }
+
+  .td-glass {
+    background: rgba(33,33,33,0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* The single restrained accent (soft violet). Use sparingly. */
+  .td-accent-text { color: #a9a0f5; }
+  .td-accent-ring { box-shadow: 0 0 0 3px rgba(124,108,240,0.18); }
+
+  /* Premium primary button: white-on-black, high contrast. */
+  .td-btn-primary {
+    background: #ffffff; color: #0d0d0d;
+    border-radius: 9999px; font-weight: 600;
+    transition: transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+  }
+  .td-btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+  .td-btn-primary:active { transform: scale(.98); }
+
+  .td-btn-ghost {
+    background: rgba(255,255,255,0.05); color: #e4e4e7;
+    border: 1px solid rgba(255,255,255,0.09); border-radius: 9999px; font-weight: 500;
+    transition: background-color .18s ease, transform .18s ease, border-color .18s ease;
+  }
+  .td-btn-ghost:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.16); }
+  .td-btn-ghost:active { transform: scale(.98); }
+
+  /* Modern hero banner: gradient mesh + grain on pure dark. */
+  .td-hero {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(120% 140% at 15% 10%, rgba(124,108,240,0.16), transparent 45%),
+      radial-gradient(120% 140% at 95% 0%, rgba(255,255,255,0.06), transparent 40%),
+      linear-gradient(180deg, #0d0d10, #09090b);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .td-hero::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  }
+
+  @keyframes td-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .td-in { animation: td-fade-up .5s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Clickable card: clear affordance — pointer, lift, brighter border, glow,
+     and a sheen sweep on hover. Pair with .td-surface. */
+  .td-card-click {
+    cursor: pointer;
+    position: relative;
+    transition: transform .32s cubic-bezier(.22,1,.36,1), border-color .25s ease,
+                box-shadow .3s ease, background-color .25s ease;
+    will-change: transform;
+  }
+  /* cinematic zoom-in on hover */
+  .td-card-click:hover {
+    transform: translateY(-5px) scale(1.022);
+    border-color: rgba(255,255,255,0.20) !important;
+    background-color: rgba(255,255,255,0.02);
+    box-shadow: 0 26px 55px -22px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+  }
+  .td-card-click:active { transform: translateY(-2px) scale(1.0); }
+  /* the little corner arrow that brightens on hover */
+  .td-card-click .td-go {
+    color: rgba(113,113,122,1);
+    transition: color .2s ease, transform .2s ease;
+  }
+  .td-card-click:hover .td-go {
+    color: rgba(244,244,245,1);
+    transform: translate(2px,-2px);
   }
 }
 
@@ -136,4 +224,129 @@ iframe[src*="razorpay"] {
 /* Prevent Drawer overlay from blocking Razorpay */
 [data-radix-dialog-overlay] {
   pointer-events: none !important;
+}
+
+/* =====================================================================
+   Light theme — overrides applied only when the .dark class is absent.
+   The dark rules above remain the default; these flip surfaces, buttons,
+   and (scoped to .td-app) text colors so the app reads well on white.
+   ===================================================================== */
+@layer utilities {
+  /* Light palette — ChatGPT-style soft white (not pure-bright). */
+  :root:not(.dark) .td-base      { background: #f7f7f8; }
+  :root:not(.dark) .td-surface   {
+    background: #ffffff; border-color: rgba(13,13,13,0.10);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px -6px rgba(0,0,0,0.08);
+  }
+  :root:not(.dark) .td-surface-2 { background: #ececec; border-color: rgba(13,13,13,0.08); }
+  :root:not(.dark) .td-hairline  { border-color: rgba(13,13,13,0.10); }
+  :root:not(.dark) .td-glass     {
+    background: rgba(255,255,255,0.85); border-color: rgba(0,0,0,0.10);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+  }
+  :root:not(.dark) .td-card-click:hover {
+    box-shadow: 0 26px 50px -24px rgba(0,0,0,0.28) !important;
+  }
+  :root:not(.dark) .td-banner:hover {
+    box-shadow: 0 28px 52px -26px rgba(0,0,0,0.30) !important;
+  }
+  :root:not(.dark) .td-accent-text { color: #6d5fe0; }
+
+  :root:not(.dark) .td-btn-primary { background: #0d0d0d; color: #ffffff; }
+  :root:not(.dark) .td-btn-primary:hover { background: #000; box-shadow: 0 10px 30px -12px rgba(0,0,0,0.35); }
+
+  :root:not(.dark) .td-btn-ghost { background: rgba(13,13,13,0.04); color: #0d0d0d; border-color: rgba(13,13,13,0.12); }
+  :root:not(.dark) .td-btn-ghost:hover { background: rgba(13,13,13,0.07); border-color: rgba(13,13,13,0.2); }
+
+  :root:not(.dark) .td-hero {
+    background:
+      radial-gradient(120% 140% at 15% 10%, rgba(124,108,240,0.12), transparent 45%),
+      linear-gradient(180deg, #ffffff, #f3f3f5);
+    border-color: rgba(0,0,0,0.08);
+  }
+  :root:not(.dark) .td-hero::after { opacity: .25; }
+
+  :root:not(.dark) .td-card-click:hover {
+    border-color: rgba(0,0,0,0.18) !important;
+    background-color: rgba(0,0,0,0.015);
+    box-shadow: 0 18px 40px -22px rgba(0,0,0,0.30);
+  }
+  :root:not(.dark) .td-card-click .td-go { color: #a1a1aa; }
+  :root:not(.dark) .td-card-click:hover .td-go { color: #18181b; }
+
+  /* Flip text + active pills/black-on-white inside the app shell only.
+     (Dialogs/popovers render in portals outside .td-app, so QR codes etc.
+     keep their white backgrounds.) */
+  /* Root inherited text color (same element holds td-app + text-zinc-100, so the
+     descendant rules below don't reach it) — flip it so inherited text is dark. */
+  :root:not(.dark) .td-app.td-base { color: #1f1f1f; }
+  :root:not(.dark) .td-app .text-white   { color: #0d0d0d !important; }
+  :root:not(.dark) .td-app .text-zinc-100 { color: #0d0d0d !important; }
+  :root:not(.dark) .td-app .text-zinc-200 { color: #1f1f1f !important; }
+  :root:not(.dark) .td-app .text-zinc-300 { color: #2d2d2d !important; }
+  :root:not(.dark) .td-app .text-zinc-400 { color: #5d5d5d !important; }
+  :root:not(.dark) .td-app .text-zinc-500 { color: #6e6e6e !important; }
+  :root:not(.dark) .td-app .text-zinc-600 { color: #909090 !important; }
+  :root:not(.dark) .td-app .bg-white     { background-color: #0d0d0d !important; }
+  :root:not(.dark) .td-app .text-black   { color: #ffffff !important; }
+}
+
+/* =====================================================================
+   Motion: cinematic page-open + banner cards
+   ===================================================================== */
+@layer utilities {
+  /* Page-open transition — replays on route change (keyed by pathname). */
+  @keyframes td-page-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.992); filter: blur(2px); }
+    to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+  .td-page { animation: td-page-in .42s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Banner cards: vivid gradient, cinematic hover zoom + glow. */
+  .td-banner {
+    position: relative; overflow: hidden; cursor: pointer;
+    transform-origin: center top;   /* grow downward on hover, not up into the hero */
+    transition: transform .34s cubic-bezier(.22,1,.36,1), box-shadow .34s ease;
+    will-change: transform;
+  }
+  .td-banner:hover {
+    transform: translateY(-3px) scale(1.018);
+    box-shadow: 0 26px 52px -24px rgba(0,0,0,0.55);
+    z-index: 2;
+  }
+  .td-banner:active { transform: translateY(-1px) scale(1.004); }
+  .td-banner .td-banner-icon {
+    transition: transform .5s cubic-bezier(.22,1,.36,1), opacity .34s ease;
+  }
+  .td-banner:hover .td-banner-icon { transform: scale(1.12) rotate(-4deg); opacity: .9; }
+  .td-banner .td-banner-cta { transition: transform .3s ease; }
+  .td-banner:hover .td-banner-cta { transform: translateX(3px); }
+
+  /* Solid black/white banner cards — invert the page for premium contrast.
+     Dark page  -> white card, black text.
+     Light page -> black card, white text. Chips/CTA invert against the card. */
+  .td-banner-bw { background: #ffffff; color: #0d0d0d; border: 1px solid rgba(0,0,0,0.06); }
+  .td-banner-bw .td-bw-soft { color: currentColor; opacity: .58; }
+  .td-banner-bw .td-bw-chip { background: #0d0d0d; color: #ffffff; }
+  /* subtle inverted pill / outline button that sits on a B&W card */
+  .td-banner-bw .td-bw-pill { background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08); color: currentColor; }
+  .td-banner-bw .td-bw-pill:hover { background: rgba(0,0,0,0.09); }
+  :root:not(.dark) .td-banner-bw { background: #0d0d0d; color: #f7f7f8; border-color: rgba(255,255,255,0.08); }
+  :root:not(.dark) .td-banner-bw .td-bw-chip { background: #f7f7f8; color: #0d0d0d; }
+  :root:not(.dark) .td-banner-bw .td-bw-pill { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.14); }
+  :root:not(.dark) .td-banner-bw .td-bw-pill:hover { background: rgba(255,255,255,0.14); }
+  :root:not(.dark) .td-banner-bw:hover { box-shadow: 0 28px 52px -26px rgba(0,0,0,0.45) !important; }
+
+  /* Anniversary banner sheen sweep */
+  .td-anniv-shine {
+    background: linear-gradient(110deg, transparent 32%, rgba(255,255,255,0.22) 50%, transparent 68%);
+    transform: translateX(-100%);
+    animation: td-anniv-sweep 4.5s ease-in-out infinite;
+  }
+  @keyframes td-anniv-sweep { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(100%); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .td-page, .td-banner, .td-banner-icon, .td-banner-cta, .td-card-click, .td-anniv-shine { animation: none !important; transition: none !important; }
+    .td-banner:hover, .td-card-click:hover { transform: none !important; }
+  }
 }

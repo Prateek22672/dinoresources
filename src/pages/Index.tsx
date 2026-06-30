@@ -311,47 +311,9 @@ const Index = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-
-      if (
-        e.key === "F12" ||
-        (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(key)) ||
-        (e.ctrlKey && key === "u")
-      ) {
-        e.preventDefault();
-        return;
-      }
-
-      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x"].includes(key)) {
-        e.preventDefault();
-        return;
-      }
-    };
-
-    const preventClipboard = (e: Event) => {
-      e.preventDefault();
-    };
-
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("copy", preventClipboard);
-    document.addEventListener("cut", preventClipboard);
-    document.addEventListener("paste", preventClipboard);
-
-    return () => {
-      document.removeEventListener("contextmenu", handleContextMenu);
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("copy", preventClipboard);
-      document.removeEventListener("cut", preventClipboard);
-      document.removeEventListener("paste", preventClipboard);
-    };
-  }, []);
+  // Site protection (DevTools / copy-paste blocking) is now centrally controlled
+  // by <SecurityGuard /> in App.tsx, driven by the admin-configurable
+  // app_settings.security_level. The old hardcoded blocker was removed.
 
   const checkProfile = async (userId: string) => {
     try {

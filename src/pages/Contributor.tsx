@@ -1,0 +1,250 @@
+import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { tbl, SubjectRow, SubjectQARow, EditorialRow } from "@/integrations/supabase/revamp";
+import AppShell from "@/components/layout/AppShell";
+import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
+import { toast } from "sonner";
+import {
+  PenSquare, Plus, Trash2, Save, Eye, EyeOff, Sparkles, FileUp, ExternalLink, Clapperboard, Briefcase,
+} from "lucide-react";
+
+const UNITS = [1, 2, 3, 4, 5];
+const RES_CATEGORIES = ["Syllabus", "Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Previous Papers", "Additional Resources"];
+
+export default function Contributor() {
+  const [subjects, setSubjects] = useState<SubjectRow[]>([]);
+  const [subjectId, setSubjectId] = useState("");
+  const [unit, setUnit] = useState(1);
+  const [qa, setQa] = useState<SubjectQARow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // new QA draft
+  const [q, setQ] = useState("");
+  const [a, setA] = useState("");
+  const [isFree, setIsFree] = useState(false);
+
+  // material draft
+  const [mTitle, setMTitle] = useState("");
+  const [mUrl, setMUrl] = useState("");
+  const [mType, setMType] = useState<"pdf" | "youtube" | "link">("pdf");
+  const [mCat, setMCat] = useState("Unit 1");
+
+  // editorial
+  const [editorials, setEditorials] = useState<EditorialRow[]>([]);
+  const [edTitle, setEdTitle] = useState("");
+  const [edUrl, setEdUrl] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await tbl("subjects").select("*").order("name");
+      const subs = (data ?? []) as SubjectRow[];
+      setSubjects(subs);
+      if (subs[0]) setSubjectId(subs[0].id);
+    })();
+  }, []);
+
+  const loadQa = useCallback(async () => {
+    if (!subjectId) return;
+    setLoading(true);
+    const { data } = await tbl("subject_qa").select("*")
+      .eq("subject_id", subjectId).eq("unit_number", unit)
+      .order("order_index", { ascending: true });
+    setQa((data ?? []) as SubjectQARow[]);
+    setLoading(false);
+  }, [subjectId, unit]);
+  useEffect(() => { loadQa(); }, [loadQa]);
+
+  const loadEditorials = useCallback(async () => {
+    if (!subjectId) return;
+    const { data } = await tbl("subject_editorial").select("*")
+      .eq("subject_id", subjectId).eq("unit_number", unit).order("created_at", { ascending: false });
+    setEditorials((data ?? []) as EditorialRow[]);
+  }, [subjectId, unit]);
+  useEffect(() => { loadEditorials(); }, [loadEditorials]);
+
+  const addEditorial = async () => {
+    if (!edUrl.trim()) { toast.error("YouTube URL required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await tbl("subject_editorial").insert({
+      subject_id: subjectId, unit_number: unit, title: edTitle.trim() || null, youtube_url: edUrl.trim(), created_by: user?.id,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Editorial added"); setEdTitle(""); setEdUrl(""); loadEditorials();
+  };
+
+  const deleteEditorial = async (id: string) => {
+    if (!confirm("Remove this editorial video?")) return;
+    const { error } = await tbl("subject_editorial").delete().eq("id", id);
+    if (error) toast.error(error.message); else { toast.success("Removed"); loadEditorials(); }
+  };
+
+  const addQa = async () => {
+    if (!q.trim()) { toast.error("Question required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await tbl("subject_qa").insert({
+      subject_id: subjectId, unit_number: unit, question: q.trim(), answer_md: a,
+      is_free: isFree, order_index: qa.length, created_by: user?.id,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Q&A added"); setQ(""); setA(""); setIsFree(false); loadQa();
+  };
+
+  const saveQa = async (item: SubjectQARow) => {
+    const { error } = await tbl("subject_qa").update({
+      question: item.question, answer_md: item.answer_md, is_free: item.is_free,
+    }).eq("id", item.id);
+    if (error) toast.error(error.message); else toast.success("Saved");
+  };
+
+  const deleteQa = async (id: string) => {
+    if (!confirm("Delete this Q&A?")) return;
+    const { error } = await tbl("subject_qa").delete().eq("id", id);
+    if (error) toast.error(error.message); else { toast.success("Deleted"); loadQa(); }
+  };
+
+  const addMaterial = async () => {
+    if (!mTitle.trim() || !mUrl.trim()) { toast.error("Title and URL required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    const unitNum = /^Unit (\d)/.exec(mCat)?.[1];
+    const { error } = await supabase.from("resources").insert({
+      subject_id: subjectId, title: mTitle.trim(), url: mUrl.trim(), type: mType,
+      category: mCat as any, unit_number: unitNum ? Number(unitNum) : null, created_by: user?.id,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Material added"); setMTitle(""); setMUrl("");
+  };
+
+  return (
+    <AppShell>
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <PenSquare className="w-6 h-6 td-accent-text" />
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Contributor Studio</h1>
+        </div>
+        <Link to="/contributor/jobs" className="td-btn-ghost px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5">
+          <Briefcase className="w-4 h-4" /> Jobs content
+        </Link>
+      </div>
+
+      {/* selectors */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)}
+          className="td-surface-2 rounded-xl px-3 h-11 text-sm text-white outline-none min-w-[200px]">
+          {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <div className="flex gap-1.5">
+          {UNITS.map((u) => (
+            <button key={u} onClick={() => setUnit(u)}
+              className={`px-3.5 h-11 rounded-xl text-sm font-medium ${unit === u ? "bg-white text-black" : "td-btn-ghost"}`}>
+              Unit {u}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Q&A editor */}
+        <div className="space-y-4">
+          <div className="td-surface rounded-3xl p-5">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Add Study-With-AI Q&amp;A</h3>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Question"
+              className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 mb-2" />
+            <textarea value={a} onChange={(e) => setA(e.target.value)} placeholder="Answer (markdown supported)…" rows={5}
+              className="w-full td-surface-2 rounded-xl px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 resize-y" />
+            <div className="flex items-center justify-between mt-3">
+              <label className="flex items-center gap-2 text-sm text-zinc-400">
+                <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} /> Free preview
+              </label>
+              <div className="flex gap-2">
+                <button onClick={() => setPreview(a)} className="td-btn-ghost px-3 py-2 text-sm flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" /> Preview</button>
+                <button onClick={addQa} className="td-btn-primary px-4 py-2 text-sm flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add</button>
+              </div>
+            </div>
+          </div>
+
+          {/* existing QA */}
+          <div className="space-y-2">
+            {loading ? <div className="h-20 rounded-2xl td-surface animate-pulse" /> :
+              qa.length === 0 ? <p className="text-zinc-600 text-sm text-center py-6">No Q&amp;A for this unit yet.</p> :
+              qa.map((item, idx) => (
+                <div key={item.id} className="td-surface rounded-2xl p-4 space-y-2">
+                  <input value={item.question} onChange={(e) => setQa((p) => p.map((x, i) => i === idx ? { ...x, question: e.target.value } : x))}
+                    className="w-full bg-transparent text-white font-medium text-sm outline-none" />
+                  <textarea value={item.answer_md} onChange={(e) => setQa((p) => p.map((x, i) => i === idx ? { ...x, answer_md: e.target.value } : x))}
+                    rows={3} className="w-full td-surface-2 rounded-lg px-3 py-2 text-xs text-zinc-300 outline-none resize-y" />
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => setQa((p) => p.map((x, i) => i === idx ? { ...x, is_free: !x.is_free } : x))}
+                      className="text-xs flex items-center gap-1 text-zinc-400">
+                      {item.is_free ? <Eye className="w-3.5 h-3.5 text-emerald-400" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      {item.is_free ? "Free" : "Paid"}
+                    </button>
+                    <div className="flex gap-1.5">
+                      <button onClick={() => saveQa(item)} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1"><Save className="w-3 h-3" /> Save</button>
+                      <button onClick={() => deleteQa(item.id)} className="w-8 h-8 rounded-full hover:bg-red-500/20 flex items-center justify-center"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Right column: materials + preview */}
+        <div className="space-y-4">
+          <div className="td-surface rounded-3xl p-5">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><FileUp className="w-4 h-4 td-accent-text" /> Add material</h3>
+            <input value={mTitle} onChange={(e) => setMTitle(e.target.value)} placeholder="Title"
+              className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 mb-2" />
+            <input value={mUrl} onChange={(e) => setMUrl(e.target.value)} placeholder="URL (PDF / YouTube / link)"
+              className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 mb-2" />
+            <div className="flex gap-2 flex-wrap">
+              <select value={mType} onChange={(e) => setMType(e.target.value as any)} className="td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
+                <option value="pdf">PDF</option><option value="youtube">YouTube</option><option value="link">Link</option>
+              </select>
+              <select value={mCat} onChange={(e) => setMCat(e.target.value)} className="flex-1 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
+                {RES_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button onClick={addMaterial} className="td-btn-primary px-4 text-sm flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add</button>
+            </div>
+            <p className="text-zinc-600 text-xs mt-2 flex items-center gap-1"><ExternalLink className="w-3 h-3" /> Upload files to Supabase Storage / Drive and paste the link here.</p>
+          </div>
+
+          {/* Editorial (YouTube) */}
+          <div className="td-surface rounded-3xl p-5">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Clapperboard className="w-4 h-4 td-accent-text" /> Editorial video</h3>
+            <input value={edTitle} onChange={(e) => setEdTitle(e.target.value)} placeholder="Title (optional)"
+              className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 mb-2" />
+            <div className="flex gap-2">
+              <input value={edUrl} onChange={(e) => setEdUrl(e.target.value)} placeholder="YouTube URL"
+                className="flex-1 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+              <button onClick={addEditorial} className="td-btn-primary px-4 text-sm flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add</button>
+            </div>
+            <p className="text-zinc-600 text-xs mt-2">Plays embedded on the subject’s Editorial tab.</p>
+            {editorials.length > 0 && (
+              <div className="space-y-2 mt-3">
+                {editorials.map((e) => (
+                  <div key={e.id} className="td-surface-2 rounded-xl p-3 flex items-center gap-3">
+                    <Clapperboard className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1"><p className="text-zinc-200 text-sm font-medium truncate">{e.title || "Editorial"}</p><p className="text-zinc-600 text-xs truncate">{e.youtube_url}</p></div>
+                    <button onClick={() => deleteEditorial(e.id)} className="w-8 h-8 rounded-full hover:bg-red-500/20 flex items-center justify-center shrink-0"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {preview !== null && (
+            <div className="td-surface rounded-3xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-white font-semibold">Answer preview</h3>
+                <button onClick={() => setPreview(null)} className="text-zinc-500 hover:text-white text-sm">Close</button>
+              </div>
+              <MarkdownRenderer content={preview || "_Nothing to preview_"} />
+            </div>
+          )}
+        </div>
+      </div>
+    </AppShell>
+  );
+}

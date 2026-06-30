@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
@@ -8,6 +9,8 @@ import {
   Globe,
   Calculator,
   Megaphone,
+  Store,
+  Library,
 } from "lucide-react";
 import genai from "@/assets/aiWhite.png";
 
@@ -33,6 +36,33 @@ const navCards = [
     glow: "shadow-[0_0_30px_-5px_rgba(59,130,246,0.15)]",
     buttonText: "Start Studying Now",
     externalLink: undefined as string | undefined,
+    route: undefined as string | undefined,
+  },
+  {
+    id: "store",
+    overline: "MARKETPLACE",
+    title: "Store",
+    desc: "Buy single subjects or save with full-year combo packs.",
+    icon: Store,
+    bgGradient: "from-violet-900/40 to-indigo-900/40",
+    iconTint: "text-violet-400/20",
+    glow: "shadow-[0_0_30px_-5px_rgba(124,108,240,0.18)]",
+    buttonText: "Browse Store",
+    externalLink: undefined as string | undefined,
+    route: "/store",
+  },
+  {
+    id: "library",
+    overline: "OWNED",
+    title: "My Library",
+    desc: "Jump back into the subjects and combos you own.",
+    icon: Library,
+    bgGradient: "from-emerald-900/40 to-teal-900/40",
+    iconTint: "text-emerald-400/20",
+    glow: "shadow-[0_0_30px_-5px_rgba(16,185,129,0.15)]",
+    buttonText: "Open Library",
+    externalLink: undefined as string | undefined,
+    route: "/library",
   },
   {
     id: "ai_subjects",
@@ -101,6 +131,7 @@ export function DashboardNav({
   activeTab,
   handleTabClick,
 }: DashboardNavProps) {
+  const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -108,6 +139,11 @@ export function DashboardNav({
   const handleCardClick = (card: (typeof navCards)[number]) => {
     if (card.externalLink) {
       window.open(card.externalLink, "_blank");
+      return;
+    }
+    const route = (card as { route?: string }).route;
+    if (route) {
+      navigate(route);
       return;
     }
     handleTabClick(card.id);
