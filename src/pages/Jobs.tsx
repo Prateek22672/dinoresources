@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { tbl, JobItemRow } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
+import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
   Briefcase, ListChecks, BookOpen, HelpCircle, ExternalLink, ChevronDown, Building2,
@@ -36,18 +37,13 @@ export default function Jobs() {
 
   return (
     <AppShell>
-      {/* Hero */}
-      <section className="td-banner-bw rounded-[28px] p-7 sm:p-10 mb-7 relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <span className="td-bw-chip inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold mb-4">
-            <Briefcase className="w-3 h-3" /> Placement Prep
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.05]">Crack your dream company.</h1>
-          <p className="td-bw-soft mt-4 text-base sm:text-lg leading-relaxed">
-            Exam patterns, curated materials and previous questions — organised company by company.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Placement Prep"
+        eyebrowIcon={Briefcase}
+        title="Crack your dream company."
+        subtitle="Exam patterns, curated materials and previous questions — organised company by company."
+        stats={companies.length ? [{ label: "Companies", value: companies.length, icon: Building2 }] : undefined}
+      />
 
       {loading ? (
         <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 rounded-2xl td-surface animate-pulse" />)}</div>

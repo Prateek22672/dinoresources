@@ -6,6 +6,8 @@ import {
   Sun, Moon, LifeBuoy, Menu, X, Briefcase,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
+import AccentPicker from "@/components/layout/AccentPicker";
+import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCart } from "@/context/CartContext";
@@ -39,6 +41,14 @@ export default function AppShell({ children, hideHeader = false }: { children: R
     ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
+  const mobileItems: MobileNavItem[] = [
+    ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
+    { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
+    { label: "Help", icon: LifeBuoy, onClick: () => setHelpOpen(true) },
+    { label: "Profile", icon: UserCog, onClick: () => navigate("/setup?edit=true") },
+    { label: "Sign out", icon: LogOut, danger: true, onClick: signOut },
+  ];
+
   const linkClass = (to: string, base = "") =>
     `${base} flex items-center gap-1.5 font-medium transition-colors ${
       isActive(to) ? "bg-white text-black" : "text-zinc-400 hover:text-white hover:bg-white/5"
@@ -70,9 +80,10 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             <Link to="/cart" className="relative w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Cart">
               <ShoppingCart className="w-4 h-4" />
               {count > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#7c6cf0] text-white text-[10px] font-bold flex items-center justify-center">{count}</span>
+                <span className="td-accent-solid absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center">{count}</span>
               )}
             </Link>
+            <AccentPicker />
             <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Toggle theme">
               <Sun className="w-4 h-4 hidden dark:block" /><Moon className="w-4 h-4 dark:hidden" />
             </button>
@@ -95,30 +106,11 @@ export default function AppShell({ children, hideHeader = false }: { children: R
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
-        {menuOpen && (
-          <div className="lg:hidden border-t border-white/8 td-glass">
-            <div className="container mx-auto px-3 py-3 space-y-1">
-              {links.map((item) => (
-                <Link key={item.to} to={item.to} onClick={() => setMenuOpen(false)} className={linkClass(item.to, "px-4 py-3 rounded-xl text-sm w-full")}>
-                  <item.icon className="w-4 h-4" /> {item.label}
-                </Link>
-              ))}
-              <div className="h-px bg-white/8 my-2" />
-              <button onClick={() => { setMenuOpen(false); setHelpOpen(true); }} className="w-full flex items-center gap-1.5 px-4 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5">
-                <LifeBuoy className="w-4 h-4" /> Help & Support
-              </button>
-              <button onClick={() => { setMenuOpen(false); navigate("/setup?edit=true"); }} className="w-full flex items-center gap-1.5 px-4 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5">
-                <UserCog className="w-4 h-4" /> Profile
-              </button>
-              <button onClick={signOut} className="w-full flex items-center gap-1.5 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10">
-                <LogOut className="w-4 h-4" /> Sign out
-              </button>
-            </div>
-          </div>
-        )}
       </header>
       )}
+
+      {/* Mobile bubble menu (landing-style) */}
+      <MobileNavOverlay open={menuOpen} onClose={() => setMenuOpen(false)} items={mobileItems} />
 
       <main key={location.pathname} className="td-page flex-1 container mx-auto px-3 sm:px-4 py-6 sm:py-8">{children}</main>
 

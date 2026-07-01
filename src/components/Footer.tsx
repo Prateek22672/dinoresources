@@ -1,29 +1,11 @@
-import { useState } from "react";
-import { Heart, Coffee, Users, Check, Copy, ArrowUp } from "lucide-react";
+import { Heart, Users, ArrowUp, ArrowRight, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "./ui/dialog";
 
 import FallingText from "@/components/reactbits/FallingText";
 import dinoLogo from "@/assets/dinosaurWhite.png";
-import gpayQr from "@/assets/gpay-qr.jpeg";
 import fyxLogo from "@/assets/fyx.png";
 
-const UPI_ID = "narenbachina22@okhdfcbank";
-
 export default function Footer() {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(UPI_ID);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy", err);
-    }
-  };
-
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
@@ -79,39 +61,13 @@ export default function Footer() {
             <Users className="w-4 h-4" /> Meet the Team
           </Link>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="td-btn-primary rounded-full px-6 py-2.5 text-sm shadow-none">
-                <Coffee className="w-4 h-4 mr-2" /> Support Us
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent className="bg-[#0a0a0c] border border-white/10 text-white rounded-[24px] w-[95vw] sm:max-w-[500px] p-6 shadow-2xl gap-0">
-              <DialogTitle className="sr-only">Support the Project</DialogTitle>
-              <div className="flex flex-col-reverse sm:flex-row items-center gap-6">
-                <div className="flex-1 text-center sm:text-left w-full">
-                  <h2 className="text-xl font-bold tracking-tight text-white mb-2">Support TeamDino</h2>
-                  <p className="text-zinc-400 text-xs leading-relaxed mb-5">
-                    Scan the QR or copy the UPI ID below. Your contribution helps keep our servers running and tools free for all students!
-                  </p>
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full justify-between group hover:bg-white/10 transition-colors">
-                    <span className="font-mono text-xs text-zinc-300 truncate select-all">{UPI_ID}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleCopy}
-                      className="shrink-0 h-7 w-7 text-zinc-400 hover:text-white hover:bg-white/10 rounded-md"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="shrink-0 bg-white p-2 rounded-2xl">
-                  <img src={gpayQr} alt="UPI QR Code" className="w-32 h-32 sm:w-36 sm:h-36 object-contain rounded-xl" />
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Link
+            to="/store"
+            onClick={scrollToTop}
+            className="td-btn-primary rounded-full px-6 py-2.5 text-sm flex items-center justify-center gap-2"
+          >
+            <BookOpen className="w-4 h-4" /> Browse Subjects <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { invokeFn } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
+import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
 import { Bot, Send, RefreshCw, Mail, Sparkles, FileText, Lock } from "lucide-react";
@@ -34,16 +35,15 @@ export default function Agent() {
 
   return (
     <AppShell>
-      <div className="flex items-center gap-2.5 mb-2">
-        <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center"><Bot className="w-5 h-5 text-black" /></div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white leading-tight">TeamDino Agent</h1>
-          <p className="text-zinc-500 text-sm">Summarize emails &amp; notes, draft replies, explain anything.</p>
-        </div>
-      </div>
+      <PageHero
+        eyebrow="Assistant"
+        eyebrowIcon={Bot}
+        title="AI Assistant"
+        subtitle="Summarize emails & notes, draft replies, and explain anything — instantly."
+      />
 
       {/* Connect Gmail (needs OAuth setup) */}
-      <div className="td-surface rounded-2xl p-4 my-5 flex items-center gap-3 flex-wrap">
+      <div className="td-surface rounded-2xl p-4 mb-5 flex items-center gap-3 flex-wrap">
         <Mail className="w-5 h-5 td-accent-text shrink-0" />
         <p className="text-sm text-zinc-300 flex-1 min-w-[200px]">Connect Gmail to auto-fetch &amp; summarize your inbox.</p>
         <button onClick={() => toast.info("Gmail connect needs a Google OAuth client — ask the admin to set it up.")}
