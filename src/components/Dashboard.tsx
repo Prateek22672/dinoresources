@@ -1,265 +1,319 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
-import { aiSyllabus, getAiSubject } from "@/data/aiSyllabus";
+import { tbl, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
+import { useCart } from "@/context/CartContext";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { formatPaise } from "@/lib/money";
 
-import { DashboardHeader } from "./dashboard/DashboardHeader";
-import { DashboardNav } from "./dashboard/DashboardNav";
-import { SubjectGrid } from "./dashboard/SubjectGrid";
-
-import UploadResourceDialog from "./UploadResourceDialog";
-import AddSubjectDialog from "./AddSubjectDialog";
-import SubjectDrawer from "./SubjectDrawer";
-import SubjectDrawerAi from "./ai/SubjectDrawerAi";
-import { AnnouncementsSection } from "./AnnouncementsSection";
+import AppShell from "@/components/layout/AppShell";
+import SplashScreen from "@/components/layout/SplashScreen";
+import AnniversaryBanner from "./AnniversaryBanner";
 import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
+import { AnnouncementsSection } from "./AnnouncementsSection";
 import Footer from "./Footer";
-import dinoLogo from "@/assets/dinosaurWhite.png";
 
-type TabType = "subjects" | "ai_subjects" | "attendance" | "sgpa" | "announcements" | "support";
+import {
+  BookOpen, Library, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
+  CalendarDays, Megaphone, Globe, Package, Sparkles, GraduationCap, Briefcase, Bot,
+} from "lucide-react";
 
-const smartSearch = (subjectName: string, query: string) => {
-  const name = subjectName.toLowerCase();
-  const q = query.toLowerCase().trim();
-  if (!q) return true;
-  if (name.includes(q)) return true;
-  if (name.replace(/\s+/g, '').includes(q.replace(/\s+/g, ''))) return true;
-  const acronym = name.split(/[\s_.-]+/).map(w => w[0]).join('');
-  if (acronym.includes(q)) return true;
-  const aliases: Record<string, string[]> = {
-    "ai": ["artificial intelligence"], "ml": ["machine learning"], "dl": ["deep learning"],
-    "os": ["operating system", "operating systems"], "cn": ["computer network", "computer networks"],
-    "dbms": ["database", "database management"], "cd": ["compiler design"],
-    "se": ["software engineering"], "oops": ["object oriented"], "dsa": ["data structures"],
-  };
-  if (aliases[q] && aliases[q].some(alias => name.includes(alias))) return true;
-  return false;
-};
+type ToolView = null | "sgpa" | "attendance" | "announcements";
+
+interface Banner {
+  key: string;
+  overline: string;
+  title: string;
+  desc: string;
+  cta: string;
+  accent: string; // subtle accent hue (icon + faint glow); card body stays neutral
+  icon: any;
+  onClick: () => void;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { isContributor, userId, role, isLoading: roleLoading } = useUserRole();
-  const [profile, setProfile] = useState<{ department: string; semester: string } | null>(null);
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<any | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isAddSubjectDialogOpen, setIsAddSubjectDialogOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>("subjects");
+  const { role } = useUserRole();
+  const { addSubject, addCombo, isInCart } = useCart();
+  const { isOn } = useFeatureFlags();
 
-  const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
-  const [aiDrawerTarget, setAiDrawerTarget] = useState<{
-    subjectId: string;
-    subjectName: string;
-    initialUnit: number;
-  } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; department: string; semester: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const contentAreaRef = useRef<HTMLDivElement>(null);
+  const [subjects, setSubjects] = useState<SubjectRow[]>([]);
+  const [years, setYears] = useState<YearRow[]>([]);
+  const [ownedSubjectIds, setOwnedSubjectIds] = useState<Set<string>>(new Set());
+  const [ownedYearIds, setOwnedYearIds] = useState<Set<string>>(new Set());
+  const [tool, setTool] = useState<ToolView>(null);
 
-  useEffect(() => { checkAuth(); }, []);
-  useEffect(() => { if (profile) { loadSubjects(); } }, [profile]);
+  const checkAuthAndLoad = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return navigate("/auth");
 
-  const handleTabClick = (tabId: TabType) => {
-    setActiveTab(tabId);
-    setTimeout(() => contentAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-  };
+    const { data: p } = await tbl("profiles")
+      .select("department, semester, username, full_name, email")
+      .eq("id", session.user.id)
+      .single();
 
-  
+    if (!p || !p.department || !p.semester) return navigate("/setup");
 
-  const checkAuth = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) return navigate("/auth");
+    const name = p.full_name || p.username || (p.email ? p.email.split("@")[0] : "there");
+    setProfile({ name, department: p.department, semester: p.semester });
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("department, semester")
-        .eq("id", session.user.id)
-        .single();
+    const [subjRes, yearRes, sa, ya] = await Promise.all([
+      tbl("subjects").select("*").eq("active", true).order("order_index", { ascending: true }),
+      tbl("years").select("*").eq("active", true).order("order_index", { ascending: true }),
+      tbl("user_subject_access").select("subject_id").eq("user_id", session.user.id).is("revoked_at", null),
+      tbl("user_year_access").select("year_id").eq("user_id", session.user.id).is("revoked_at", null),
+    ]);
 
-      if (profileError || !profileData) return navigate("/auth");
-      if (!profileData.department || !profileData.semester) return navigate("/setup");
+    setSubjects((subjRes.data ?? []) as SubjectRow[]);
+    setYears((yearRes.data ?? []) as YearRow[]);
+    setOwnedSubjectIds(new Set((sa.data ?? []).map((r: any) => r.subject_id)));
+    setOwnedYearIds(new Set((ya.data ?? []).map((r: any) => r.year_id)));
+    setLoading(false);
+  }, [navigate]);
 
-      setProfile({
-        department: profileData.department,
-        semester: profileData.semester,
-      });
+  useEffect(() => { checkAuthAndLoad(); }, [checkAuthAndLoad]);
 
-      setIsLoading(false);
-    } catch (err) {
-      navigate("/auth");
-    }
-  };
+  const isOwned = (s: SubjectRow) =>
+    ownedSubjectIds.has(s.id) || (s.year_id ? ownedYearIds.has(s.year_id) : false);
 
-  const loadSubjects = async () => {
-    if (!profile) return;
-    const { data } = await supabase
-      .from("subjects")
-      .select("*")
-      .eq("department", profile.department)
-      .eq("semester", profile.semester)
-      .order("order_index", { ascending: true });
-    setSubjects(data || []);
-  };
+  const owned = subjects.filter(isOwned);
+  const available = subjects.filter((s) => !isOwned(s));
+  const yearName = (id: string | null) => years.find((y) => y.id === id)?.name;
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
+  if (loading) return <SplashScreen />;
 
-  const handleOpenAiDrawer = (subjectId: string, subjectName: string, unit: number) => {
-    setAiDrawerTarget({ subjectId, subjectName, initialUnit: unit });
-    setIsAiDrawerOpen(true);
-  };
-
-  if (isLoading || roleLoading) {
+  // ── Tool view (SGPA / Attendance / Announcements) ──
+  if (tool) {
+    const meta = {
+      sgpa: { title: "SGPA Calculator", sub: "Estimate your semester grades." },
+      attendance: { title: "Attendance Calculator", sub: "Plan how many classes you need." },
+      announcements: { title: "Announcements", sub: "Latest updates from the team." },
+    }[tool];
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-3xl bg-zinc-900 flex items-center justify-center shadow-2xl mx-auto animate-pulse border border-white/10">
-            <img src={dinoLogo} alt="Loading" className="w-10 h-10 opacity-50" />
-          </div>
-          <p className="text-zinc-500 font-medium tracking-wide">Loading workspace...</p>
+      <AppShell>
+        <button onClick={() => setTool(null)} className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white mb-5">
+          <ArrowLeft className="w-4 h-4" /> Back to dashboard
+        </button>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">{meta.title}</h1>
+          <p className="text-zinc-400 mt-1">{meta.sub}</p>
         </div>
-      </div>
+        <div className="td-surface rounded-[32px] p-6 max-w-4xl">
+          {tool === "sgpa" && <SGPACalculator />}
+          {tool === "attendance" && <AttendanceCalculator />}
+          {tool === "announcements" && <AnnouncementsSection isAdmin={role === "admin"} />}
+        </div>
+      </AppShell>
     );
   }
 
-  const filteredSubjects = subjects.filter((s) => {
-    const matchesSearch = smartSearch(s.name, searchQuery);
-    const hasAiContent = !!getAiSubject(s.name);
-    return activeTab === "ai_subjects" ? matchesSearch && hasAiContent : matchesSearch;
-  });
+  const banners: Banner[] = [
+    { key: "library", overline: "Learning", title: "My Subjects", desc: "Open the subjects you own.", cta: "Go to Library",
+      accent: "#7c6cf0", icon: BookOpen, onClick: () => navigate("/library") },
+    { key: "store", overline: "Marketplace", title: "Store", desc: "Unlock subjects & year combos.", cta: "Browse Store",
+      accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
+    ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
+      accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
+    ...(isOn("agent") ? [{ key: "agent", overline: "Assistant", title: "Agent Fury", desc: "Create your agents — e.g. email fetch & summarizer.", cta: "Launch",
+      accent: "#7c6cf0", icon: Bot, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
+    { key: "sgpa", overline: "Performance", title: "SGPA Calc", desc: "Estimate your semester grades.", cta: "Open Calculator",
+      accent: "#e879a6", icon: Calculator, onClick: () => navigate("/sgpa-calc") },
+    { key: "attendance", overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", cta: "Check Attendance",
+      accent: "#34d399", icon: CalendarDays, onClick: () => navigate("/attendance-calc") },
+    { key: "announcements", overline: "Updates", title: "Announcements", desc: "Latest campus updates.", cta: "View Updates",
+      accent: "#f5b042", icon: Megaphone, onClick: () => setTool("announcements") },
+    { key: "foliofyx", overline: "Create your website", title: "FolioFYX", desc: "Build a standout portfolio.", cta: "Create Now Free",
+      accent: "#f472b6", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-white/20 flex flex-col">
-      <DashboardHeader
-        profile={profile}
-        activeTab={activeTab}
-        handleTabClick={handleTabClick}
-        handleSignOut={handleSignOut}
-      />
+    <AppShell>
+      {/* ── 1st anniversary ── */}
+      <AnniversaryBanner className="mb-6" />
 
-      <main className="container mx-auto px-4 py-8 space-y-12 flex-1">
-        <DashboardNav activeTab={activeTab} handleTabClick={handleTabClick} />
+      {/* ── Welcome hero — inverted B&W card (white in dark / black in light) ── */}
+      <section className="td-banner-bw rounded-[28px] p-7 sm:p-10 mb-7 relative overflow-hidden">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="min-w-0">
+            <span className="td-bw-chip inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold mb-3">
+              <GraduationCap className="w-3.5 h-3.5" /> {profile?.department} · {profile?.semester}
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
+              Hey {profile?.name},
+            </h1>
+            <p className="td-bw-soft mt-2 max-w-md leading-relaxed">
+              {owned.length > 0
+                ? "Pick up where you left off, or unlock more subjects."
+                : "Unlock your first subject to access notes, PYQs and Study-With-AI."}
+            </p>
 
-        <div
-          ref={contentAreaRef}
-          className="bg-[#121214] border border-white/5 rounded-[40px] p-6 sm:p-10 min-h-[500px] scroll-mt-24 transition-all duration-500 animate-in slide-in-from-bottom-12 shadow-2xl relative overflow-hidden"
-        >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
-          {(activeTab === "subjects" || activeTab === "ai_subjects") && (
-            <SubjectGrid
-              activeTab={activeTab}
-              isContributor={isContributor}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              filteredSubjects={filteredSubjects}
-              setIsAddSubjectDialogOpen={setIsAddSubjectDialogOpen}
-              setIsUploadDialogOpen={setIsUploadDialogOpen}
-              handleSubjectClick={(sub) => { setSelectedSubject(sub); setIsDrawerOpen(true); }}
-            />
-          )}
-
-          {activeTab === "attendance" && (
-            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white">Attendance Calculator</h2>
-                <p className="text-zinc-400 mt-2">Only for 2nd/3rd Year Students.</p>
-              </div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
-                <AttendanceCalculator />
-              </div>
+            {/* inline stats */}
+            <div className="flex flex-wrap items-center gap-2 mt-5">
+              <span className="td-bw-pill rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" /> {owned.length} unlocked
+              </span>
+              <span className="td-bw-pill rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" /> {ownedYearIds.size} combo{ownedYearIds.size === 1 ? "" : "s"}
+              </span>
+              <span className="td-bw-pill rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
+                <Store className="w-3.5 h-3.5" /> {available.length} available
+              </span>
+              <span className="td-bw-pill td-bw-soft rounded-full px-3 py-1.5 text-xs font-medium">
+                7 sections / subject
+              </span>
             </div>
-          )}
+          </div>
 
-          {activeTab === "sgpa" && (
-            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white">SGPA Calculator</h2>
-                <p className="text-zinc-400 mt-2">Estimate semester grades.</p>
-              </div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
-                <SGPACalculator />
-              </div>
-            </div>
-          )}
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => navigate("/store")} className="td-bw-chip px-5 py-3 rounded-full text-sm font-semibold flex items-center gap-1.5 hover:scale-[1.02] transition-transform">
+              <Store className="w-4 h-4" /> Browse Store
+            </button>
+            {owned.length > 0 && (
+              <button onClick={() => navigate("/library")} className="td-bw-pill px-5 py-3 rounded-full text-sm font-medium flex items-center gap-1.5">
+                <Library className="w-4 h-4" /> Library
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
 
-          {activeTab === "announcements" && (
-            <div className="animate-in fade-in duration-500 max-w-4xl mx-auto">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white">Announcements</h2>
-                <p className="text-zinc-400 mt-2">Latest updates.</p>
+      {/* ── Quick access ── */}
+      <div className="flex items-baseline justify-between mb-3 px-0.5">
+        <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
+        <span className="text-[11px] text-zinc-600 hidden sm:block">swipe →</span>
+      </div>
+      {/* ── Banner cards ── */}
+      <div className="flex gap-4 overflow-x-auto pt-3 pb-5 pl-2 -mr-4 pr-4 mb-9 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
+        {banners.map((b) => (
+          <button
+            key={b.key}
+            onClick={b.onClick}
+            className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[280px] h-[300px] sm:h-[340px] rounded-[28px] p-6 flex flex-col justify-between text-left"
+          >
+            <div className="relative z-10">
+              {/* chip inverts against the card */}
+              <div className="td-bw-chip w-11 h-11 rounded-2xl flex items-center justify-center mb-5">
+                <b.icon className="w-5 h-5" strokeWidth={1.7} />
               </div>
-              <div className="bg-[#09090b] rounded-[32px] p-6 border border-white/5">
-                <AnnouncementsSection isAdmin={role === "admin"} />
-              </div>
+              <p className="td-bw-soft text-[10px] font-semibold tracking-[0.22em] uppercase mb-2">{b.overline}</p>
+              <h3 className="text-[22px] font-semibold leading-tight tracking-tight">{b.title}</h3>
+              <p className="td-bw-soft text-sm mt-2 leading-relaxed">{b.desc}</p>
             </div>
+
+            <div className="relative z-10 td-banner-cta inline-flex items-center gap-2 text-sm font-semibold">
+              {b.cta} <span className="td-bw-chip w-7 h-7 rounded-full flex items-center justify-center"><ArrowRight className="w-3.5 h-3.5" /></span>
+            </div>
+
+            <b.icon className="td-banner-icon absolute -bottom-6 -right-5 w-36 h-36" style={{ opacity: 0.05 }} strokeWidth={1} />
+          </button>
+        ))}
+      </div>
+
+      {/* ── My Library ── */}
+      <section className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2"><Library className="w-5 h-5 td-accent-text" /> My Library</h2>
+          {owned.length > 0 && (
+            <button onClick={() => navigate("/library")} className="text-sm text-zinc-400 hover:text-white flex items-center gap-1">
+              View all <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
-      </main>
+
+        {owned.length === 0 ? (
+          <div className="td-surface rounded-[28px] p-8 sm:p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl td-surface-2 flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-6 h-6 text-zinc-400" />
+            </div>
+            <h3 className="text-white font-semibold text-lg">No subjects unlocked yet</h3>
+            <p className="text-zinc-500 text-sm mt-1 max-w-sm mx-auto">
+              Each subject includes a syllabus, 5 units of notes &amp; Study-With-AI, and previous year questions.
+            </p>
+            <button onClick={() => navigate("/store")} className="td-btn-primary px-6 py-3 text-sm mt-5 inline-flex items-center gap-2">
+              Explore the Store <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {owned.slice(0, 8).map((s) => (
+              <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="td-surface td-card-click rounded-2xl p-5 text-left">
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-2xl td-surface-2 flex items-center justify-center mb-3"><BookOpen className="w-4.5 h-4.5 text-zinc-300" /></div>
+                  <ArrowUpRight className="td-go w-4 h-4" />
+                </div>
+                <h3 className="text-white font-semibold leading-snug line-clamp-2">{s.name}</h3>
+                <p className="text-zinc-600 text-xs mt-1.5">{yearName(s.year_id) ?? "Subject"} · 5 units</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Unlock more ── */}
+      {available.length > 0 && (
+        <section className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2"><Sparkles className="w-5 h-5 td-accent-text" /> Unlock more</h2>
+            <button onClick={() => navigate("/store")} className="text-sm text-zinc-400 hover:text-white flex items-center gap-1">
+              Full store <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {years.filter((y) => !ownedYearIds.has(y.id) && subjects.some((s) => s.year_id === y.id)).slice(0, 1).map((y) => (
+            <div key={y.id} className="td-hero rounded-3xl p-5 sm:p-6 mb-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl td-surface-2 flex items-center justify-center"><Package className="w-5 h-5 td-accent-text" /></div>
+                <div>
+                  <p className="text-white font-semibold">{y.name} — Complete Access</p>
+                  <p className="text-zinc-400 text-sm">Unlock every {y.name} subject at once.</p>
+                </div>
+              </div>
+              <div className="relative z-10 flex items-center gap-3">
+                <span className="text-white font-bold text-lg">{formatPaise(y.combo_price_paise)}</span>
+                {isInCart("combo", y.id) ? (
+                  <button onClick={() => navigate("/cart")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Check className="w-4 h-4" /> In cart</button>
+                ) : (
+                  <button onClick={() => addCombo(y.id, y.name)} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Plus className="w-4 h-4" /> Add combo</button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {available.slice(0, 8).map((s) => {
+              const inCart = isInCart("subject", s.id);
+              return (
+                <div key={s.id} className="td-surface rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div className="w-10 h-10 rounded-2xl td-surface-2 flex items-center justify-center mb-3"><BookOpen className="w-4.5 h-4.5 text-zinc-300" /></div>
+                      <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
+                    </div>
+                    <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="block text-left">
+                      <h3 className="text-white font-semibold leading-snug line-clamp-2 hover:underline">{s.name}</h3>
+                    </button>
+                    <p className="text-zinc-600 text-xs mt-1">{yearName(s.year_id) ?? "Subject"} · 5 units</p>
+                  </div>
+                  <div className="mt-4">
+                    {inCart ? (
+                      <button onClick={() => navigate("/cart")} className="w-full td-btn-ghost py-2.5 text-[13px] flex items-center justify-center gap-1.5"><Check className="w-3.5 h-3.5" /> In cart</button>
+                    ) : (
+                      <button onClick={() => addSubject(s.id, s.name)} className="w-full td-btn-primary py-2.5 text-[13px] flex items-center justify-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add to cart</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <Footer />
-
-      {selectedSubject && activeTab === "subjects" && (
-        <SubjectDrawer
-          open={isDrawerOpen}
-          onOpenChange={setIsDrawerOpen}
-          subjectId={selectedSubject.id}
-          subjectName={selectedSubject.name}
-          subjectPrice={Math.floor((selectedSubject.price_paise ?? 2900) / 100)}
-          userRole={role}
-          userId={userId}
-          onOpenAiDrawer={handleOpenAiDrawer}
-        />
-      )}
-
-      {selectedSubject && activeTab === "ai_subjects" && (
-        <SubjectDrawerAi
-          open={isDrawerOpen}
-          onOpenChange={setIsDrawerOpen}
-          subjectId={selectedSubject.id}
-          subjectName={selectedSubject.name}
-          userRole={role}
-          userId={userId}
-        />
-      )}
-
-      {aiDrawerTarget && (
-        <SubjectDrawerAi
-          open={isAiDrawerOpen}
-          onOpenChange={setIsAiDrawerOpen}
-          subjectId={aiDrawerTarget.subjectId}
-          subjectName={aiDrawerTarget.subjectName}
-          userRole={role}
-          userId={userId}
-        />
-      )}
-
-      {isContributor && subjects.length > 0 && (
-        <UploadResourceDialog
-          open={isUploadDialogOpen}
-          onOpenChange={setIsUploadDialogOpen}
-          subjects={subjects}
-          onResourceUploaded={() => setIsUploadDialogOpen(false)}
-        />
-      )}
-
-      {isContributor && profile && (
-        <AddSubjectDialog
-          open={isAddSubjectDialogOpen}
-          onOpenChange={setIsAddSubjectDialogOpen}
-          currentDepartment={profile.department}
-          currentSemester={profile.semester}
-          onSubjectAdded={loadSubjects}
-        />
-      )}
-    </div>
+    </AppShell>
   );
 }
