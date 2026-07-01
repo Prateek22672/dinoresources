@@ -5,6 +5,7 @@ import { tbl, SubjectRow } from "@/integrations/supabase/revamp";
 import { useAccess } from "@/hooks/useAccess";
 import { useCart } from "@/context/CartContext";
 import { formatPaise } from "@/lib/money";
+import { setRecentSubject } from "@/lib/recent";
 import AppShell from "@/components/layout/AppShell";
 import UnitView from "@/components/subject/UnitView";
 import {
@@ -36,7 +37,9 @@ export default function SubjectPage() {
       const byId = await tbl("subjects").select("*").eq("id", slug).maybeSingle();
       data = byId.data;
     }
-    setSubject((data as SubjectRow) ?? null);
+    const s = (data as SubjectRow) ?? null;
+    setSubject(s);
+    if (s) setRecentSubject(s.slug ?? String(s.id), s.name);
     setLoading(false);
   }, [slug]);
 

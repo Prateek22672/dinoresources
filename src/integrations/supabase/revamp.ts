@@ -194,6 +194,29 @@ export const ticketCategoryLabel = (value: string) =>
 // deno-lint-ignore no-explicit-any
 export const tbl = (name: string) => (supabase as any).from(name);
 
+/**
+ * Whether the access tables have the `expires_at` column (i.e. the purchase-validity
+ * migration has been applied). Probed once and cached, so the app keeps working even
+ * if the frontend ships before that migration is run.
+ */
+let _expiryProbe: Promise<boolean> | null = null;
+export function accessSupportsExpiry(): Promise<boolean> {
+  if (!_expiryProbe) {
+    _expiryProbe = tbl("user_subject_access").select("expires_at").limit(1)
+      // deno-lint-ignore no-explicit-any
+      .then((r: any) => !r.error)
+      .catch(() => false);
+  }
+  return _expiryProbe;
+}
+
+/** PostgREST `.or(...)` filter that excludes expired access rows, or `null` when the
+ *  column doesn't exist yet (caller should then skip the filter). */
+export async function notExpiredFilter(): Promise<string | null> {
+  const ok = await accessSupportsExpiry();
+  return ok ? `expires_at.is.null,expires_at.gt.${new Date().toISOString()}` : null;
+}
+
 /** Invoke a revamp edge function (forwards the user's JWT automatically). */
 export async function invokeFn<T = unknown>(
   name: string,

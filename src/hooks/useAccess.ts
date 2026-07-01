@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { tbl } from "@/integrations/supabase/revamp";
+import { tbl, notExpiredFilter } from "@/integrations/supabase/revamp";
 
 /**
  * Whether the current user can access a subject:
@@ -24,11 +24,14 @@ export function useAccess(subjectId: string | null, yearId?: string | null) {
 
       if (!subjectId) { setHasAccess(false); return; }
 
+      const notExpired = await notExpiredFilter();
+
       // Direct subject access
-      const { data: subj } = await tbl("user_subject_access")
+      let subjQ = tbl("user_subject_access")
         .select("id")
-        .eq("user_id", user.id).eq("subject_id", subjectId).is("revoked_at", null)
-        .maybeSingle();
+        .eq("user_id", user.id).eq("subject_id", subjectId).is("revoked_at", null);
+      if (notExpired) subjQ = subjQ.or(notExpired);
+      const { data: subj } = await subjQ.maybeSingle();
       if (subj) { setHasAccess(true); return; }
 
       // Year-combo access — resolve the subject's year if not provided
@@ -38,10 +41,11 @@ export function useAccess(subjectId: string | null, yearId?: string | null) {
         yId = s?.year_id ?? null;
       }
       if (yId) {
-        const { data: yr } = await tbl("user_year_access")
+        let yrQ = tbl("user_year_access")
           .select("id")
-          .eq("user_id", user.id).eq("year_id", yId).is("revoked_at", null)
-          .maybeSingle();
+          .eq("user_id", user.id).eq("year_id", yId).is("revoked_at", null);
+        if (notExpired) yrQ = yrQ.or(notExpired);
+        const { data: yr } = await yrQ.maybeSingle();
         if (yr) { setHasAccess(true); return; }
       }
 

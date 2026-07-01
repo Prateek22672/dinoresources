@@ -17,7 +17,7 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
 
   const busy = ["creating_order", "checkout_open", "verifying"].includes(state);
 
-  const start = useCallback(async (couponCode?: string) => {
+  const start = useCallback(async (couponCode?: string, chargeIds?: string[]) => {
     setError(null);
     try {
       await ensureRazorpaySDK();
@@ -31,9 +31,12 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
     if (!session) { toast.error("Please log in to continue."); return; }
 
     setState("creating_order");
+    const orderBody: Record<string, unknown> = {};
+    if (couponCode) orderBody.coupon_code = couponCode;
+    if (chargeIds && chargeIds.length) orderBody.charge_ids = chargeIds;
     const { data, error: orderErr } = await invokeFn<{
       order_id: string; key_id: string; amount: number; currency: string;
-    }>("create-cart-order", couponCode ? { coupon_code: couponCode } : undefined);
+    }>("create-cart-order", Object.keys(orderBody).length ? orderBody : undefined);
 
     if (orderErr || !data?.order_id) {
       setState("failed");
@@ -52,7 +55,7 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
         currency: data.currency ?? "INR",
         name: "Team Dino",
         description: "TeamDino purchase",
-        theme: { color: "#7c6cf0" },
+        theme: { color: getComputedStyle(document.documentElement).getPropertyValue("--td-accent").trim() || "#7c6cf0" },
         handler: async (response: any) => {
           restore();
           setState("verifying");

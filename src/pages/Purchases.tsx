@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl, OrderRow, OrderItemRow } from "@/integrations/supabase/revamp";
 import { formatPaise } from "@/lib/money";
 import AppShell from "@/components/layout/AppShell";
-import { Receipt, BookOpen, Package, CheckCircle2, XCircle, Clock, RotateCcw } from "lucide-react";
+import PageHero from "@/components/layout/PageHero";
+import { Receipt, BookOpen, Package, CheckCircle2, XCircle, Clock, RotateCcw, IndianRupee } from "lucide-react";
 
 interface OrderWithItems extends OrderRow { items: OrderItemRow[] }
 
@@ -42,11 +43,21 @@ export default function Purchases() {
 
   useEffect(() => { load(); }, [load]);
 
+  const paidOrders = orders.filter((o) => o.status === "paid");
+  const totalSpent = paidOrders.reduce((sum, o) => sum + o.amount_paise, 0);
+
   return (
     <AppShell>
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5 mb-8">
-        <Receipt className="w-6 h-6 td-accent-text" /> Purchase History
-      </h1>
+      <PageHero
+        eyebrow="Billing"
+        eyebrowIcon={Receipt}
+        title="Purchase History"
+        subtitle="Every order, payment and unlock — in one clear record."
+        stats={[
+          { label: "Total spent", value: formatPaise(totalSpent), icon: IndianRupee },
+          { label: "Orders", value: paidOrders.length, icon: Package },
+        ]}
+      />
 
       {loading ? (
         <div className="space-y-3">

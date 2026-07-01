@@ -1,15 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { tbl } from "@/integrations/supabase/revamp";
 import { useCart } from "@/context/CartContext";
 import { useCheckout } from "@/hooks/useCheckout";
 import { formatPaise } from "@/lib/money";
 import AppShell from "@/components/layout/AppShell";
 import {
-  ShoppingCart, Trash2, BookOpen, Package, ArrowRight, RefreshCw, AlertCircle, Tag, Check, X,
+  ShoppingCart, Trash2, BookOpen, Package, ArrowRight, RefreshCw, AlertCircle, Tag, Check, X, Lock,
 } from "lucide-react";
 
 interface Applied { code: string; discount: number; }
+interface ChargeRow {
+  id: string; label: string; description: string | null;
+  kind: "percent" | "fixed"; amount: number; mandatory: boolean; default_selected: boolean;
+}
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -20,8 +25,38 @@ export default function Cart() {
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
+  const [charges, setCharges] = useState<ChargeRow[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [validityDays, setValidityDays] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data }, { data: settings }] = await Promise.all([
+        tbl("cart_charges").select("*").eq("active", true).order("order_index", { ascending: true }),
+        tbl("app_settings").select("purchase_validity_days").maybeSingle(),
+      ]);
+      const rows = (data ?? []) as ChargeRow[];
+      setCharges(rows);
+      setSelected(new Set(rows.filter((r) => !r.mandatory && r.default_selected).map((r) => r.id)));
+      setValidityDays(Number((settings as any)?.purchase_validity_days ?? 0));
+    })();
+  }, []);
+
+  const toggleCharge = (id: string) =>
+    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const chargeAmount = (c: ChargeRow, base: number) =>
+    c.kind === "percent" ? Math.round((base * c.amount) / 100) : Math.round(c.amount);
+
   const discount = applied?.discount ?? 0;
-  const finalTotal = Math.max(0, totalPaise - discount);
+  const taxable = Math.max(0, totalPaise - discount);
+  const appliedCharges = charges
+    .filter((c) => c.mandatory || selected.has(c.id))
+    .map((c) => ({ ...c, amt: chargeAmount(c, taxable) }))
+    .filter((c) => c.amt > 0);
+  const chargesTotal = appliedCharges.reduce((s, c) => s + c.amt, 0);
+  const optionalCharges = charges.filter((c) => !c.mandatory);
+  const finalTotal = taxable + chargesTotal;
 
   const { state, error, busy, start } = useCheckout(async () => {
     await refresh();
@@ -84,25 +119,27 @@ export default function Cart() {
           {/* Line items */}
           <div className="lg:col-span-2 space-y-3">
             {items.map((item) => (
-              <div key={item.id} className="td-surface rounded-2xl p-4 flex items-center gap-4 td-in">
-                <div className="w-11 h-11 rounded-xl td-surface-2 flex items-center justify-center shrink-0">
+              <div key={item.id} className="td-surface rounded-2xl p-3.5 sm:p-4 flex items-center gap-3 sm:gap-4 td-in">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl td-surface-2 flex items-center justify-center shrink-0">
                   {item.item_type === "combo" ? <Package className="w-5 h-5 td-accent-text" /> : <BookOpen className="w-5 h-5 text-zinc-300" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white font-medium truncate">{item.label}</p>
-                  <p className="text-zinc-500 text-xs capitalize">{item.item_type === "combo" ? "Year combo" : "Single subject"}</p>
+                  <p className="text-white font-medium leading-snug line-clamp-2 break-words">{item.label}</p>
+                  <p className="text-zinc-500 text-xs capitalize mt-0.5">{item.item_type === "combo" ? "Year combo" : "Single subject"}</p>
                 </div>
-                <span className="text-white font-bold">{formatPaise(item.price_paise)}</span>
-                <button onClick={() => remove(item.id)} className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Remove">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <span className="text-white font-bold text-sm sm:text-base whitespace-nowrap">{formatPaise(item.price_paise)}</span>
+                  <button onClick={() => remove(item.id)} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Remove">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="td-surface rounded-3xl p-6 sticky top-24">
+            <div className="td-surface rounded-3xl p-5 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-white font-semibold mb-4">Order summary</h2>
 
               {/* Coupon */}
@@ -138,6 +175,30 @@ export default function Cart() {
                 )}
               </div>
 
+              {/* Optional charges (donation / support) — toggleable */}
+              {optionalCharges.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {optionalCharges.map((c) => {
+                    const on = selected.has(c.id);
+                    return (
+                      <button
+                        key={c.id} type="button" onClick={() => toggleCharge(c.id)}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left border transition-colors ${on ? "border-white/15 bg-white/[0.06]" : "border-white/[0.08] hover:border-white/20"}`}
+                      >
+                        <span className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border ${on ? "td-accent-solid border-transparent text-white" : "border-white/25"}`}>
+                          {on && <Check className="w-3 h-3" strokeWidth={3} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="text-white text-sm font-medium block truncate">{c.label}</span>
+                          {c.description && <span className="text-zinc-500 text-xs block truncate">{c.description}</span>}
+                        </span>
+                        <span className="text-sm text-zinc-300 shrink-0">{formatPaise(chargeAmount(c, taxable))}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-zinc-400">
                   <span>Items ({items.length})</span>
@@ -149,6 +210,15 @@ export default function Cart() {
                     <span>− {formatPaise(discount)}</span>
                   </div>
                 )}
+                {appliedCharges.map((c) => (
+                  <div key={c.id} className="flex justify-between text-zinc-400">
+                    <span className="flex items-center gap-1.5">
+                      {c.mandatory && <Lock className="w-3 h-3 text-zinc-500" />}
+                      {c.label}{c.kind === "percent" ? ` (${c.amount}%)` : ""}
+                    </span>
+                    <span>+ {formatPaise(c.amt)}</span>
+                  </div>
+                ))}
                 <div className="h-px bg-white/8 my-3" />
                 <div className="flex justify-between text-white font-bold text-base">
                   <span>Total</span>
@@ -164,14 +234,16 @@ export default function Cart() {
               )}
 
               <button
-                onClick={() => start(applied?.code)}
+                onClick={() => start(applied?.code, [...selected])}
                 disabled={busy || state === "success"}
                 className="w-full td-btn-primary py-4 mt-5 flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {(state === "verifying" || state === "creating_order") && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {checkoutLabel[state]}
               </button>
-              <p className="text-center text-[11px] text-zinc-600 mt-3">Secure payment via Razorpay</p>
+              <p className="text-center text-[11px] text-zinc-500 mt-3">
+                {validityDays > 0 ? `Access valid for ${validityDays} days` : "Lifetime access"} · Secure payment via Razorpay
+              </p>
             </div>
           </div>
         </div>

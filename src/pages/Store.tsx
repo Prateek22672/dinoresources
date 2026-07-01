@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { tbl, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
+import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import { useCart } from "@/context/CartContext";
 import { formatPaise } from "@/lib/money";
 import AppShell from "@/components/layout/AppShell";
+import PageHero from "@/components/layout/PageHero";
 import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, Zap } from "lucide-react";
 
 interface YearGroup { year: YearRow; subjects: SubjectRow[] }
@@ -53,10 +54,11 @@ export default function Store() {
     const subjects = (subjRes.data ?? []) as SubjectRow[];
 
     if (user) {
-      const [sa, ya] = await Promise.all([
-        tbl("user_subject_access").select("subject_id").eq("user_id", user.id).is("revoked_at", null),
-        tbl("user_year_access").select("year_id").eq("user_id", user.id).is("revoked_at", null),
-      ]);
+      const notExpired = await notExpiredFilter();
+      let saQ = tbl("user_subject_access").select("subject_id").eq("user_id", user.id).is("revoked_at", null);
+      let yaQ = tbl("user_year_access").select("year_id").eq("user_id", user.id).is("revoked_at", null);
+      if (notExpired) { saQ = saQ.or(notExpired); yaQ = yaQ.or(notExpired); }
+      const [sa, ya] = await Promise.all([saQ, yaQ]);
       setOwnedSubjects(new Set((sa.data ?? []).map((r: any) => r.subject_id)));
       setOwnedYears(new Set((ya.data ?? []).map((r: any) => r.year_id)));
     }
@@ -100,23 +102,21 @@ export default function Store() {
     return groups.flatMap((g) => g.subjects).filter((s) => s.name.toLowerCase().includes(q)).slice(0, 6);
   }, [groups, query]);
 
+  const totalSubjectCount = groups.reduce((n, g) => n + g.subjects.length, 0);
+  const comboCount = groups.filter((g) => g.year.id !== "__none__" && g.year.combo_price_paise > 0).length;
+
   return (
     <AppShell>
-      {/* Hero */}
-      <section className="td-banner-bw rounded-[28px] p-7 sm:p-10 mb-7 td-in relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <span className="td-bw-chip inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold mb-4">
-            <Sparkles className="w-3 h-3" /> Store
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
-            Unlock exactly what you need.
-          </h1>
-          <p className="td-bw-soft mt-4 text-base sm:text-lg leading-relaxed">
-            Buy a single subject, or grab the full-year combo and save. One payment,
-            permanent access — notes, PYQs and Study-With-AI included.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Store"
+        eyebrowIcon={Sparkles}
+        title="Unlock exactly what you need."
+        subtitle="Buy a single subject, or grab the full-year combo and save. One payment, permanent access — notes, PYQs and Study-With-AI included."
+        stats={[
+          { label: "Subjects", value: totalSubjectCount, icon: BookOpen },
+          { label: "Year combos", value: comboCount, icon: Package },
+        ]}
+      />
 
       {/* Search */}
       <div className="relative mb-5 max-w-xl">

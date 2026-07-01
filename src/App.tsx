@@ -13,6 +13,7 @@ import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import SecurityGuard from "./components/layout/SecurityGuard";
 import LoginTracker from "./components/layout/LoginTracker";
+import SessionGuard from "./components/layout/SessionGuard";
 import Store from "./pages/Store";
 import Library from "./pages/Library";
 import Cart from "./pages/Cart";
@@ -65,6 +66,7 @@ const App = () => (
         <CartProvider>
           <SecurityGuard />
           <LoginTracker />
+          <SessionGuard />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Index />} />

@@ -51,7 +51,20 @@ All colors MUST be HSL.
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(214 32% 97%));
     --shadow-card: 0 4px 6px -1px hsl(217 91% 60% / 0.1), 0 2px 4px -1px hsl(217 91% 60% / 0.06);
     --shadow-hover: 0 10px 15px -3px hsl(217 91% 60% / 0.15), 0 4px 6px -2px hsl(217 91% 60% / 0.05);
+
+    /* TeamDino accent — swappable app-wide via [data-accent] (default: violet).
+       --td-accent = solid, --td-accent-soft = text-on-dark, --td-accent-strong = text-on-light,
+       --td-accent-rgb = space-separated triplet for rgb(... / alpha) usage. */
+    --td-accent: #7c6cf0;
+    --td-accent-soft: #a9a0f5;
+    --td-accent-strong: #6d5fe0;
+    --td-accent-rgb: 124 108 240;
   }
+
+  :root[data-accent="emerald"] { --td-accent:#10b981; --td-accent-soft:#6ee7b7; --td-accent-strong:#059669; --td-accent-rgb:16 185 129; }
+  :root[data-accent="blue"]    { --td-accent:#3b82f6; --td-accent-soft:#93b4ff; --td-accent-strong:#2563eb; --td-accent-rgb:59 130 246; }
+  :root[data-accent="amber"]   { --td-accent:#f59e0b; --td-accent-soft:#fcd34d; --td-accent-strong:#b7791f; --td-accent-rgb:245 158 11; }
+  :root[data-accent="rose"]    { --td-accent:#f43f5e; --td-accent-soft:#fda4b8; --td-accent-strong:#e11d48; --td-accent-rgb:244 63 94; }
 
   .dark {
     --background: 240 10% 4%;
@@ -145,9 +158,15 @@ All colors MUST be HSL.
     border: 1px solid rgba(255,255,255,0.08);
   }
 
-  /* The single restrained accent (soft violet). Use sparingly. */
-  .td-accent-text { color: #a9a0f5; }
-  .td-accent-ring { box-shadow: 0 0 0 3px rgba(124,108,240,0.18); }
+  /* The single restrained accent (swappable via --td-accent). Use sparingly. */
+  .td-accent-text { color: var(--td-accent-soft); }
+  .td-accent-ring { box-shadow: 0 0 0 3px rgb(var(--td-accent-rgb) / 0.18); }
+  .td-accent-bg   { background: rgb(var(--td-accent-rgb) / 0.16); color: var(--td-accent-soft); }
+  .td-accent-solid { background: var(--td-accent); }
+
+  /* Edge fades for horizontally scrollable strips (theme-aware, match base bg). */
+  .td-edge-l { background: linear-gradient(to right, #212121, transparent); }
+  .td-edge-r { background: linear-gradient(to left,  #212121, transparent); }
 
   /* Premium primary button: white-on-black, high contrast. */
   .td-btn-primary {
@@ -170,7 +189,7 @@ All colors MUST be HSL.
   .td-hero {
     position: relative; overflow: hidden;
     background:
-      radial-gradient(120% 140% at 15% 10%, rgba(124,108,240,0.16), transparent 45%),
+      radial-gradient(120% 140% at 15% 10%, rgb(var(--td-accent-rgb) / 0.18), transparent 45%),
       radial-gradient(120% 140% at 95% 0%, rgba(255,255,255,0.06), transparent 40%),
       linear-gradient(180deg, #0d0d10, #09090b);
     border: 1px solid rgba(255,255,255,0.08);
@@ -250,7 +269,9 @@ iframe[src*="razorpay"] {
   :root:not(.dark) .td-banner:hover {
     box-shadow: 0 28px 52px -26px rgba(0,0,0,0.30) !important;
   }
-  :root:not(.dark) .td-accent-text { color: #6d5fe0; }
+  :root:not(.dark) .td-accent-text { color: var(--td-accent-strong); }
+  :root:not(.dark) .td-edge-l { background: linear-gradient(to right, #f7f7f8, transparent); }
+  :root:not(.dark) .td-edge-r { background: linear-gradient(to left,  #f7f7f8, transparent); }
 
   :root:not(.dark) .td-btn-primary { background: #0d0d0d; color: #ffffff; }
   :root:not(.dark) .td-btn-primary:hover { background: #000; box-shadow: 0 10px 30px -12px rgba(0,0,0,0.35); }
@@ -260,7 +281,7 @@ iframe[src*="razorpay"] {
 
   :root:not(.dark) .td-hero {
     background:
-      radial-gradient(120% 140% at 15% 10%, rgba(124,108,240,0.12), transparent 45%),
+      radial-gradient(120% 140% at 15% 10%, rgb(var(--td-accent-rgb) / 0.14), transparent 45%),
       linear-gradient(180deg, #ffffff, #f3f3f5);
     border-color: rgba(0,0,0,0.08);
   }

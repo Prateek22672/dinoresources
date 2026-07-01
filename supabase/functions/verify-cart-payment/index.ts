@@ -40,6 +40,13 @@ Deno.serve(async (req) => {
       .eq("order_id", order.id);
     if (itemsErr) throw itemsErr;
 
+    // Global validity window (0 = lifetime). Applied to new purchases only.
+    const { data: settings } = await db.from("app_settings").select("purchase_validity_days").maybeSingle();
+    const validityDays = Number(settings?.purchase_validity_days ?? 0);
+    const expiresAt = validityDays > 0
+      ? new Date(Date.now() + validityDays * 86_400_000).toISOString()
+      : null;
+
     // Grant access. The active-row unique index is partial (revoked_at IS NULL),
     // so we check-then-insert rather than relying on upsert/onConflict.
     for (const i of items ?? []) {
@@ -52,7 +59,7 @@ Deno.serve(async (req) => {
         if (!existing) {
           await db.from("user_subject_access").insert({
             user_id: user.id, subject_id: i.subject_id, source: "purchase",
-            order_id: order.id, amount_paise: i.price_paise,
+            order_id: order.id, amount_paise: i.price_paise, expires_at: expiresAt,
           });
         }
       } else if (i.item_type === "combo" && i.year_id) {
@@ -64,7 +71,7 @@ Deno.serve(async (req) => {
         if (!existing) {
           await db.from("user_year_access").insert({
             user_id: user.id, year_id: i.year_id, source: "combo",
-            order_id: order.id, amount_paise: i.price_paise,
+            order_id: order.id, amount_paise: i.price_paise, expires_at: expiresAt,
           });
         }
       }

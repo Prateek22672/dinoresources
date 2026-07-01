@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { tbl, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
+import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
+import PageHero from "@/components/layout/PageHero";
 import { BookOpen, Library as LibraryIcon, ArrowRight, Package } from "lucide-react";
 
 export default function Library() {
@@ -15,14 +16,18 @@ export default function Library() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
+    const notExpired = await notExpiredFilter();
+
     // Years the user owns as a combo
-    const { data: ya } = await tbl("user_year_access")
-      .select("year_id").eq("user_id", user.id).is("revoked_at", null);
+    let yaQ = tbl("user_year_access").select("year_id").eq("user_id", user.id).is("revoked_at", null);
+    if (notExpired) yaQ = yaQ.or(notExpired);
+    const { data: ya } = await yaQ;
     const yearIds = (ya ?? []).map((r: any) => r.year_id);
 
     // Subjects owned directly
-    const { data: sa } = await tbl("user_subject_access")
-      .select("subject_id").eq("user_id", user.id).is("revoked_at", null);
+    let saQ = tbl("user_subject_access").select("subject_id").eq("user_id", user.id).is("revoked_at", null);
+    if (notExpired) saQ = saQ.or(notExpired);
+    const { data: sa } = await saQ;
     const directIds = (sa ?? []).map((r: any) => r.subject_id);
 
     const [allSubjRes, yearsRes] = await Promise.all([
@@ -45,17 +50,21 @@ export default function Library() {
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <LibraryIcon className="w-6 h-6 td-accent-text" /> My Library
-          </h1>
-          <p className="text-zinc-500 mt-1">Everything you own, in one place.</p>
-        </div>
-        <Link to="/store" className="td-btn-ghost px-4 py-2 text-sm flex items-center gap-1.5">
-          Browse store <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
+      <PageHero
+        eyebrow="My Library"
+        eyebrowIcon={LibraryIcon}
+        title="Everything you own, in one place."
+        subtitle="Open any subject to jump into notes, PYQs and Study-With-AI."
+        actions={
+          <Link to="/store" className="td-btn-ghost px-5 py-3 text-sm flex items-center gap-1.5">
+            Browse store <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        }
+        stats={[
+          { label: "Subjects owned", value: subjects.length, icon: BookOpen },
+          { label: "Year combos", value: comboYears.length, icon: Package },
+        ]}
+      />
 
       {comboYears.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">

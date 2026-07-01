@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { tbl, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
+import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import { useCart } from "@/context/CartContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { formatPaise } from "@/lib/money";
+import { getRecentSubject, bumpStreak, type RecentSubject } from "@/lib/recent";
 
 import AppShell from "@/components/layout/AppShell";
 import SplashScreen from "@/components/layout/SplashScreen";
@@ -18,6 +19,7 @@ import Footer from "./Footer";
 import {
   BookOpen, Library, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
   CalendarDays, Megaphone, Globe, Package, Sparkles, GraduationCap, Briefcase, Bot,
+  Play, Flame,
 } from "lucide-react";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
@@ -47,6 +49,10 @@ export default function Dashboard() {
   const [ownedSubjectIds, setOwnedSubjectIds] = useState<Set<string>>(new Set());
   const [ownedYearIds, setOwnedYearIds] = useState<Set<string>>(new Set());
   const [tool, setTool] = useState<ToolView>(null);
+  const [recent, setRecent] = useState<RecentSubject | null>(null);
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); }, []);
 
   const checkAuthAndLoad = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -62,11 +68,16 @@ export default function Dashboard() {
     const name = p.full_name || p.username || (p.email ? p.email.split("@")[0] : "there");
     setProfile({ name, department: p.department, semester: p.semester });
 
+    const notExpired = await notExpiredFilter();
+    let saQ = tbl("user_subject_access").select("subject_id").eq("user_id", session.user.id).is("revoked_at", null);
+    let yaQ = tbl("user_year_access").select("year_id").eq("user_id", session.user.id).is("revoked_at", null);
+    if (notExpired) { saQ = saQ.or(notExpired); yaQ = yaQ.or(notExpired); }
+
     const [subjRes, yearRes, sa, ya] = await Promise.all([
       tbl("subjects").select("*").eq("active", true).order("order_index", { ascending: true }),
       tbl("years").select("*").eq("active", true).order("order_index", { ascending: true }),
-      tbl("user_subject_access").select("subject_id").eq("user_id", session.user.id).is("revoked_at", null),
-      tbl("user_year_access").select("year_id").eq("user_id", session.user.id).is("revoked_at", null),
+      saQ,
+      yaQ,
     ]);
 
     setSubjects((subjRes.data ?? []) as SubjectRow[]);
@@ -84,6 +95,12 @@ export default function Dashboard() {
   const owned = subjects.filter(isOwned);
   const available = subjects.filter((s) => !isOwned(s));
   const yearName = (id: string | null) => years.find((y) => y.id === id)?.name;
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const pct = subjects.length ? Math.round((owned.length / subjects.length) * 100) : 0;
+  // only surface the resume card when the user actually owns that subject
+  const resume = recent && owned.some((s) => (s.slug ?? String(s.id)) === recent.slug) ? recent : null;
 
   if (loading) return <SplashScreen />;
 
@@ -136,48 +153,123 @@ export default function Dashboard() {
       {/* ── 1st anniversary ── */}
       <AnniversaryBanner className="mb-6" />
 
-      {/* ── Welcome hero — inverted B&W card (white in dark / black in light) ── */}
-      <section className="td-banner-bw rounded-[28px] p-7 sm:p-10 mb-7 relative overflow-hidden">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+      {/* ── Welcome hero — depth (radial glow + grain) with a live progress panel ── */}
+      <section className="td-hero td-in rounded-[28px] p-6 sm:p-9 mb-7">
+        <div className="relative z-10 grid lg:grid-cols-[1.4fr_.85fr] gap-7 lg:gap-10 items-center">
+          {/* Left — greeting, resume, actions */}
           <div className="min-w-0">
-            <span className="td-bw-chip inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold mb-3">
-              <GraduationCap className="w-3.5 h-3.5" /> {profile?.department} · {profile?.semester}
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-              Hey {profile?.name},
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="td-accent-text text-sm font-semibold">{greeting}</span>
+              <span className="text-base" aria-hidden>👋</span>
+              <span className="td-glass inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-zinc-400">
+                <GraduationCap className="w-3.5 h-3.5" /> {profile?.department} · {profile?.semester}
+              </span>
+            </div>
+
+            <h1 className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-tight leading-[1.05] text-white">
+              Hey {profile?.name}.
             </h1>
-            <p className="td-bw-soft mt-2 max-w-md leading-relaxed">
-              {owned.length > 0
-                ? "Pick up where you left off, or unlock more subjects."
-                : "Unlock your first subject to access notes, PYQs and Study-With-AI."}
+            <p className="text-zinc-400 mt-3 max-w-md leading-relaxed">
+              {resume
+                ? "Jump back into your last subject, or unlock something new."
+                : owned.length > 0
+                  ? "Your subjects are ready — pick one up and keep the streak alive."
+                  : "Unlock your first subject to access notes, PYQs and Study-With-AI."}
             </p>
 
-            {/* inline stats */}
-            <div className="flex flex-wrap items-center gap-2 mt-5">
-              <span className="td-bw-pill rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" /> {owned.length} unlocked
-              </span>
-              <span className="td-bw-pill rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5" /> {ownedYearIds.size} combo{ownedYearIds.size === 1 ? "" : "s"}
-              </span>
-              <span className="td-bw-pill rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5" /> {available.length} available
-              </span>
-              <span className="td-bw-pill td-bw-soft rounded-full px-3 py-1.5 text-xs font-medium">
-                7 sections / subject
-              </span>
+            {/* Resume card — the primary next-action */}
+            {resume && (
+              <button
+                onClick={() => navigate(`/subject/${resume.slug}`)}
+                className="group mt-6 w-full sm:max-w-md td-surface td-card-click rounded-2xl p-3.5 flex items-center gap-3 text-left"
+              >
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                  <Play className="w-5 h-5" fill="currentColor" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-zinc-500">Continue learning</p>
+                  <p className="text-white font-semibold truncate">{resume.name}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-2.5 mt-6">
+              {owned.length > 0 ? (
+                <button onClick={() => navigate("/library")} className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
+                  <Library className="w-4 h-4" /> {resume ? "My Library" : "Start learning"}
+                </button>
+              ) : (
+                <button onClick={() => navigate("/store")} className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
+                  <Store className="w-4 h-4" /> Browse Store
+                </button>
+              )}
+              {owned.length > 0 && (
+                <button onClick={() => navigate("/store")} className="td-btn-ghost px-5 py-3 text-sm flex items-center gap-1.5">
+                  <Store className="w-4 h-4" /> Browse Store
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex gap-2 shrink-0">
-            <button onClick={() => navigate("/store")} className="td-bw-chip px-5 py-3 rounded-full text-sm font-semibold flex items-center gap-1.5 hover:scale-[1.02] transition-transform">
-              <Store className="w-4 h-4" /> Browse Store
-            </button>
-            {owned.length > 0 && (
-              <button onClick={() => navigate("/library")} className="td-bw-pill px-5 py-3 rounded-full text-sm font-medium flex items-center gap-1.5">
-                <Library className="w-4 h-4" /> Library
+          {/* Right — live progress panel (fills the space, adds "alive" feel) */}
+          <div className="td-glass rounded-3xl p-5 sm:p-6">
+            <div className="flex items-center gap-5">
+              {/* progress ring */}
+              <div className="relative w-[120px] h-[120px] shrink-0">
+                <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgb(var(--td-accent-rgb) / 0.16)" strokeWidth="10" />
+                  <circle
+                    cx="60" cy="60" r="52" fill="none" stroke="url(#tdRing)" strokeWidth="10" strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 52}
+                    strokeDashoffset={2 * Math.PI * 52 * (1 - pct / 100)}
+                    style={{ transition: "stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)" }}
+                  />
+                  <defs>
+                    <linearGradient id="tdRing" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="var(--td-accent-soft)" />
+                      <stop offset="100%" stopColor="var(--td-accent)" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-extrabold text-white leading-none">{pct}%</span>
+                  <span className="text-[10px] text-zinc-500 mt-1">unlocked</span>
+                </div>
+              </div>
+              {/* stat tiles */}
+              <div className="flex-1 min-w-0 space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                    <Flame className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white font-bold leading-none">{streak} day{streak === 1 ? "" : "s"}</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Login streak</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl td-surface-2 flex items-center justify-center shrink-0 text-zinc-300">
+                    <BookOpen className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white font-bold leading-none">{owned.length} <span className="text-zinc-500 font-medium text-sm">/ {subjects.length}</span></p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Subjects owned</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* footer chips */}
+            <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/8">
+              <span className="td-surface-2 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" /> {ownedYearIds.size} combo{ownedYearIds.size === 1 ? "" : "s"}
+              </span>
+              <button onClick={() => navigate("/store")} className="td-surface-2 td-card-click rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                <Store className="w-3.5 h-3.5" /> {available.length} to unlock
               </button>
-            )}
+            </div>
           </div>
         </div>
       </section>
@@ -292,7 +384,10 @@ export default function Dashboard() {
                   <div>
                     <div className="flex items-start justify-between">
                       <div className="w-10 h-10 rounded-2xl td-surface-2 flex items-center justify-center mb-3"><BookOpen className="w-4.5 h-4.5 text-zinc-300" /></div>
-                      <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
+                      <div className="text-right leading-none">
+                        <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">Lifetime</p>
+                      </div>
                     </div>
                     <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="block text-left">
                       <h3 className="text-white font-semibold leading-snug line-clamp-2 hover:underline">{s.name}</h3>

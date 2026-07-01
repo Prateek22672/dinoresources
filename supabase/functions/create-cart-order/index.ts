@@ -59,17 +59,46 @@ Deno.serve(async (req) => {
     const subtotal = items.reduce((sum, i) => sum + i.price_paise, 0);
     if (subtotal <= 0) return jsonResponse({ error: "Invalid cart total" }, 400);
 
+    // Parse the request body once (coupon + selected optional charges).
+    const body = await req.json().catch(() => ({} as any));
+    const rawCoupon = body?.coupon_code;
+    const selectedChargeIds: string[] = Array.isArray(body?.charge_ids)
+      ? body.charge_ids.filter((x: unknown) => typeof x === "string")
+      : [];
+
     // 2b) Validate + apply coupon SERVER-SIDE (never trust a client discount)
     let couponCode: string | null = null;
     let discount = 0;
-    const rawCoupon = (await req.clone().json().catch(() => ({}))).coupon_code;
     if (rawCoupon && typeof rawCoupon === "string" && rawCoupon.trim()) {
       const { data: quote } = await db.rpc("coupon_quote", { _code: rawCoupon.trim(), _amount_paise: subtotal });
       const q = Array.isArray(quote) ? quote[0] : quote;
       if (q?.valid) { discount = Math.max(0, Math.min(subtotal, q.discount_paise ?? 0)); couponCode = rawCoupon.trim().toUpperCase(); }
     }
 
-    const total = Math.max(0, subtotal - discount);
+    const taxable = Math.max(0, subtotal - discount);
+
+    // 2c) Apply cart charges SERVER-SIDE. Mandatory charges are always added;
+    // optional ones only when the client selected them. Amounts recomputed here.
+    const { data: charges } = await db
+      .from("cart_charges")
+      .select("id, label, kind, amount, mandatory")
+      .eq("active", true)
+      .order("order_index", { ascending: true });
+
+    const chargeDetail: { id: string; label: string; amount_paise: number; kind: string }[] = [];
+    let chargesTotal = 0;
+    for (const ch of charges ?? []) {
+      const include = ch.mandatory === true || selectedChargeIds.includes(ch.id);
+      if (!include) continue;
+      const amt = ch.kind === "percent"
+        ? Math.max(0, Math.round((taxable * Number(ch.amount)) / 100))
+        : Math.max(0, Math.round(Number(ch.amount)));
+      if (amt <= 0) continue;
+      chargesTotal += amt;
+      chargeDetail.push({ id: ch.id, label: ch.label, amount_paise: amt, kind: ch.kind });
+    }
+
+    const total = taxable + chargesTotal;
     if (total <= 0) return jsonResponse({ error: "Order total must be greater than zero" }, 400);
 
     // 3) Create the Razorpay order for the DISCOUNTED amount
@@ -84,6 +113,8 @@ Deno.serve(async (req) => {
         amount_paise: total,
         discount_paise: discount,
         coupon_code: couponCode,
+        charges_paise: chargesTotal,
+        charges_detail: chargeDetail.length ? chargeDetail : null,
         currency: "INR",
         status: "created",
       })

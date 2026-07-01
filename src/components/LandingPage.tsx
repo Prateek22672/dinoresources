@@ -84,7 +84,7 @@ function TiltCard({ children, className = "" }: { children: React.ReactNode; cla
 
 /* ─── Stats strip data ──────────────────────────────────────── */
 const STATS = [
-  { value: 900, suffix: "+", label: "Active Students" },
+  { value: 1400, suffix: "+", label: "Active Students" },
   { value: 89,  suffix: "%", label: "Found it useful" },
   { value: 15,  suffix: "+", label: "Subjects covered" },
   { value: 2,   suffix: "AM", label: "We're still here" },
