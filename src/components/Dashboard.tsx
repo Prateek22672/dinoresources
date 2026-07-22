@@ -10,7 +10,6 @@ import { getRecentSubject, bumpStreak, type RecentSubject } from "@/lib/recent";
 
 import AppShell from "@/components/layout/AppShell";
 import SplashScreen from "@/components/layout/SplashScreen";
-import AnniversaryBanner from "./AnniversaryBanner";
 import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
 import { AnnouncementsSection } from "./AnnouncementsSection";
@@ -150,9 +149,6 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      {/* ── 1st anniversary ── */}
-      <AnniversaryBanner className="mb-6" />
-
       {/* ── Welcome hero — depth (radial glow + grain) with a live progress panel ── */}
       <section className="td-hero td-in rounded-[28px] p-6 sm:p-9 mb-7">
         <div className="relative z-10 grid lg:grid-cols-[1.4fr_.85fr] gap-7 lg:gap-10 items-center">

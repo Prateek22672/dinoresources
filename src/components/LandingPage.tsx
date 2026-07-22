@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Calculator, Globe, Clock, Coins, Sparkles, CalendarDays, ShoppingBag, Bot } from "lucide-react";
 import Footer from "./Footer";
-import AnniversaryBanner from "./AnniversaryBanner";
 import DecryptedText from "@/components/reactbits/DecryptedText";
 import BubbleMenu from "@/components/reactbits/BubbleMenu";
 import dinoLogo from "@/assets/dinosaurWhite.png";
@@ -84,7 +83,7 @@ function TiltCard({ children, className = "" }: { children: React.ReactNode; cla
 
 /* ─── Stats strip data ──────────────────────────────────────── */
 const STATS = [
-  { value: 1400, suffix: "+", label: "Active Students" },
+  { value: 1200, suffix: "+", label: "Active Students" },
   { value: 89,  suffix: "%", label: "Found it useful" },
   { value: 15,  suffix: "+", label: "Subjects covered" },
   { value: 2,   suffix: "AM", label: "We're still here" },
@@ -533,7 +532,7 @@ export default function LandingPage() {
                 textShadow: "0 2px 50px rgba(0,0,0,0.35)",
                 margin: 0,
               }}>
-                Make.<br />Exams.<br />Easy.
+                Make<br />Exams<br />Easy.
               </h1>
 
               <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-8">
@@ -541,11 +540,11 @@ export default function LandingPage() {
                   onClick={() => navigate("/auth")}
                   className="inline-flex items-center gap-2 rounded-full bg-white text-black font-semibold text-sm px-6 py-3.5 hover:bg-zinc-100 hover:scale-[1.02] active:scale-100 transition-all"
                 >
-                  Start studying free
+                  Start studying
                   <ArrowRight style={{ width: 16, height: 16 }} />
                 </button>
                 <span className="text-white/70 text-sm font-medium tracking-wide">
-                  Notes&nbsp;&nbsp;·&nbsp;&nbsp;PYQs&nbsp;&nbsp;·&nbsp;&nbsp;Study with AI
+                  Study with AI&nbsp;&nbsp;·&nbsp;&nbsp;Notes&nbsp;&nbsp;·&nbsp;&nbsp;PYQs
                 </span>
               </div>
             </div>
@@ -813,66 +812,7 @@ export default function LandingPage() {
 
         {/* ── Separator ── */}
         <div className="sep-line mx-8" />
-
-        {/* ───────────────── FINAL CTA ──────────────────────── */}
-        <section style={{ padding: "8rem 1rem 10rem", textAlign: "center" }}>
-          <RevealBlock delay={0}>
-            <div
-              style={{
-                maxWidth: 640, margin: "0 auto",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: "2rem",
-              }}
-            >
-              {/* Dino mark */}
-              <div
-                style={{
-                  width: 80, height: 80,
-                  borderRadius: 24,
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <img src={dinoLogo} alt="" style={{ width: 42, height: 42, opacity: 0.7 }} className="dino-float" />
-              </div>
-
-              <h2
-                className="font-display"
-                style={{
-                  fontSize: "clamp(2.5rem, 7vw, 5rem)",
-                  fontWeight: 400,
-                  letterSpacing: "-0.03em",
-                  lineHeight: 1.1,
-                  color: "#fafafa",
-                }}
-              >
-                <DecryptedText text="Ready to stop" animateOn="view" sequential speed={45} />
-                <br />
-                <span className="font-display" style={{ fontStyle: "italic", color: "#52525b" }}>
-                  <DecryptedText text="panicking?" animateOn="view" sequential speed={55} />
-                </span>
-              </h2>
-
-              <p style={{ fontSize: "0.95rem", color: "#52525b", maxWidth: 400, lineHeight: 1.7 }}>
-                Join students who stopped stressing and started performing.
-                Everything you need is one click away.
-              </p>
-
-              <button
-                onClick={() => navigate("/auth")}
-                className="cta-btn"
-                style={{ height: "3.5rem", padding: "0 2.5rem", fontSize: "0.95rem" }}
-              >
-                Start Studying Now
-                <ArrowRight style={{ width: 16, height: 16 }} />
-              </button>
-
-              <p style={{ fontSize: 11, color: "#27272a", fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                Free to start — no credit card needed
-              </p>
-            </div>
-          </RevealBlock>
-        </section>
+ 
       </main>
 
       <Footer />

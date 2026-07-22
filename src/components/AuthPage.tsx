@@ -130,7 +130,7 @@ export default function AuthPage() {
                   <span key={l} className="w-7 h-7 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
                 ))}
               </div>
-              <span className="text-sm text-zinc-500 font-medium">1400+ students already inside</span>
+              <span className="text-sm text-zinc-500 font-medium">1200+ students already inside</span>
             </div>
           </div>
 
@@ -205,7 +205,7 @@ export default function AuthPage() {
                     <button type="submit" disabled={isLoading} className="td-btn-primary h-12 mt-1 flex items-center justify-center gap-2 text-sm disabled:opacity-60">
                       {isLoading ? "Authenticating…" : <>Log In <ArrowRight className="w-4 h-4" /></>}
                     </button>
-                    <p className="text-center text-[11px] uppercase tracking-wider text-zinc-600 font-medium">Trusted by 1400+ students</p>
+                    <p className="text-center text-[11px] uppercase tracking-wider text-zinc-600 font-medium">Trusted by 1200+ students</p>
                   </form>
                 </TabsContent>
 

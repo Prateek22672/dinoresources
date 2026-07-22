@@ -14,16 +14,7 @@ export default function Footer() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
       {/* Falling-text play band (desktop) — drag the words around */}
-      <div className="hidden md:block h-36 mb-8 text-zinc-300 font-semibold">
-        <FallingText
-          text="Notes PYQs SGPA Attendance Study with AI Subjects Combos Library — TeamDino"
-          highlightWords={["AI", "TeamDino", "SGPA", "Combos"]}
-          trigger="scroll"
-          gravity={0.55}
-          fontSize="1.6rem"
-          mouseConstraintStiffness={0.9}
-        />
-      </div>
+      
 
       {/* Top: brand + actions */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-8 mb-8">
