@@ -227,15 +227,27 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
                       <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
                     </p>
                   )}
-                  {items.map((item) => {
+                  {items.map((item, qi) => {
                     const open = openId === item.id;
                     return (
-                      <div key={item.id} className="td-surface rounded-2xl overflow-hidden">
-                        <button onClick={() => setOpenId(open ? null : item.id)} className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left">
-                          <span className="text-white font-medium">{item.question}</span>
+                      <div key={item.id} className={`td-surface rounded-2xl overflow-hidden transition-shadow ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
+                        <button onClick={() => setOpenId(open ? null : item.id)} className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left">
+                          <span
+                            className="shrink-0 w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center"
+                            style={open
+                              ? { background: "var(--td-accent)", color: "#fff" }
+                              : { background: "rgb(var(--td-accent-rgb) / 0.12)", color: "var(--td-accent)" }}
+                          >
+                            {qi + 1}
+                          </span>
+                          <span className={`flex-1 font-medium ${open ? "text-white" : "text-zinc-200"}`}>{item.question}</span>
                           <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
                         </button>
-                        {open && <div className="px-5 pb-5 pt-1 border-t border-white/5"><MarkdownRenderer content={item.answer_md || "_No answer yet._"} /></div>}
+                        {open && (
+                          <div className="px-4 sm:px-5 pb-5 pt-3 border-t border-white/5">
+                            <MarkdownRenderer content={item.answer_md || "_No answer yet._"} />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
