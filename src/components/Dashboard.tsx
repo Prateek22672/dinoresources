@@ -60,7 +60,41 @@ export default function Dashboard() {
   const [streak, setStreak] = useState(0);
   const [activity, setActivity] = useState<string[]>([]);
 
-  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); setActivity(logActivity()); }, []);
+  // exam countdown (user-set dates)
+  interface ExamRow { id: string; title: string; exam_date: string; }
+  const [exams, setExams] = useState<ExamRow[]>([]);
+  const [pickDay, setPickDay] = useState<number | null>(null);
+  const [examTitle, setExamTitle] = useState("");
+
+  const loadExams = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await tbl("user_exams").select("id, title, exam_date")
+      .eq("user_id", user.id)
+      .gte("exam_date", new Date().toLocaleDateString("en-CA"))
+      .order("exam_date", { ascending: true });
+    setExams((data ?? []) as ExamRow[]);
+  }, []);
+
+  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); setActivity(logActivity()); loadExams(); }, [loadExams]);
+
+  const addExam = async () => {
+    if (pickDay == null) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await tbl("user_exams").insert({
+      user_id: user.id,
+      title: examTitle.trim() || "Exam",
+      exam_date: `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(pickDay)}`,
+    });
+    if (!error) { setExamTitle(""); setPickDay(null); loadExams(); }
+  };
+
+  const removeExam = async (id: string) => {
+    await tbl("user_exams").delete().eq("id", id);
+    setPickDay(null);
+    loadExams();
+  };
 
   const checkAuthAndLoad = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -170,15 +204,37 @@ export default function Dashboard() {
 
   const comboYear = years.find((y) => !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id));
 
+  // ── Exam helpers ──
+  const daysTo = (iso: string) =>
+    Math.round((new Date(iso + "T00:00:00").getTime() - new Date(todayIso + "T00:00:00").getTime()) / 86_400_000);
+  const examOn = (iso: string) => exams.find((e) => e.exam_date === iso);
+  const nextExam = exams[0];
+  const countdownLabel = (n: number) => (n === 0 ? "Today!" : n === 1 ? "Tomorrow" : `${n} days to go`);
+  const urgencyCls = (n: number) =>
+    n <= 3 ? "bg-red-500/15 text-red-300" : n <= 7 ? "bg-amber-500/15 text-amber-300" : "td-accent-bg";
+  const pickedExam = pickDay != null ? examOn(cellIso(pickDay)) : undefined;
+
   // ── Right rail cards (also stacked below content on smaller screens) ──
   const rightCards = (
     <>
-      {/* Calendar */}
+      {/* Exam calendar — tap a date to mark your exam */}
       <div className="td-surface rounded-[24px] p-5">
         <div className="flex items-center justify-between mb-3">
           <p className="text-white font-semibold text-sm">{monthLabel}</p>
           <CalendarDays className="w-4 h-4 td-accent-text" />
         </div>
+
+        {/* Countdown alert */}
+        {nextExam && (
+          <div className={`rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2.5 ${urgencyCls(daysTo(nextExam.exam_date))}`}>
+            <Flame className="w-4 h-4 shrink-0" />
+            <p className="text-[13px] font-semibold leading-tight min-w-0">
+              <span className="truncate">{nextExam.title}</span>
+              <span className="block text-[11px] font-bold opacity-90">{countdownLabel(daysTo(nextExam.exam_date))}</span>
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-7 gap-1 text-center">
           {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
             <span key={d} className="text-[10px] font-semibold text-zinc-500 pb-1">{d}</span>
@@ -188,16 +244,71 @@ export default function Dashboard() {
             const d = i + 1;
             const iso = cellIso(d);
             const isToday = iso === todayIso;
+            const exam = examOn(iso);
+            const past = daysTo(iso) < 0;
             const active = activity.includes(iso);
             return (
-              <span key={d}
-                className={`h-7 w-7 mx-auto flex items-center justify-center rounded-full text-[11px] font-medium
-                  ${isToday ? "td-accent-solid text-white font-bold" : active ? "td-accent-bg" : "text-zinc-400"}`}>
+              <button
+                key={d}
+                disabled={past && !exam}
+                onClick={() => setPickDay(pickDay === d ? null : d)}
+                title={exam ? `${exam.title} — tap to manage` : past ? undefined : "Tap to mark an exam"}
+                className={`h-7 w-7 mx-auto flex items-center justify-center rounded-full text-[11px] font-medium transition-colors
+                  ${exam ? (isToday ? "bg-red-500 text-white font-bold" : "bg-red-500/25 text-red-300 font-bold")
+                    : isToday ? "td-accent-solid text-white font-bold"
+                    : active ? "td-accent-bg"
+                    : past ? "text-zinc-700" : "text-zinc-400 hover:bg-white/10"}
+                  ${pickDay === d ? "ring-2 ring-white/40" : ""}`}
+              >
                 {d}
-              </span>
+              </button>
             );
           })}
         </div>
+
+        {/* Add / manage exam on the picked day */}
+        {pickDay != null && (
+          <div className="mt-3 td-surface-2 rounded-xl p-3 td-in">
+            {pickedExam ? (
+              <div className="flex items-center gap-2">
+                <p className="text-white text-sm font-semibold flex-1 min-w-0 truncate">{pickedExam.title}</p>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${urgencyCls(daysTo(pickedExam.exam_date))}`}>
+                  {countdownLabel(daysTo(pickedExam.exam_date))}
+                </span>
+                <button onClick={() => removeExam(pickedExam.id)} className="text-red-400 text-xs font-semibold hover:text-red-300">Remove</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  value={examTitle}
+                  onChange={(e) => setExamTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addExam()}
+                  placeholder={`Exam on ${monthLabel.split(" ")[0]} ${pickDay}…`}
+                  className="flex-1 min-w-0 bg-transparent border border-white/10 rounded-lg px-2.5 h-8 text-xs text-white outline-none placeholder:text-zinc-600"
+                  autoFocus
+                />
+                <button onClick={addExam} className="td-btn-primary px-3 h-8 text-xs font-bold shrink-0">Add</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Upcoming exams */}
+        {pickDay == null && exams.length > 1 && (
+          <div className="mt-3 space-y-1.5">
+            {exams.slice(1, 3).map((e) => (
+              <div key={e.id} className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-zinc-400 truncate">{e.title}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${urgencyCls(daysTo(e.exam_date))}`}>
+                  {countdownLabel(daysTo(e.exam_date))}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        {pickDay == null && exams.length === 0 && (
+          <p className="text-zinc-600 text-[11px] mt-3 text-center">Tap a date to mark your exam — we'll count down for you.</p>
+        )}
       </div>
 
       {/* Overall information */}
