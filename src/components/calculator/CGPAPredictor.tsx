@@ -40,20 +40,20 @@ export default function CGPAPredictor() {
   return (
     <div className="gg space-y-5">
       <style>{`
-        .gg-in { background:#18181b; border:1px solid rgba(255,255,255,0.10); color:#fafafa; border-radius:12px; padding:9px 12px; font-size:14px; outline:none; width:100%; }
-        .gg-in:focus { border-color: rgba(168,85,247,0.55); }
-        .gg-card { background: rgba(24,24,27,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:24px; }
-        .gg-range { accent-color:#a855f7; }
+        .gg-in { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); color:#fafafa; border-radius:12px; padding:9px 12px; font-size:14px; outline:none; width:100%; }
+        .gg-in:focus { border-color: rgb(var(--td-accent-rgb) / 0.55); box-shadow: 0 0 0 3px rgb(var(--td-accent-rgb) / 0.14); }
+        .gg-card { background:#2a2a2a; border:1px solid rgba(255,255,255,0.08); border-radius:24px; }
+        .gg-range { accent-color: var(--td-accent); }
       `}</style>
 
       <div className="text-center">
-        <h2 className="text-xl sm:text-2xl font-extrabold text-white flex items-center justify-center gap-2"><Target className="w-5 h-5 text-purple-400" /> What-If CGPA Predictor</h2>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-white flex items-center justify-center gap-2"><Target className="w-5 h-5 td-accent-text" /> What-If CGPA Predictor</h2>
         <p className="text-zinc-500 text-sm mt-1">Enter your current standing and simulate future semesters.</p>
       </div>
 
       {/* current standing */}
       <div className="gg-card p-5">
-        <p className="font-bold text-white mb-3 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-purple-400" /> Your current standing</p>
+        <p className="font-bold text-white mb-3 flex items-center gap-2"><BarChart3 className="w-4 h-4 td-accent-text" /> Your current standing</p>
         <div className="grid sm:grid-cols-3 gap-3">
           <div><label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Current CGPA (0–10)</label>
             <input className="gg-in" type="number" step="0.01" placeholder="e.g. 8.2" value={currentCGPA} onChange={(e) => setCurrentCGPA(e.target.value)} /></div>
@@ -67,7 +67,7 @@ export default function CGPAPredictor() {
       {/* future semesters */}
       <div className="gg-card p-5">
         <div className="flex items-center justify-between mb-3">
-          <p className="font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-pink-400" /> Future semesters</p>
+          <p className="font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 td-accent-text" /> Future semesters</p>
           <label className="text-xs text-zinc-400 flex items-center gap-2">Predict
             <select className="gg-in !w-auto !py-1.5" value={count} onChange={(e) => setCountAndSync(parseInt(e.target.value))}>
               {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
@@ -76,8 +76,8 @@ export default function CGPAPredictor() {
         </div>
         <div className="space-y-3">
           {sems.map((s, i) => (
-            <div key={i} className="rounded-2xl border border-purple-500/20 p-4" style={{ background: "rgba(168,85,247,0.04)" }}>
-              <p className="text-sm font-semibold text-white mb-2.5">Semester {i + 2} <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-600/30 text-purple-200 ml-1">What-If</span></p>
+            <div key={i} className="rounded-2xl p-4" style={{ border: "1px solid rgb(var(--td-accent-rgb) / 0.22)", background: "rgb(var(--td-accent-rgb) / 0.05)" }}>
+              <p className="text-sm font-semibold text-white mb-2.5">Semester {i + 2} <span className="text-[10px] px-2 py-0.5 rounded-full td-accent-bg ml-1">What-If</span></p>
               <div className="grid sm:grid-cols-[160px_minmax(0,1fr)] gap-3 items-center">
                 <div><label className="text-[11px] text-zinc-500 mb-1 block">Credits</label>
                   <input className="gg-in" type="number" value={s.credits} onChange={(e) => updateSem(i, { credits: parseInt(e.target.value) || 0 })} /></div>
@@ -90,18 +90,18 @@ export default function CGPAPredictor() {
       </div>
 
       {/* projected */}
-      <div className="gg-card p-6 text-center border-sky-500/30">
+      <div className="gg-card p-6 text-center">
         <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-1 flex items-center justify-center gap-1.5"><BarChart3 className="w-3.5 h-3.5" /> Your projected CGPA</p>
-        <div className="text-5xl sm:text-6xl font-black text-sky-400">{projected.toFixed(2)}</div>
-        <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full bg-sky-500/15 text-sky-300 font-semibold">{band(projected)}</span>
-        <p className="text-xs text-zinc-500 mt-3">Previous: <strong className="text-zinc-300">{cur.toFixed(2)}</strong> → Projected: <strong className="text-sky-300">{projected.toFixed(2)}</strong>
+        <div className="text-5xl sm:text-6xl font-black td-accent-text" style={{ fontVariantNumeric: "tabular-nums" }}>{projected.toFixed(2)}</div>
+        <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full td-accent-bg font-semibold">{band(projected)}</span>
+        <p className="text-xs text-zinc-500 mt-3">Previous: <strong className="text-zinc-300">{cur.toFixed(2)}</strong> → Projected: <strong className="td-accent-text">{projected.toFixed(2)}</strong>
           <span className={delta >= 0 ? "text-emerald-400 ml-1.5" : "text-red-400 ml-1.5"}>{delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(2)}</span></p>
-        <div className="h-2 rounded-full bg-white/8 overflow-hidden mt-3"><div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(100, projected * 10)}%` }} /></div>
+        <div className="h-2 rounded-full bg-white/8 overflow-hidden mt-3"><div className="h-full td-accent-solid rounded-full" style={{ width: `${Math.min(100, projected * 10)}%` }} /></div>
       </div>
 
       {/* required */}
       <div className="gg-card p-5">
-        <p className="font-bold text-white mb-3 flex items-center gap-2"><Target className="w-4 h-4 text-orange-400" /> Required SGPA calculator</p>
+        <p className="font-bold text-white mb-3 flex items-center gap-2"><Target className="w-4 h-4 td-accent-text" /> Required SGPA calculator</p>
         <div className="grid sm:grid-cols-2 gap-4 items-center">
           <div><label className="text-xs font-semibold text-zinc-400 mb-1.5 block">What CGPA do you want?</label>
             <input className="gg-in" type="number" step="0.1" value={target} onChange={(e) => setTarget(e.target.value)} /></div>

@@ -4,7 +4,7 @@ import {
   newCourse, courseFinal, calcSGPA, calcCGPA,
 } from "@/lib/gradeguru";
 import {
-  BookOpen, Award, Calculator, TrendingUp, Plus, Trash2, ChevronDown, Sparkles,
+  BookOpen, Award, Calculator, TrendingUp, Plus, Trash2, ChevronDown,
   GraduationCap, FlaskConical, Info, RotateCcw,
 } from "lucide-react";
 
@@ -43,24 +43,19 @@ export default function GradeGuru() {
   return (
     <div className="gg space-y-6">
       <style>{`
-        .gg { --gg-pink:#ec4899; --gg-purple:#a855f7; --gg-cyan:#22d3ee; }
-        .gg-dots { background-image: radial-gradient(circle at 1px 1px, rgba(168,85,247,0.18) 1px, transparent 0); background-size: 22px 22px; }
-        .gg-grad { background: rgba(168,85,247,0.15); }
-        .gg-card-head { background: rgba(168,85,247,0.12); }
-        .gg-sel { background:#18181b; border:1px solid rgba(168,85,247,0.25); color:#fafafa; border-radius:9999px; padding:6px 12px; font-size:13px; outline:none; }
-        .gg-sel:focus { border-color: rgba(168,85,247,0.6); }
-        .gg-in { background:#18181b; border:1px solid rgba(255,255,255,0.10); color:#fafafa; border-radius:12px; padding:9px 12px; font-size:14px; outline:none; width:100%; }
-        .gg-in:focus { border-color: rgba(168,85,247,0.55); }
+        .gg-sel { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); color:#fafafa; border-radius:9999px; padding:6px 12px; font-size:13px; outline:none; }
+        .gg-sel:focus { border-color: rgb(var(--td-accent-rgb) / 0.55); }
+        .gg-in { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); color:#fafafa; border-radius:12px; padding:9px 12px; font-size:14px; outline:none; width:100%; }
+        .gg-in:focus { border-color: rgb(var(--td-accent-rgb) / 0.55); box-shadow: 0 0 0 3px rgb(var(--td-accent-rgb) / 0.14); }
       `}</style>
 
       {/* Title */}
       <div className="text-center space-y-3">
-        <div className="gg-grad inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-pink-400/30">
-          <GraduationCap className="w-5 h-5 text-pink-400" />
+        <div className="td-surface inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full">
+          <span className="w-8 h-8 rounded-xl td-accent-bg flex items-center justify-center"><GraduationCap className="w-4 h-4" /></span>
           <h2 className="text-lg sm:text-xl font-extrabold text-white">Grade Calculator</h2>
-          <Sparkles className="w-4 h-4 text-yellow-300" />
         </div>
-        <p className="text-zinc-400 text-xs sm:text-sm">Calculate your WGP, SGPA and CGPA with step-by-step breakdowns.</p>
+        <p className="text-zinc-500 text-xs sm:text-sm">Calculate your WGP, SGPA and CGPA with step-by-step breakdowns.</p>
       </div>
 
       {/* Step indicator */}
@@ -70,27 +65,27 @@ export default function GradeGuru() {
           return (
             <div key={s.label} className="flex items-center gap-1 sm:gap-2">
               <div className="flex flex-col items-center gap-1">
-                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-colors ${active ? "bg-purple-600 text-white" : "bg-white/5 text-zinc-500 border border-white/10"}`}>
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-colors ${active ? "td-accent-solid text-white" : "td-surface-2 text-zinc-500"}`}>
                   <s.icon className="w-5 h-5" />
                 </div>
-                <span className={`text-[10px] sm:text-[11px] font-semibold ${active ? "text-purple-300" : "text-zinc-600"}`}>{s.label}</span>
+                <span className={`text-[10px] sm:text-[11px] font-semibold ${active ? "td-accent-text" : "text-zinc-600"}`}>{s.label}</span>
               </div>
-              {i < STEPS.length - 1 && <div className={`w-5 sm:w-10 h-px ${step > i + 1 ? "bg-purple-500/50" : "bg-white/10"}`} />}
+              {i < STEPS.length - 1 && <div className="w-5 sm:w-10 h-px" style={{ background: step > i + 1 ? "rgb(var(--td-accent-rgb) / 0.5)" : "rgba(255,255,255,0.1)" }} />}
             </div>
           );
         })}
       </div>
 
       {/* Grade conversion chart */}
-      <div className="rounded-2xl border border-yellow-500/30 overflow-hidden" style={{ background: "rgba(250,204,21,0.04)" }}>
+      <div className="td-surface rounded-2xl overflow-hidden">
         <button onClick={() => setChartOpen((o) => !o)} className="w-full flex items-center justify-between px-4 py-3">
-          <span className="flex items-center gap-2 text-sm font-bold text-white"><Info className="w-4 h-4 text-yellow-400" /> Grade Conversion Chart</span>
+          <span className="flex items-center gap-2 text-sm font-bold text-white"><Info className="w-4 h-4 td-accent-text" /> Grade Conversion Chart</span>
           <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${chartOpen ? "rotate-180" : ""}`} />
         </button>
         {chartOpen && (
           <div className="px-4 pb-4 flex flex-wrap gap-2">
             {GRADE_CHART.map((g) => (
-              <span key={g.letter} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs">
+              <span key={g.letter} className="td-surface-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs">
                 <span className="w-2 h-2 rounded-full" style={{ background: g.color }} />
                 <strong className="text-white">{g.letter}</strong> <span className="text-zinc-500">{g.rule}</span>
               </span>
@@ -104,10 +99,10 @@ export default function GradeGuru() {
         {courses.map((c, idx) => {
           const f = courseFinal(c);
           return (
-            <div key={c.id} className="rounded-3xl border border-purple-500/25 overflow-hidden" style={{ background: "rgba(24,24,27,0.6)" }}>
-              <div className="gg-card-head flex items-center justify-between px-5 py-3.5">
+            <div key={c.id} className="td-surface rounded-3xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/8">
                 <span className="flex items-center gap-2.5 font-bold text-white">
-                  <span className="w-9 h-9 rounded-2xl bg-purple-600 flex items-center justify-center"><BookOpen className="w-4.5 h-4.5 text-white" /></span>
+                  <span className="w-9 h-9 rounded-2xl td-accent-bg flex items-center justify-center"><BookOpen className="w-4.5 h-4.5" /></span>
                   Course {idx + 1}
                 </span>
                 {courses.length > 1 && <button onClick={() => remove(c.id)} className="w-8 h-8 rounded-full hover:bg-red-500/20 flex items-center justify-center"><Trash2 className="w-4 h-4 text-red-400" /></button>}
@@ -128,10 +123,10 @@ export default function GradeGuru() {
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500">Grading:</span>
-                    <div className="flex bg-white/5 rounded-full p-0.5">
+                    <div className="flex td-surface-2 rounded-full p-0.5">
                       {(["relative", "absolute"] as const).map((g) => (
                         <button key={g} onClick={() => update(c.id, { grading: g })}
-                          className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${c.grading === g ? "bg-purple-600 text-white" : "text-zinc-400"}`}>{g}</button>
+                          className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${c.grading === g ? "bg-white text-black" : "text-zinc-400"}`}>{g}</button>
                       ))}
                     </div>
                   </div>
@@ -163,7 +158,7 @@ export default function GradeGuru() {
 
                 {/* WGP + final */}
                 {f && (
-                  <div className="flex items-center justify-between rounded-2xl px-4 py-3 bg-purple-600/15 border border-purple-500/25">
+                  <div className="flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "rgb(var(--td-accent-rgb) / 0.10)", border: "1px solid rgb(var(--td-accent-rgb) / 0.25)" }}>
                     <span className="text-sm text-zinc-300">WGP = <strong className="text-white font-mono">{f.wgp.toFixed(2)}</strong></span>
                     <span className="inline-flex items-center gap-2 text-sm">Final:
                       <span className="px-2.5 py-1 rounded-lg font-bold text-white" style={{ background: gradeColor(f.letter) }}>{f.letter}</span>
@@ -178,7 +173,7 @@ export default function GradeGuru() {
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <button onClick={add} className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-cyan-400/50 text-cyan-300 font-bold px-5 py-2.5 text-sm hover:bg-cyan-400/10">
+        <button onClick={add} className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-white/20 text-zinc-300 font-bold px-5 py-2.5 text-sm hover:border-white/40 hover:text-white transition-colors">
           <Plus className="w-4 h-4" /> Add Another Course
         </button>
         {courses.length > 1 && <button onClick={reset} className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-red-400 text-xs font-bold px-3 py-2"><RotateCcw className="w-3.5 h-3.5" /> Reset</button>}
@@ -186,16 +181,16 @@ export default function GradeGuru() {
 
       {/* SGPA */}
       {hasResult && (
-        <div className="rounded-3xl border border-emerald-500/30 overflow-hidden">
-          <div className="px-5 py-4 text-center bg-emerald-500/10">
+        <div className="td-surface rounded-3xl overflow-hidden">
+          <div className="px-5 py-5 text-center bg-emerald-500/10">
             <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Your SGPA</p>
-            <div className="text-5xl sm:text-6xl font-black text-emerald-400">{sg.sgpa.toFixed(2)}</div>
+            <div className="text-5xl sm:text-6xl font-black text-emerald-400" style={{ fontVariantNumeric: "tabular-nums" }}>{sg.sgpa.toFixed(2)}</div>
             <div className="flex items-center justify-center gap-3 mt-3 text-xs text-zinc-400">
-              <span className="bg-white/5 px-3 py-1 rounded-full">Credits: <strong className="text-white">{sg.totalCredits}</strong></span>
-              <span className="bg-white/5 px-3 py-1 rounded-full">Grade Points: <strong className="text-white">{sg.totalPoints.toFixed(0)}</strong></span>
+              <span className="td-surface-2 px-3 py-1 rounded-full">Credits: <strong className="text-white">{sg.totalCredits}</strong></span>
+              <span className="td-surface-2 px-3 py-1 rounded-full">Grade Points: <strong className="text-white">{sg.totalPoints.toFixed(0)}</strong></span>
             </div>
-            <button onClick={() => setShowCGPA((v) => !v)} className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-orange-400/50 text-orange-300 font-bold px-5 py-2 text-sm hover:bg-orange-400/10">
-              <TrendingUp className="w-4 h-4" /> {showCGPA ? "Hide CGPA" : "Calculate CGPA (Optional)"}
+            <button onClick={() => setShowCGPA((v) => !v)} className="td-btn-ghost mt-4 inline-flex items-center gap-2 rounded-full font-bold px-5 py-2 text-sm">
+              <TrendingUp className="w-4 h-4 td-accent-text" /> {showCGPA ? "Hide CGPA" : "Calculate CGPA (Optional)"}
             </button>
           </div>
         </div>
@@ -203,8 +198,8 @@ export default function GradeGuru() {
 
       {/* CGPA */}
       {showCGPA && hasResult && (
-        <div className="rounded-3xl border border-orange-500/25 p-5 space-y-4" style={{ background: "rgba(24,24,27,0.6)" }}>
-          <p className="font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange-400" /> CGPA Predictor</p>
+        <div className="td-surface rounded-3xl p-5 space-y-4">
+          <p className="font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 td-accent-text" /> CGPA Predictor</p>
           <div className="grid sm:grid-cols-2 gap-3">
             <div><label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Previous CGPA</label>
               <input className="gg-in" type="number" placeholder="e.g. 8.2" value={prevCGPA} onChange={(e) => setPrevCGPA(e.target.value)} /></div>
@@ -212,9 +207,9 @@ export default function GradeGuru() {
               <input className="gg-in" type="number" placeholder="e.g. 80" value={prevCredits} onChange={(e) => setPrevCredits(e.target.value)} /></div>
           </div>
           {prevCGPA && prevCredits && (
-            <div className="text-center rounded-2xl px-4 py-4 bg-orange-500/10 border border-orange-500/20">
+            <div className="text-center rounded-2xl px-4 py-4" style={{ background: "rgb(var(--td-accent-rgb) / 0.10)", border: "1px solid rgb(var(--td-accent-rgb) / 0.25)" }}>
               <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Projected CGPA</p>
-              <div className="text-4xl font-black text-orange-400">{cgpa.toFixed(2)}</div>
+              <div className="text-4xl font-black td-accent-text" style={{ fontVariantNumeric: "tabular-nums" }}>{cgpa.toFixed(2)}</div>
             </div>
           )}
         </div>
