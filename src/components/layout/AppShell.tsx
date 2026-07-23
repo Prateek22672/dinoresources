@@ -62,7 +62,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
       {!hideHeader && (
       <header className="sticky top-0 z-40 td-glass">
         <div className="container mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
-          <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
+          {/* Brand hidden on xl+ — the SideNav rail owns the identity there (revert: drop xl:hidden) */}
+          <Link to="/dashboard" className="flex xl:hidden items-center gap-2.5 shrink-0">
             <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center">
               <img src={dinoLogo} alt="TeamDino" className="w-5 h-5" />
             </div>
