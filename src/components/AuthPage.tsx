@@ -72,7 +72,7 @@ export default function AuthPage() {
     "placeholder:text-zinc-600 outline-none transition-shadow td-auth-field";
 
   return (
-    <div className="min-h-[100dvh] bg-[#0b0b0e] text-zinc-100 font-sans flex flex-col relative overflow-hidden">
+    <div className="min-h-[100dvh] lg:h-[100dvh] bg-[#0b0b0e] text-zinc-100 font-sans flex flex-col relative overflow-hidden">
       <style>{`
         .td-auth-field:focus {
           border-color: rgb(var(--td-accent-rgb) / 0.55);
@@ -104,7 +104,7 @@ export default function AuthPage() {
       }} />
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 h-16 border-b border-white/[0.06]">
+      <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 h-14 shrink-0">
         <button onClick={() => navigate("/")} className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
             <img src={dinoLogo} alt="" className="w-5 h-5 opacity-90" />
@@ -117,14 +117,14 @@ export default function AuthPage() {
       </header>
 
       {/* Main */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+      <main className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-4 py-8 lg:py-4">
+        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left — brand (desktop) */}
-          <div className="hidden lg:flex flex-col gap-7 td-auth-in">
+          <div className="hidden lg:flex flex-col gap-5 td-auth-in">
             <span className="td-glass inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-zinc-300 w-fit">
               <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--td-accent-soft)" }} /> Your study companion
             </span>
-            <h1 className="text-5xl font-extrabold tracking-tight leading-[1.05]">
+            <h1 className="text-4xl xl:text-[2.7rem] font-extrabold tracking-tight leading-[1.06]">
               Every exam,<br />
               <span style={{ color: "var(--td-accent-soft)" }}>every subject,</span><br />
               <span className="text-zinc-600">covered.</span>
@@ -134,15 +134,15 @@ export default function AuthPage() {
             </p>
 
             {/* what's inside */}
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {[
                 "Notes, PYQs & Study-With-AI for every subject",
                 "Free SGPA, CGPA & attendance calculators",
                 "Placement prep — company by company",
               ].map((f) => (
-                <li key={f} className="flex items-center gap-3 text-[15px] text-zinc-300">
-                  <span className="w-6 h-6 rounded-full td-accent-bg flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                <li key={f} className="flex items-center gap-2.5 text-sm text-zinc-300">
+                  <span className="w-5 h-5 rounded-full td-accent-bg flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3" strokeWidth={3} />
                   </span>
                   {f}
                 </li>
@@ -162,7 +162,7 @@ export default function AuthPage() {
 
           {/* Right — form card */}
           <div className="td-auth-in2 w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end">
-            <div className="rounded-[28px] bg-[#121216] border border-white/10 p-6 sm:p-8 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
+            <div className="rounded-[28px] bg-[#121216] border border-white/10 p-6 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
               {/* Mobile brand */}
               <div className="lg:hidden flex flex-col items-center text-center mb-6">
                 <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-3">
@@ -172,20 +172,20 @@ export default function AuthPage() {
                 <p className="text-zinc-500 text-sm mt-1">Your last-minute study survival kit</p>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-5">
                 <h2 className="text-xl font-bold tracking-tight">Sign in to your workspace</h2>
                 <p className="text-zinc-500 text-sm mt-1">Access notes, AI help and everything else.</p>
               </div>
 
               <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid grid-cols-2 gap-1 w-full h-11 p-1 mb-6 rounded-full bg-white/[0.04] border border-white/[0.07]">
+                <TabsList className="grid grid-cols-2 gap-1 w-full h-11 p-1 mb-5 rounded-full bg-white/[0.04] border border-white/[0.07]">
                   <TabsTrigger value="signin" className="rounded-full text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-black data-[state=inactive]:text-zinc-500">Log In</TabsTrigger>
                   <TabsTrigger value="signup" className="rounded-full text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-black data-[state=inactive]:text-zinc-500">Create Account</TabsTrigger>
                 </TabsList>
 
                 {/* Sign in */}
                 <TabsContent value="signin" className="mt-0">
-                  <form onSubmit={handleSignIn} className="flex flex-col gap-4">
+                  <form onSubmit={handleSignIn} className="flex flex-col gap-3.5">
                     <div className="flex flex-col gap-1.5">
                       <Label htmlFor="signin-email" className="text-xs font-medium text-zinc-400 pl-1">Email address</Label>
                       <div className="relative">
@@ -237,7 +237,7 @@ export default function AuthPage() {
 
                 {/* Sign up */}
                 <TabsContent value="signup" className="mt-0">
-                  <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+                  <form onSubmit={handleSignUp} className="flex flex-col gap-3.5">
                     <div className="flex flex-col gap-1.5">
                       <Label htmlFor="signup-email" className="text-xs font-medium text-zinc-400 pl-1">University email</Label>
                       <div className="relative">
@@ -260,7 +260,7 @@ export default function AuthPage() {
                 </TabsContent>
               </Tabs>
 
-              <div className="h-px bg-white/[0.06] my-5" />
+              <div className="h-px bg-white/[0.06] my-4" />
               <p className="text-center text-[11px] text-zinc-600 flex items-center justify-center gap-1.5">
                 <Sparkles className="w-3 h-3" /> By continuing, you agree to our Terms &amp; Privacy Policy
               </p>
