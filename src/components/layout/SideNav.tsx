@@ -43,7 +43,7 @@ export default function SideNav({
     }`;
 
   return (
-    <aside className={`hidden xl:flex flex-col bg-[#131316] border border-white/8 rounded-[28px] ${collapsed ? "p-2.5" : "p-3.5"} sticky top-24 min-h-[78vh] transition-all`}>
+    <aside className={`hidden xl:flex flex-col bg-[#131316] border border-white/8 rounded-[28px] ${collapsed ? "p-2.5" : "p-3.5"} xl:-mt-20 sticky top-4 h-[calc(100dvh-2rem)] transition-all`}>
       {/* Brand + collapse toggle */}
       <div className={`flex items-center ${collapsed ? "flex-col gap-2 pb-3" : "gap-2.5 px-2.5 pt-1.5 pb-4"}`}>
         <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
@@ -60,7 +60,7 @@ export default function SideNav({
         </button>
       </div>
 
-      <nav className="space-y-1">
+      <nav className="space-y-1 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden">
         {items.map((item) => (
           <button key={item.label} onClick={() => navigate(item.to)}
             className={itemCls(isActive(item.to))} title={collapsed ? item.label : undefined}>
@@ -69,7 +69,7 @@ export default function SideNav({
         ))}
       </nav>
 
-      <div className="mt-auto pt-3 border-t border-white/8 space-y-1">
+      <div className="pt-3 border-t border-white/8 space-y-1">
         {bottom.map((b) => (
           <button key={b.label} onClick={b.onClick} className={itemCls(false)} title={collapsed ? b.label : undefined}>
             <b.icon className="w-4 h-4 shrink-0" /> {!collapsed && b.label}

@@ -69,7 +69,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
     <div className="td-app min-h-screen td-base text-zinc-100 font-sans flex flex-col">
       {/* Top bar */}
       {!hideHeader && (
-      <header className="sticky top-0 z-40 td-glass">
+      <header className="sticky top-0 z-40 td-glass td-header-clear xl:pointer-events-none">
         <div className="container mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
           {/* Brand hidden on xl+ — the SideNav rail owns the identity there (revert: drop xl:hidden) */}
           <Link to="/dashboard" className="flex xl:hidden items-center gap-2.5 shrink-0">
@@ -89,7 +89,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
           </nav>
 
           {/* Utilities — ordered least-used (left) → most-used (right) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto xl:pointer-events-auto">
             <button onClick={signOut} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Sign out" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
