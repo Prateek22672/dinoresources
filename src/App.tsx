@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useFeatureFlags } from "./hooks/useFeatureFlags";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./components/ResetPassword";
@@ -27,6 +28,13 @@ import JobsContributor from "./pages/JobsContributor";
 import Agent from "./pages/Agent";
 
 const queryClient = new QueryClient();
+
+/** Blocks a route when its admin feature flag is off (direct URLs included). */
+const FeatureRoute = ({ flag, children }: { flag: string; children: JSX.Element }) => {
+  const { isOn } = useFeatureFlags();
+  if (!isOn(flag)) return <Navigate to="/dashboard" replace />;
+  return children;
+};
 
 // Component to handle dynamic SEO tags
 const SEO = () => {
@@ -86,9 +94,9 @@ const App = () => (
             <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
             <Route path="/purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />
             <Route path="/subject/:slug" element={<ProtectedRoute><SubjectPage /></ProtectedRoute>} />
-            <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
-            <Route path="/agent" element={<ProtectedRoute><Agent /></ProtectedRoute>} />
-            <Route path="/contributor/jobs" element={<ProtectedRoute roles={["contributor", "admin"]}><JobsContributor /></ProtectedRoute>} />
+            <Route path="/jobs" element={<ProtectedRoute><FeatureRoute flag="jobs"><Jobs /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/agent" element={<ProtectedRoute><FeatureRoute flag="agent"><Agent /></FeatureRoute></ProtectedRoute>} />
+            <Route path="/contributor/jobs" element={<ProtectedRoute roles={["contributor", "admin"]}><FeatureRoute flag="jobs"><JobsContributor /></FeatureRoute></ProtectedRoute>} />
 
             {/* Role-gated dashboards */}
             <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><Admin /></ProtectedRoute>} />

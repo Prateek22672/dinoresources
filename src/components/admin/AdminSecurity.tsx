@@ -7,7 +7,7 @@ const LEVELS = [
   { value: 0, title: "Off — Developer mode", desc: "Nothing is blocked. DevTools, right-click, copy/paste all allowed.", icon: Code2 },
   { value: 1, title: "Level 1 — No DevTools", desc: "Blocks F12 / Ctrl+Shift+I·J·C / Ctrl+U and right-click.", icon: Shield },
   { value: 2, title: "Level 2 — No copy/paste", desc: "Level 1 + blocks copy, cut, paste and text selection.", icon: Lock },
-  { value: 3, title: "Level 3 — Strict", desc: "Level 2 + blocks printing and image dragging.", icon: Ban },
+  { value: 3, title: "Level 3 — Strict", desc: "Level 2 + blocks printing & image dragging, and deters screenshots (PrintScreen wipes the clipboard; content blurs when the window loses focus).", icon: Ban },
 ];
 
 export default function AdminSecurity() {

@@ -168,6 +168,10 @@ All colors MUST be HSL.
   .td-edge-l { background: linear-gradient(to right, #212121, transparent); }
   .td-edge-r { background: linear-gradient(to left,  #212121, transparent); }
 
+  /* Screenshot shield (security L3): blur all content while the window is
+     unfocused or right after PrintScreen, so grabs land on blurred pixels. */
+  .td-shield #root { filter: blur(18px) !important; transition: filter .12s ease; }
+
   /* Premium primary button: white-on-black, high contrast. */
   .td-btn-primary {
     background: #ffffff; color: #0d0d0d;
