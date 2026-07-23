@@ -144,16 +144,19 @@ const SHOW = [
     eyebrow: "Study With AI",
     title: "Answers that follow your syllabus",
     desc: "Unit-wise explanations mapped to your exact units — not generic chatbot rambling. Stuck at 2AM? It's awake.",
+    ctas: [{ label: "Get started free", to: "/auth" }],
   },
   {
     eyebrow: "Free tools",
     title: "Know exactly where you stand",
     desc: "SGPA calculator, CGPA predictor and attendance planner. Free forever, no login, no card.",
+    ctas: [{ label: "SGPA Calc", to: "/sgpa-calc" }, { label: "Attendance Calc", to: "/attendance-calc" }],
   },
   {
     eyebrow: "Placement prep",
     title: "Walk into interviews ready",
     desc: "Exam patterns, curated materials and previous questions — organised company by company.",
+    ctas: [{ label: "Explore placement prep", to: "/jobs" }],
   },
 ];
 
@@ -187,6 +190,7 @@ const STACK = [
 
 /* ─── Pinned showcase (sticky panel, steps swap on one continuous scroll) ─── */
 function PinnedShowcase() {
+  const navigate = useNavigate();
   const [active, setActive] = useState(0);
   const refs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -253,6 +257,13 @@ function PinnedShowcase() {
               <p className="text-[12px] font-black tracking-[0.28em] uppercase mb-4" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
               <h2 className={`text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05] transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-40"}`}>{s.title}</h2>
               <p className="text-zinc-600 text-lg leading-relaxed max-w-md mt-5">{s.desc}</p>
+              <div className="flex flex-wrap gap-2.5 mt-7">
+                {s.ctas.map((c) => (
+                  <button key={c.to} onClick={() => navigate(c.to)} className="bg-black text-white rounded-full h-11 px-6 text-sm font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform">
+                    {c.label} <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -278,6 +289,13 @@ function PinnedShowcase() {
             <p className="text-[11px] font-black tracking-[0.25em] uppercase mb-2" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
             <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{s.title}</h2>
             <p className="text-zinc-600 leading-relaxed mt-2 mb-4">{s.desc}</p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {s.ctas.map((c) => (
+                <button key={c.to} onClick={() => navigate(c.to)} className="bg-black text-white rounded-full h-10 px-5 text-[13px] font-bold flex items-center gap-1.5">
+                  {c.label} <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ))}
+            </div>
             <div className="bg-[#131316] border border-white/10 rounded-[24px] p-5">{mocks[i]}</div>
           </div>
         ))}
