@@ -5,7 +5,8 @@ import GradeGuru from "@/components/calculator/GradeGuru";
 import CGPAPredictor from "@/components/calculator/CGPAPredictor";
 import AttendanceCalculator from "@/components/AttendanceCalculator";
 import dinoLogo from "@/assets/dinosaurWhite.png";
-import { ArrowLeft, Calculator, CalendarDays, BookOpen, Briefcase, Bot, Globe, ArrowRight, Target } from "lucide-react";
+import { ArrowLeft, Calculator, CalendarDays, BookOpen, Briefcase, Globe, ArrowRight, Target } from "lucide-react";
+import { GenAiIcon } from "@/components/BrandIcons";
 
 type Tab = "sgpa" | "cgpa" | "attendance";
 
@@ -19,7 +20,7 @@ export default function Calc({ initial = "sgpa" }: { initial?: Tab }) {
   const promos = [
     { title: "Explore subjects", desc: "Notes, PYQs & Study-With-AI.", icon: BookOpen, onClick: () => navigate("/store"), accent: "#6b8afd" },
     ...(isOn("jobs") ? [{ title: "Placement Prep", desc: "Company patterns & questions.", icon: Briefcase, onClick: () => navigate("/jobs"), accent: "#34d399" }] : []),
-    ...(isOn("agent") ? [{ title: "Agent Fury", desc: "Create agents — email fetch & summarize.", icon: Bot, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank"), accent: "#7c6cf0" }] : []),
+    ...(isOn("agent") ? [{ title: "Agent Fury", desc: "Create agents — email fetch & summarize.", icon: GenAiIcon, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank"), accent: "#7c6cf0" }] : []),
     { title: "FolioFYX", desc: "Build your portfolio site.", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank"), accent: "#f472b6" },
   ];
 

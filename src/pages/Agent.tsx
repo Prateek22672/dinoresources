@@ -4,7 +4,8 @@ import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
-import { Bot, Send, RefreshCw, Mail, Sparkles, FileText, Lock } from "lucide-react";
+import { Send, RefreshCw, Mail, Sparkles, FileText, Lock } from "lucide-react";
+import { GenAiIcon } from "@/components/BrandIcons";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
@@ -37,7 +38,7 @@ export default function Agent() {
     <AppShell>
       <PageHero
         eyebrow="Assistant"
-        eyebrowIcon={Bot}
+        eyebrowIcon={GenAiIcon}
         title="AI Assistant"
         subtitle="Summarize emails & notes, draft replies, and explain anything — instantly."
       />

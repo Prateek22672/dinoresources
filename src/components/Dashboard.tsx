@@ -21,6 +21,7 @@ import {
   CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
   Play, Flame, TrendingUp,
 } from "lucide-react";
+import { GenAiIcon } from "@/components/BrandIcons";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
 
@@ -191,7 +192,7 @@ export default function Dashboard() {
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
     ...(isOn("agent") ? [{ key: "agent", overline: "Assistant", title: "Agent Fury", desc: "Create your agents — e.g. email fetch & summarizer.", cta: "Launch",
-      accent: "#7c6cf0", icon: Bot, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
+      accent: "#7c6cf0", icon: GenAiIcon, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
     { key: "sgpa", overline: "Performance", title: "SGPA Calc", desc: "Estimate your semester grades.", cta: "Open Calculator",
       accent: "#e879a6", icon: Calculator, onClick: () => navigate("/sgpa-calc") },
     { key: "attendance", overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", cta: "Check Attendance",

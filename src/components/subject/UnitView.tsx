@@ -5,6 +5,7 @@ import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
   Sparkles, FileText, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
 } from "lucide-react";
+import { AiIcon } from "@/components/BrandIcons";
 
 interface ResourceRow {
   id: string; title: string; type: "pdf" | "youtube" | "link"; url: string;
@@ -153,7 +154,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
   const mainEmbed = mainEditorial ? toEmbedUrl(mainEditorial.youtube_url) : null;
 
   const tabs: { id: UnitTab; label: string; icon: any }[] = [
-    { id: "ai", label: "Study With AI", icon: Sparkles },
+    { id: "ai", label: "Study With AI", icon: AiIcon },
     { id: "editorial", label: "Editorial", icon: Clapperboard },
     { id: "resources", label: "Resources", icon: Layers },
   ];
@@ -270,7 +271,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
           {/* Groq related rail */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Similar videos</h3>
+              <h3 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2"><AiIcon className="w-4 h-4" /> Similar videos</h3>
               <button onClick={loadRelated} disabled={relatedLoading} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 disabled:opacity-50">
                 {relatedLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} {relatedTried ? "Refresh" : "Find with AI"}
               </button>

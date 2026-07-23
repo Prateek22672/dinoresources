@@ -10,6 +10,7 @@ import {
   PenSquare, Plus, Trash2, Save, Eye, EyeOff, Sparkles, FileUp, ExternalLink, Clapperboard, Briefcase,
   FileText, Youtube, Link2,
 } from "lucide-react";
+import { AiIcon } from "@/components/BrandIcons";
 
 const UNITS = [1, 2, 3, 4, 5];
 const RES_CATEGORIES = ["Syllabus", "Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Previous Papers", "Additional Resources"];
@@ -195,7 +196,7 @@ export default function Contributor() {
           </Link>
         }
         stats={[
-          { label: "Q&A in subject", value: Object.values(unitCounts).reduce((n, c) => n + c, 0), icon: Sparkles },
+          { label: "Q&A in subject", value: Object.values(unitCounts).reduce((n, c) => n + c, 0), icon: AiIcon },
           { label: "Materials", value: materials.length, icon: FileUp },
         ]}
       />
@@ -254,7 +255,7 @@ export default function Contributor() {
         {/* Q&A editor */}
         <div className="space-y-4">
           <div className="td-surface rounded-3xl p-5">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Add Study-With-AI Q&amp;A</h3>
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><AiIcon className="w-4 h-4" /> Add Study-With-AI Q&amp;A</h3>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Question"
               className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 mb-2" />
             <textarea value={a} onChange={(e) => setA(e.target.value)} placeholder="Answer (markdown supported)…" rows={5}

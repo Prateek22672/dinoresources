@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { X, Sparkles } from "lucide-react";
+import { DinoBlackIcon } from "@/components/BrandIcons";
 
 interface Seg { id: string; label: string; percent: number; }
 interface Win { code: string; percent: number; label: string; }
@@ -103,7 +104,7 @@ export default function SpinWheel({
             ))}
             {/* hub */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white flex items-center justify-center">
-              <span className="text-black font-black text-xs">🦕</span>
+              <DinoBlackIcon className="w-6 h-6" />
             </div>
           </div>
         </div>

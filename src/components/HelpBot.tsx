@@ -7,7 +7,8 @@ import { useAccent } from "@/hooks/useAccent";
 import { useCart } from "@/context/CartContext";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
-import { Bot, Send, X, RefreshCw, Ticket, Sparkles, ArrowRight, Check, Trash2 } from "lucide-react";
+import { Send, X, RefreshCw, Ticket, ArrowRight, Check, Trash2 } from "lucide-react";
+import { AiIcon, DinoIcon } from "@/components/BrandIcons";
 
 interface BotAction {
   type: string; label: string;
@@ -197,7 +198,7 @@ export default function HelpBot({
         <div className="td-surface w-full h-[88dvh] sm:h-[600px] sm:max-h-[calc(100dvh-3rem)] rounded-t-[28px] sm:rounded-[28px] flex flex-col overflow-hidden td-in border border-white/10 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.65)]">
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-white/8 shrink-0">
-            <span className="w-10 h-10 rounded-2xl td-accent-bg flex items-center justify-center"><Bot className="w-5 h-5" /></span>
+            <span className="w-10 h-10 rounded-2xl td-accent-bg flex items-center justify-center"><DinoIcon className="w-6 h-6" /></span>
             <div className="min-w-0 flex-1">
               <p className="text-white font-bold leading-tight">DinoBot</p>
               <p className="text-zinc-500 text-xs">Does things for you · replies instantly</p>
@@ -275,7 +276,7 @@ export default function HelpBot({
               </button>
             </div>
             <p className="text-center text-[10px] text-zinc-600 flex items-center justify-center gap-1">
-              <Sparkles className="w-3 h-3" /> AI assistant — may make mistakes; the team confirms via tickets.
+              <AiIcon className="w-3 h-3 opacity-70" /> AI assistant — may make mistakes; the team confirms via tickets.
             </p>
           </div>
         </div>
