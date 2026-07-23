@@ -55,9 +55,9 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const mobileItems: MobileNavItem[] = [
     ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
     { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
-    { label: "Help", icon: LifeBuoy, onClick: () => setBotOpen(true) },
-    { label: "Profile", icon: UserCog, onClick: () => navigate("/setup?edit=true") },
-    { label: "Sign out", icon: LogOut, danger: true, onClick: signOut },
+    { label: "Help", icon: LifeBuoy, bottom: true, onClick: () => setBotOpen(true) },
+    { label: "Settings", icon: UserCog, bottom: true, onClick: () => navigate("/setup?edit=true") },
+    { label: "Sign out", icon: LogOut, danger: true, bottom: true, onClick: signOut },
   ];
 
   const linkClass = (to: string, base = "") =>
