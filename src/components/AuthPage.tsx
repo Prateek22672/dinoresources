@@ -37,13 +37,17 @@ export default function AuthPage() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+
+    // Mint this device's token BEFORE auth so the session guard's claim
+    // always finds it — the freshest login owns the session.
+    const deviceToken = Date.now().toString(36) + Math.random().toString(36).substring(2);
+    localStorage.setItem("device_token", deviceToken);
+
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setIsLoading(false);
     if (error) {
       toast.error(error.message);
     } else if (data.user) {
-      const deviceToken = Date.now().toString(36) + Math.random().toString(36).substring(2);
-      localStorage.setItem("device_token", deviceToken);
       await supabase.from("profiles").update({ session_token: deviceToken } as any).eq("id", data.user.id);
       toast.success("Welcome back!");
       navigate("/");
