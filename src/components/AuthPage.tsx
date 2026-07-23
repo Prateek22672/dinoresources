@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
 export default function AuthPage() {
@@ -78,6 +78,16 @@ export default function AuthPage() {
           border-color: rgb(var(--td-accent-rgb) / 0.55);
           box-shadow: 0 0 0 3px rgb(var(--td-accent-rgb) / 0.16);
         }
+        /* kill Chrome's blue autofill wash — keep our dark field */
+        .td-auth-field:-webkit-autofill,
+        .td-auth-field:-webkit-autofill:hover,
+        .td-auth-field:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px #101014 inset !important;
+          -webkit-text-fill-color: #ffffff !important;
+          caret-color: #ffffff;
+          border-color: rgba(255,255,255,0.12);
+          transition: background-color 99999s ease-in-out 0s;
+        }
         @keyframes tdAuthIn { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
         .td-auth-in  { animation: tdAuthIn .6s cubic-bezier(.22,1,.36,1) both; }
         .td-auth-in2 { animation: tdAuthIn .6s cubic-bezier(.22,1,.36,1) both; animation-delay:.1s; }
@@ -120,22 +130,39 @@ export default function AuthPage() {
               <span className="text-zinc-600">covered.</span>
             </h1>
             <p className="text-zinc-400 leading-relaxed max-w-sm">
-              Notes, PYQs, AI help and attendance tracking — everything a GITAM student
-              actually needs, in one place.
+              Everything a GITAM student actually needs, in one place.
             </p>
+
+            {/* what's inside */}
+            <ul className="space-y-3">
+              {[
+                "Notes, PYQs & Study-With-AI for every subject",
+                "Free SGPA, CGPA & attendance calculators",
+                "Placement prep — company by company",
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-3 text-[15px] text-zinc-300">
+                  <span className="w-6 h-6 rounded-full td-accent-bg flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                  </span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+
             <div className="flex items-center gap-3 mt-1">
               <div className="flex -space-x-2">
                 {["A", "R", "S", "K"].map((l) => (
-                  <span key={l} className="w-7 h-7 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
+                  <span key={l} className="w-8 h-8 rounded-full bg-white/[0.07] border-2 border-[#0b0b0e] flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
                 ))}
+                <span className="w-8 h-8 rounded-full td-accent-solid border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black text-white">1.4k</span>
               </div>
               <span className="text-sm text-zinc-500 font-medium">1400+ students already inside</span>
             </div>
           </div>
 
           {/* Right — form card */}
-          <div className="td-auth-in2">
-            <div className="rounded-[26px] bg-white/[0.02] border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-2xl">
+          <div className="td-auth-in2 w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end">
+            <div className="rounded-[28px] bg-[#121216] border border-white/10 p-6 sm:p-8 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
               {/* Mobile brand */}
               <div className="lg:hidden flex flex-col items-center text-center mb-6">
                 <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-3">
