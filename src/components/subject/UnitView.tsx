@@ -109,7 +109,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
   };
 
   const Materials = () => {
-    if (resources.length === 0) {
+    if (resources.length === 0 && (!isUnit || topics.length === 0)) {
       return <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No materials uploaded yet.</div>;
     }
     if (!isUnit || topics.length === 0) {
@@ -119,13 +119,16 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
       <div className="space-y-5">
         {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }].map((group) => {
           const items = resources.filter((r) => (r.topic_id ?? null) === group.gid);
-          if (items.length === 0) return null;
+          // topic headings stay visible with a placeholder; General only when it has items
+          if (items.length === 0 && group.gid === null) return null;
           return (
             <div key={group.gid ?? "general"} className="space-y-3">
               <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-500 flex items-center gap-2 px-1">
                 <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
               </p>
-              {items.map(renderResource)}
+              {items.length === 0
+                ? <div className="td-surface rounded-2xl p-4 text-center text-zinc-600 text-xs">Materials for this topic are coming soon.</div>
+                : items.map(renderResource)}
             </div>
           );
         })}
@@ -153,7 +156,19 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-white">{sectionTitle}</h2>
+      <div>
+        <h2 className="text-xl font-bold text-white">{sectionTitle}</h2>
+        {/* Topic outline — the unit's structure at a glance */}
+        {topics.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {topics.map((t, i) => (
+              <span key={t.id} className="td-surface-2 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                <span className="td-accent-text font-bold">{i + 1}.</span> {t.title}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1.5 td-surface rounded-full p-1 w-fit max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden">
@@ -165,15 +180,26 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
         ))}
       </div>
 
-      {/* Study With AI — grouped topic-wise */}
+      {/* Study With AI — grouped topic-wise (topics always visible as structure) */}
       {tab === "ai" && (
-        qa.length === 0 ? (
+        qa.length === 0 && topics.length === 0 ? (
           <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No Q&amp;A added for this unit yet.</div>
         ) : (
           <div className="space-y-5">
             {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }].map((group) => {
               const items = qa.filter((x) => ((x as any).topic_id ?? null) === group.gid);
-              if (items.length === 0) return null;
+              // topic headings always show (with a placeholder); General only when it has content
+              if (items.length === 0 && group.gid === null) return null;
+              if (items.length === 0) {
+                return (
+                  <div key={group.gid} className="space-y-2.5">
+                    <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-500 flex items-center gap-2 px-1">
+                      <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
+                    </p>
+                    <div className="td-surface rounded-2xl p-4 text-center text-zinc-600 text-xs">Content for this topic is coming soon.</div>
+                  </div>
+                );
+              }
               return (
                 <div key={group.gid ?? "general"} className="space-y-2.5">
                   {topics.length > 0 && (
