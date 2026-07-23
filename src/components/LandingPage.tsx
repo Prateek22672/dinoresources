@@ -440,7 +440,7 @@ export default function LandingPage() {
           </a>
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
-            className="group rounded-[28px] p-8 bg-[#0d0d0f] border border-white/12 text-white hover:-translate-y-1.5 hover:border-white/25 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9)]">
+            className="group rounded-[28px] p-8 bg-white/[0.04] backdrop-blur-xl border-2 border-white/25 text-white hover:-translate-y-1.5 hover:border-white/50 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)]">
             <div className="flex items-start justify-between mb-5">
               <span className="h-14" aria-hidden />
               <ArrowUpRight className="w-5 h-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
