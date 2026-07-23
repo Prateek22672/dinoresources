@@ -17,6 +17,17 @@ const TICKET_CATEGORIES = [
 const NAV_RE = /^(\/store|\/cart|\/library|\/purchases|\/sgpa-calc|\/attendance-calc|\/calc|\/jobs|\/dashboard|\/about|\/setup\?edit=true|\/subject\/[a-z0-9-]+)$/;
 const ACCENTS = ["violet", "emerald", "blue", "amber", "rose"];
 
+// In-memory sliding-window rate limit (no DB writes needed for chat).
+const hits = new Map<string, number[]>();
+function rateLimited(uid: string): boolean {
+  const now = Date.now();
+  const arr = (hits.get(uid) ?? []).filter((t) => now - t < 60_000);
+  arr.push(now);
+  hits.set(uid, arr);
+  if (hits.size > 5000) hits.clear(); // memory backstop
+  return arr.length > 10;
+}
+
 async function groqChat(payload: unknown): Promise<any | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const ctl = new AbortController();
@@ -57,6 +68,31 @@ Deno.serve(async (req) => {
     if (!GROQ_KEY) return jsonResponse({ reply: "The assistant isn't configured yet — please raise a ticket instead.", actions: [] });
 
     const body = await req.json().catch(() => ({}));
+
+    // ── Phase 2: user tapped "Confirm & raise" — deterministic insert, no LLM ──
+    if (body?.confirm_ticket && typeof body.confirm_ticket === "object") {
+      const ct = body.confirm_ticket;
+      if (!TICKET_CATEGORIES.includes(ct.category) || typeof ct.message !== "string" || ct.message.trim().length < 10) {
+        return jsonResponse({ reply: "That ticket looks incomplete — tell me the issue again and I'll redo it.", actions: [] });
+      }
+      const dbc = adminClient();
+      // dedupe: identical open ticket in the last 10 minutes
+      const tenMinAgo = new Date(Date.now() - 600_000).toISOString();
+      const { data: dup } = await dbc.from("support_tickets").select("id")
+        .eq("user_id", user.id).eq("category", ct.category).gte("created_at", tenMinAgo).limit(1);
+      if (dup && dup.length) {
+        return jsonResponse({ reply: `You already have a fresh ${ct.category.replaceAll("_", " ")} ticket (#${String(dup[0].id).slice(0, 8)}) — the team is on it. I won't duplicate it.`, actions: [] });
+      }
+      const { data: t, error } = await dbc.from("support_tickets").insert({
+        user_id: user.id, category: ct.category, message: ct.message.trim().slice(0, 2000), contact: user.email ?? null,
+      }).select("id").single();
+      if (error || !t) return jsonResponse({ reply: "Couldn't file the ticket just now — please try again or use the manual form below.", actions: [] });
+      const shortId = String(t.id).slice(0, 8);
+      return jsonResponse({
+        reply: `✅ Ticket #${shortId} is filed. The team replies within 24 hours — ask me anytime for its status.`,
+        actions: [{ type: "ticket_created", id: shortId, label: `Ticket #${shortId} filed` }],
+      });
+    }
     const history = (Array.isArray(body?.messages) ? body.messages : [])
       .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
       .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 2000) }))
@@ -66,11 +102,7 @@ Deno.serve(async (req) => {
     const db = adminClient();
 
     // ── Rate limit: protect the key + absorb load spikes gracefully ──
-    const minuteAgo = new Date(Date.now() - 60_000).toISOString();
-    const { count: recent } = await db.from("help_chats")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id).gte("created_at", minuteAgo);
-    if ((recent ?? 0) > 16) {
+    if (rateLimited(user.id)) {
       return jsonResponse({ reply: "You're going fast! ⚡ Give me a few seconds and ask again.", actions: [] });
     }
 
@@ -115,7 +147,7 @@ ACTION TYPES (max 3 per reply; the user taps a button to run each — put the ex
 - {"type":"set_accent","id":"violet|emerald|blue|amber|rose","label":"Make it teal"} (emerald=teal, blue=sapphire, amber=gold)
 - {"type":"add_to_cart","subject_id":"<id from catalog>","label":"Add DBMS to cart"}
 - {"type":"add_combo","year_id":"<year_id from catalog>","label":"Add Fourth Year combo"}
-- {"type":"create_ticket","category":"<one of: ${TICKET_CATEGORIES.join(", ")}>","message":"<full issue summary>"} — the server FILES IT INSTANTLY, so emit ONLY after you have asked and learned: (1) which category fits, (2) the details (subject name / payment id if relevant). Ask ONE question at a time.
+- {"type":"create_ticket","category":"<one of: ${TICKET_CATEGORIES.join(", ")}>","message":"<full issue summary quoting the user's OWN details>"} — this does NOT file anything: the user sees a review card and must tap Confirm. STRICT RULES: (1) collect info first, ONE question at a time — issue type, then specifics (subject/combo name, what happened); (2) NEVER put create_ticket in a reply that asks a question; (3) the message must contain the user's actual details (min 25 chars), never a placeholder.
 
 RULES:
 - When the user asks to do something the site can do (open a page, change theme/accent, add to cart, raise a ticket), DO IT via an action + short reply. Never say you can't.
@@ -163,25 +195,26 @@ ${ticketLines}`;
         } else if (a?.type === "add_combo" && yearIds.has(a.year_id)) {
           const y = yearList.find((x) => x.id === a.year_id);
           safe.push({ type: "add_combo", year_id: a.year_id, year_name: y?.name ?? "Combo", label: String(a.label ?? `Add ${y?.name ?? "combo"}`).slice(0, 40) });
-        } else if (a?.type === "create_ticket" && TICKET_CATEGORIES.includes(a.category) && typeof a.message === "string" && a.message.trim()) {
-          const { data: t, error } = await db.from("support_tickets").insert({
-            user_id: user.id, category: a.category, message: a.message.trim().slice(0, 2000), contact: user.email ?? null,
-          }).select("id").single();
-          if (!error && t) {
-            safe.push({ type: "ticket_created", id: String(t.id).slice(0, 8), label: `Ticket #${String(t.id).slice(0, 8)} filed` });
-            finalReply += `\n\n✅ Done — I've raised ticket #${String(t.id).slice(0, 8)} for you. The team replies within 24 hours; ask me anytime for its status.`;
+        } else if (a?.type === "create_ticket" && TICKET_CATEGORIES.includes(a.category) && typeof a.message === "string") {
+          // NEVER file here. Readiness gate + user confirmation card instead:
+          // the ticket only exists after the user taps Confirm (phase 2 above).
+          const msg = a.message.trim();
+          const asksQuestion = /\?\s*$/.test(finalReply.trim());
+          if (msg.length >= 25 && !asksQuestion) {
+            safe.push({
+              type: "confirm_ticket",
+              category: a.category,
+              message: msg.slice(0, 1000),
+              label: "Confirm & raise ticket",
+            });
           }
+          // too thin or reply is still a question → drop silently; the bot's
+          // clarifying question stands and no ticket is created.
         }
       } catch (e) { console.error("action validation", e); }
     }
 
-    // Log (fire-and-forget)
-    const lastUser = [...history].reverse().find((m: any) => m.role === "user");
-    const rows: any[] = [];
-    if (lastUser) rows.push({ user_id: user.id, role: "user", content: lastUser.content.slice(0, 4000) });
-    rows.push({ user_id: user.id, role: "assistant", content: finalReply.slice(0, 4000) });
-    db.from("help_chats").insert(rows).then(() => {}, () => {});
-
+    // Chat history lives on the user's device (localStorage) — no DB writes.
     return jsonResponse({ reply: finalReply, actions: safe });
   } catch (err) {
     console.error("help-bot error", err);

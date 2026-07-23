@@ -7,15 +7,18 @@ import { useAccent } from "@/hooks/useAccent";
 import { useCart } from "@/context/CartContext";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
-import { Bot, Send, X, RefreshCw, Ticket, Sparkles, ArrowRight, Check } from "lucide-react";
+import { Bot, Send, X, RefreshCw, Ticket, Sparkles, ArrowRight, Check, Trash2 } from "lucide-react";
 
 interface BotAction {
   type: string; label: string;
   to?: string; mode?: string; id?: string;
   subject_id?: string; subject_name?: string;
   year_id?: string; year_name?: string;
+  category?: string; message?: string;
 }
 interface Msg { role: "user" | "assistant"; content: string; actions?: BotAction[]; }
+
+const CHAT_KEY = "td:helpbot-chat";
 
 const QUICK = [
   "What subjects are available?",
@@ -38,11 +41,20 @@ export default function HelpBot({
   const { setAccent } = useAccent();
   const { addSubject, addCombo, isInCart } = useCart();
 
-  const [messages, setMessages] = useState<Msg[]>([]);
+  // Conversation persists on-device (localStorage) — nothing stored server-side.
+  const [messages, setMessages] = useState<Msg[]>(() => {
+    try { return JSON.parse(localStorage.getItem(CHAT_KEY) || "[]"); } catch { return []; }
+  });
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [ran, setRan] = useState<Set<string>>(new Set());
   const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(CHAT_KEY, JSON.stringify(messages.slice(-30))); } catch { /* storage full */ }
+  }, [messages]);
+
+  const clearChat = () => { setMessages([]); setRan(new Set()); try { localStorage.removeItem(CHAT_KEY); } catch { /* ignore */ } };
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, busy]);
 
@@ -78,10 +90,30 @@ export default function HelpBot({
     setMessages((m) => [...m, { role: "assistant", content: data.reply, actions: data.actions ?? [] }]);
   };
 
+  /** Phase-2 ticket confirm: deterministic server insert, no LLM involved. */
+  const confirmTicket = async (a: BotAction, key: string) => {
+    if (busy) return;
+    setRan((p) => new Set(p).add(key));
+    setBusy(true);
+    const { data } = await invokeFn<{ reply: string; actions?: BotAction[] }>(
+      "help-bot",
+      { confirm_ticket: { category: a.category, message: a.message } },
+    );
+    setBusy(false);
+    setMessages((m) => [...m, {
+      role: "assistant",
+      content: data?.reply ?? "Couldn't file the ticket — please use the manual form below.",
+      actions: data?.actions ?? [],
+    }]);
+  };
+
   /** Execute a validated action. Never throws — worst case is a toast. */
   const runAction = (a: BotAction, key: string) => {
     try {
       switch (a.type) {
+        case "confirm_ticket":
+          confirmTicket(a, key);
+          break;
         case "navigate":
           if (a.to) { onClose(); navigate(a.to); }
           break;
@@ -121,6 +153,25 @@ export default function HelpBot({
         </span>
       );
     }
+    if (a.type === "confirm_ticket") {
+      const done = ran.has(key);
+      return (
+        <div key={key} className="w-full td-surface-2 rounded-2xl p-3.5 border border-white/10">
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-zinc-500 mb-1.5 flex items-center gap-1.5">
+            <Ticket className="w-3 h-3 td-accent-text" /> Review your ticket
+          </p>
+          <p className="text-[11px] text-zinc-500 mb-0.5 capitalize">Type: <span className="text-zinc-300 font-semibold">{(a.category ?? "").replaceAll("_", " ")}</span></p>
+          <p className="text-[13px] text-zinc-200 leading-relaxed mb-3">{a.message}</p>
+          <button
+            onClick={() => runAction(a, key)}
+            disabled={done || busy}
+            className="td-btn-primary w-full py-2.5 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-60"
+          >
+            {done ? <><Check className="w-3.5 h-3.5" /> Raised</> : <>Confirm &amp; raise ticket</>}
+          </button>
+        </div>
+      );
+    }
     const done = ran.has(key);
     return (
       <button
@@ -151,6 +202,11 @@ export default function HelpBot({
               <p className="text-white font-bold leading-tight">DinoBot</p>
               <p className="text-zinc-500 text-xs">Does things for you · replies instantly</p>
             </div>
+            {messages.length > 0 && (
+              <button onClick={clearChat} className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Clear chat" title="Clear chat">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button onClick={onClose} className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Close">
               <X className="w-4 h-4" />
             </button>
