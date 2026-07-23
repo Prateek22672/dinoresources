@@ -61,10 +61,11 @@ All colors MUST be HSL.
     --td-accent-rgb: 124 108 240;
   }
 
-  :root[data-accent="emerald"] { --td-accent:#10b981; --td-accent-soft:#6ee7b7; --td-accent-strong:#059669; --td-accent-rgb:16 185 129; }
-  :root[data-accent="blue"]    { --td-accent:#3b82f6; --td-accent-soft:#93b4ff; --td-accent-strong:#2563eb; --td-accent-rgb:59 130 246; }
-  :root[data-accent="amber"]   { --td-accent:#f59e0b; --td-accent-soft:#fcd34d; --td-accent-strong:#b7791f; --td-accent-rgb:245 158 11; }
-  :root[data-accent="rose"]    { --td-accent:#f43f5e; --td-accent-soft:#fda4b8; --td-accent-strong:#e11d48; --td-accent-rgb:244 63 94; }
+  /* Curated accents — desaturated to sit calmly on the grey UI. */
+  :root[data-accent="emerald"] { --td-accent:#14b8a6; --td-accent-soft:#6ee7db; --td-accent-strong:#0d9488; --td-accent-rgb:20 184 166; }
+  :root[data-accent="blue"]    { --td-accent:#5b8def; --td-accent-soft:#a3c2ff; --td-accent-strong:#3f6ad8; --td-accent-rgb:91 141 239; }
+  :root[data-accent="amber"]   { --td-accent:#d9a441; --td-accent-soft:#ecc989; --td-accent-strong:#a97b28; --td-accent-rgb:217 164 65; }
+  :root[data-accent="rose"]    { --td-accent:#d962a8; --td-accent-soft:#f0a6d4; --td-accent-strong:#c2478f; --td-accent-rgb:217 98 168; }
 
   .dark {
     --background: 240 10% 4%;

@@ -1,11 +1,13 @@
 import { useCallback, useState } from "react";
 
+// Curated, slightly desaturated hues that sit well on the grey UI
+// (ids kept stable so saved preferences keep working).
 export const ACCENTS = [
   { id: "violet", label: "Violet", color: "#7c6cf0" },
-  { id: "emerald", label: "Emerald", color: "#10b981" },
-  { id: "blue", label: "Blue", color: "#3b82f6" },
-  { id: "amber", label: "Amber", color: "#f59e0b" },
-  { id: "rose", label: "Rose", color: "#f43f5e" },
+  { id: "emerald", label: "Teal", color: "#14b8a6" },
+  { id: "blue", label: "Sapphire", color: "#5b8def" },
+  { id: "amber", label: "Gold", color: "#d9a441" },
+  { id: "rose", label: "Rose", color: "#d962a8" },
 ] as const;
 
 export type AccentId = (typeof ACCENTS)[number]["id"];

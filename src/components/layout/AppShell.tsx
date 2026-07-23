@@ -32,6 +32,15 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const [helpOpen, setHelpOpen] = useState(false);   // classic ticket form
   const [botOpen, setBotOpen] = useState(false);     // DinoBot chat (opens first)
   const [menuOpen, setMenuOpen] = useState(false);
+  // Side rail collapse (persisted) — icons-only mode frees width on dense pages
+  const [navMin, setNavMin] = useState(() => {
+    try { return localStorage.getItem("td:nav") === "min"; } catch { return false; }
+  });
+  const toggleNav = () => setNavMin((v) => {
+    const n = !v;
+    try { localStorage.setItem("td:nav", n ? "min" : "full"); } catch { /* ignore */ }
+    return n;
+  });
 
   const signOut = async () => { await supabase.auth.signOut(); navigate("/auth"); };
   const isActive = (to: string) => location.pathname === to || location.pathname.startsWith(to + "/");
@@ -79,26 +88,25 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             ))}
           </nav>
 
+          {/* Utilities — ordered least-used (left) → most-used (right) */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Link to="/cart" className="relative w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Cart">
+            <button onClick={signOut} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Sign out" title="Sign out">
+              <LogOut className="w-4 h-4" />
+            </button>
+            <button onClick={() => navigate("/setup?edit=true")} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Profile" title="Profile & settings">
+              <UserCog className="w-4 h-4" />
+            </button>
+            <AccentPicker />
+            <button onClick={() => setBotOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">
+              <LifeBuoy className="w-4 h-4" /> Help
+            </button>
+            <NoticesBell />
+            <Link to="/cart" className="relative w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Cart" title="Cart">
               <ShoppingCart className="w-4 h-4" />
               {count > 0 && (
                 <span className="td-accent-solid absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center">{count}</span>
               )}
             </Link>
-            <NoticesBell />
-            <AccentPicker />
-
-            {/* Desktop-only actions */}
-            <button onClick={() => setBotOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">
-              <LifeBuoy className="w-4 h-4" /> Help
-            </button>
-            <button onClick={() => navigate("/setup?edit=true")} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Profile">
-              <UserCog className="w-4 h-4" />
-            </button>
-            <button onClick={signOut} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Sign out">
-              <LogOut className="w-4 h-4" />
-            </button>
 
             {/* Mobile menu toggle */}
             <button onClick={() => setMenuOpen((o) => !o)} className="lg:hidden w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Menu">
@@ -114,8 +122,11 @@ export default function AppShell({ children, hideHeader = false }: { children: R
       <MobileNavOverlay open={menuOpen} onClose={() => setMenuOpen(false)} items={mobileItems} />
 
       <div className="flex-1 container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <div className={hideHeader ? "" : "xl:grid xl:grid-cols-[216px_minmax(0,1fr)] xl:gap-6 items-start"}>
-          {!hideHeader && <SideNav />}
+        <div
+          className={hideHeader ? "" : "xl:grid xl:gap-6 items-start"}
+          style={hideHeader ? undefined : { gridTemplateColumns: `${navMin ? "76px" : "216px"} minmax(0,1fr)` }}
+        >
+          {!hideHeader && <SideNav collapsed={navMin} onToggle={toggleNav} />}
           <main key={location.pathname} className="td-page min-w-0">{children}</main>
         </div>
       </div>
