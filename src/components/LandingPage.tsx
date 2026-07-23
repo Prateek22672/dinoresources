@@ -54,7 +54,6 @@ const STATS = [
   { value: 2, suffix: "AM", label: "We're still here" },
 ];
 
-const TILE_COLORS = ["#7c6cf0", "#f472b6", "#34d399", "#f59e0b", "#6b8afd", "#a78bfa"];
 const MARQUEE = [
   "DBMS", "Computer Organization", "Artificial Intelligence", "Operating Systems",
   "Software Engineering", "Compiler Design", "FLAT", "Data Structures", "DAA",
@@ -300,30 +299,40 @@ export default function LandingPage() {
         </button>
       </section>
 
-      {/* ── Stats band ── */}
-      <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 py-16 ld-reveal ${statsReveal.visible ? "on" : ""}`}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {STATS.map((s, i) => (
-            <div key={s.label} className="bg-[#131316] border border-white/8 rounded-[22px] py-7 text-center">
-              <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white" style={{ fontVariantNumeric: "tabular-nums" }}>
-                {counts[i]}{s.suffix}
-              </p>
-              <p className="text-zinc-500 text-[11px] font-bold tracking-[0.18em] uppercase mt-2">{s.label}</p>
+      {/* ── Social proof — one giant number (Fluently-style) ── */}
+      <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 pt-24 pb-16 text-center ld-reveal ${statsReveal.visible ? "on" : ""}`}>
+        <p className="text-[11px] font-black tracking-[0.3em] uppercase mb-4" style={{ color: "var(--td-accent-soft)" }}>
+          Students trust TeamDino
+        </p>
+        <p className="text-[clamp(4.5rem,13vw,9rem)] font-extrabold tracking-tight leading-none text-white" style={{ fontVariantNumeric: "tabular-nums" }}>
+          {counts[0].toLocaleString("en-IN")}+
+        </p>
+        <p className="text-zinc-500 font-medium mt-3">active GITAM students and counting</p>
+
+        <div className="flex items-center justify-center flex-wrap gap-x-8 gap-y-4 mt-10">
+          {[
+            [`${counts[1]}%`, "found it useful"],
+            [`${counts[2]}+`, "subjects covered"],
+            [`${counts[3]}AM`, "we're still here"],
+          ].map(([v, l], i) => (
+            <div key={l} className="flex items-center gap-8">
+              {i > 0 && <span className="hidden sm:block w-px h-9 bg-white/10" />}
+              <div className="text-left">
+                <p className="text-2xl font-extrabold text-white leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>{v}</p>
+                <p className="text-zinc-500 text-xs font-semibold mt-1">{l}</p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Subjects marquee ── */}
-      <section className="relative z-10 pb-10 overflow-hidden">
-        <p className="text-center text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-600 mb-6">On the shelf right now</p>
-        <div className="flex w-max" style={{ animation: "ld-marquee 32s linear infinite", maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)" }}>
+      {/* ── Subjects strip — press-logo style wordmarks ── */}
+      <section className="relative z-10 pb-16 overflow-hidden">
+        <div className="flex w-max items-center" style={{ animation: "ld-marquee 38s linear infinite", maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}>
           {[...MARQUEE, ...MARQUEE].map((m, i) => (
-            <span key={i} className="mx-2 shrink-0 flex items-center gap-2.5 bg-[#131316] border border-white/8 rounded-full pl-2 pr-5 py-2">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center text-white/80 text-sm font-black" style={{ background: TILE_COLORS[i % TILE_COLORS.length] }}>
-                {m.charAt(0)}
-              </span>
-              <span className="text-sm font-semibold text-zinc-300 whitespace-nowrap">{m}</span>
+            <span key={i} className="flex items-center shrink-0">
+              <span className="text-2xl sm:text-[1.7rem] font-extrabold tracking-tight text-zinc-700 whitespace-nowrap hover:text-zinc-400 transition-colors">{m}</span>
+              <span className="mx-7 w-1.5 h-1.5 rounded-full td-accent-solid opacity-40 inline-block shrink-0" />
             </span>
           ))}
         </div>
