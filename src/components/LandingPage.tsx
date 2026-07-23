@@ -6,24 +6,7 @@ import {
 import Footer from "./Footer";
 import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
-
-/* Floating hero frames — polaroids/tiles that pop up from below, then drift
- * at different parallax depths on scroll (Aardvark-style floating objects). */
-const FRAMES: {
-  kind: "img" | "tile" | "price";
-  src?: string;
-  cls: string;      // absolute position + size
-  rot: string;      // final tilt
-  depth: number;    // parallax rate on scroll
-  delay: number;    // pop-in stagger
-  mobile?: boolean; // show on small screens too
-}[] = [
-  { kind: "img", src: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop", cls: "top-[10%] right-[24%] w-40 xl:w-48", rot: "-8deg", depth: -0.16, delay: 0.2 },
-  { kind: "img", src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=900&auto=format&fit=crop", cls: "top-[26%] right-[2%] w-52 xl:w-64", rot: "6deg", depth: 0.1, delay: 0.35, mobile: true },
-  { kind: "img", src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop", cls: "bottom-[14%] right-[30%] w-44 xl:w-52", rot: "4deg", depth: 0.24, delay: 0.5 },
-  { kind: "tile", cls: "top-[56%] right-[52%] w-36", rot: "-6deg", depth: 0.18, delay: 0.65 },
-  { kind: "price", cls: "bottom-[10%] right-[4%]", rot: "-5deg", depth: 0.14, delay: 0.8, mobile: true },
-];
+import dinoBlack from "@/assets/dinosaurBlack.png";
 
 /* Hero scroll FX: content fades up, frames drift at their own depths. */
 function useHeroParallax(depths: number[]) {
@@ -281,6 +264,9 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#0b0b0e] text-zinc-100 font-sans overflow-x-clip relative">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Caveat:wght@600;700&display=swap');
+        .ld-display { font-family: 'Baloo 2', 'Inter', sans-serif; }
+        .ld-hand { font-family: 'Caveat', cursive; }
         @keyframes ld-in { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
         .ld-in { animation: ld-in .7s cubic-bezier(.22,1,.36,1) both; }
         .ld-in-2 { animation: ld-in .7s cubic-bezier(.22,1,.36,1) both; animation-delay:.12s; }
@@ -297,7 +283,7 @@ export default function LandingPage() {
         @media (prefers-reduced-motion: reduce) { .ld-in,.ld-in-2,.ld-in-3 { animation:none; } .ld-reveal { opacity:1; transform:none; transition:none; } }
       `}</style>
 
-      {/* ── Nav — floating pill over the hero ── */}
+      {/* ── Nav — floating dark pill (unchanged) ── */}
       <header className="sticky top-4 z-50 px-4">
         <div className="max-w-2xl mx-auto bg-[#131316]/95 backdrop-blur-xl border border-white/10 rounded-full pl-2.5 pr-2 h-14 flex items-center justify-between shadow-[0_16px_50px_-16px_rgba(0,0,0,0.8)]">
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2.5">
@@ -447,74 +433,99 @@ export default function LandingPage() {
   );
 }
 
-/* ─── Hero: solid stage, giant type, floating frames popping up from below ─── */
-function HeroSection({ goAuth }: { goAuth: () => void }) {
-  const { contentRef, cueRef, frameRefs } = useHeroParallax(FRAMES.map((f) => f.depth));
+/* A tilted SVG hardcover "subject book" — spine, page stack, badge, depth. */
+function BookMock({ cover, spine, title }: { cover: string; spine: string; title: string }) {
+  return (
+    <svg viewBox="0 0 300 400" className="w-full h-auto" style={{ filter: "drop-shadow(0 45px 45px rgba(0,0,0,0.35))" }} aria-hidden>
+      {/* page block peeking right + bottom */}
+      <rect x="24" y="10" width="270" height="384" rx="14" fill="#F4EFE3" />
+      <g stroke="#DCD3BC" strokeWidth="2">
+        <line x1="284" y1="22" x2="284" y2="382" />
+        <line x1="289" y1="28" x2="289" y2="376" />
+      </g>
+      <g stroke="#DCD3BC" strokeWidth="2">
+        <line x1="40" y1="388" x2="270" y2="388" />
+      </g>
+      {/* front cover */}
+      <rect x="6" y="0" width="274" height="382" rx="16" fill={cover} />
+      {/* cover depth edge */}
+      <rect x="262" y="4" width="18" height="374" rx="9" fill="rgba(0,0,0,0.14)" />
+      {/* spine */}
+      <path d="M6 16 A16 16 0 0 1 22 0 H52 V382 H22 A16 16 0 0 1 6 366 Z" fill={spine} />
+      <rect x="52" y="0" width="9" height="382" fill="rgba(0,0,0,0.16)" />
+      {/* hinge highlight */}
+      <rect x="66" y="10" width="4" height="362" rx="2" fill="rgba(255,255,255,0.55)" />
+      {/* dino badge */}
+      <circle cx="234" cy="48" r="26" fill="#ffffff" />
+      <image href={dinoBlack} x="218" y="32" width="32" height="32" />
+      {/* title */}
+      <text x="86" y="316" fill="#ffffff" fontWeight="800" fontSize="44" fontFamily="'Baloo 2', sans-serif">{title}</text>
+      <text x="86" y="344" fill="rgba(255,255,255,0.75)" fontWeight="700" fontSize="14" fontFamily="Inter, sans-serif">5 units · PYQs · AI</text>
+    </svg>
+  );
+}
 
-  const frameInner = (f: (typeof FRAMES)[number]) => {
-    const pop = { ["--rot" as any]: f.rot, animation: `ld-pop 1s cubic-bezier(.16,1,.3,1) ${f.delay}s both` };
-    if (f.kind === "img") {
-      return (
-        <div className="bg-white p-2 pb-6 rounded-xl shadow-[0_24px_60px_-18px_rgba(0,0,0,0.8)]" style={pop}>
-          <img src={f.src} alt="" loading="eager" className="rounded-lg w-full aspect-[4/3] object-cover" draggable={false} />
-        </div>
-      );
-    }
-    if (f.kind === "tile") {
-      return (
-        <div className="rounded-2xl p-4 shadow-[0_24px_60px_-18px_rgba(0,0,0,0.8)]" style={{ ...pop, background: "var(--td-accent)" }}>
-          <span className="w-10 h-10 rounded-xl bg-white/20 text-white font-black text-lg flex items-center justify-center">D</span>
-          <p className="text-white font-bold text-sm mt-3">DBMS</p>
-          <p className="text-white/60 text-[11px]">5 units · notes · PYQs · AI</p>
-        </div>
-      );
-    }
-    return (
-      <div className="bg-white text-black rounded-2xl px-5 py-3.5 shadow-[0_24px_60px_-18px_rgba(0,0,0,0.8)]" style={pop}>
-        <p className="text-[9px] font-black tracking-[0.22em] uppercase opacity-50">From</p>
-        <p className="text-2xl font-black leading-none">₹11<span className="text-xs font-bold opacity-50">/subject</span></p>
-      </div>
-    );
-  };
+/* ─── Hero: exact Aardvark mimic — yellow blobs, chunky black type, books ─── */
+function HeroSection({ goAuth }: { goAuth: () => void }) {
+  const { contentRef, cueRef, frameRefs } = useHeroParallax([0.1, -0.06, 0.16]);
+  const pop = (rot: string, delay: number) => ({ ["--rot" as any]: rot, animation: `ld-pop 1s cubic-bezier(.16,1,.3,1) ${delay}s both` });
 
   return (
-    <section className="relative -mt-[4.5rem] h-[94vh] min-h-[620px] overflow-hidden bg-[#0b0b0e]">
-      {/* floating frames */}
-      {FRAMES.map((f, i) => (
-        <div
-          key={i}
-          ref={(el) => (frameRefs.current[i] = el)}
-          className={`absolute z-[5] will-change-transform ${f.cls} ${f.mobile ? "" : "hidden md:block"}`}
-        >
-          {frameInner(f)}
+    <section className="relative -mt-[4.75rem] min-h-[100svh] overflow-hidden rounded-b-[44px]" style={{ background: "#FFB61E" }}>
+      {/* organic blobs */}
+      <div aria-hidden className="absolute -top-24 left-[18%] w-[520px] h-[420px]" style={{ background: "#FCD34D", borderRadius: "48% 52% 62% 38% / 55% 45% 58% 42%" }} />
+      <div aria-hidden className="absolute top-[34%] right-[22%] w-[460px] h-[520px]" style={{ background: "#FDE68A", borderRadius: "56% 44% 40% 60% / 46% 60% 40% 54%" }} />
+      <div aria-hidden className="absolute -bottom-32 left-[6%] w-[420px] h-[380px]" style={{ background: "#F59E0B", borderRadius: "52% 48% 58% 42% / 50% 55% 45% 50%", opacity: 0.55 }} />
+      <div aria-hidden className="absolute bottom-[10%] right-[2%] w-[300px] h-[280px]" style={{ background: "#FCD34D", borderRadius: "44% 56% 50% 50% / 60% 42% 58% 40%" }} />
+
+      {/* corner book peeking top-left */}
+      <div ref={(el) => (frameRefs.current[1] = el)} className="absolute -top-24 left-[16%] w-[240px] rotate-[28deg] z-[5] hidden lg:block will-change-transform">
+        <div style={pop("28deg", 0.35)}>
+          <BookMock cover="#0F9D9A" spine="#0B7A78" title="COA" />
         </div>
-      ))}
+      </div>
+
+      {/* big book right */}
+      <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[4%] sm:right-[7%] top-[20%] w-[220px] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
+        <div style={pop("10deg", 0.2)}>
+          <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
+        </div>
+      </div>
+
+      {/* handwritten note */}
+      <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[3%] bottom-[20%] rotate-[-10deg] z-[6] hidden md:block will-change-transform">
+        <p className="ld-hand text-[#6D5BD0] text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
+          made for<br />GITAM students
+        </p>
+      </div>
 
       {/* content */}
-      <div ref={contentRef} className="relative z-10 h-full max-w-7xl mx-auto px-5 sm:px-8 flex flex-col justify-end pb-16 will-change-transform">
-        <span className="ld-in inline-flex w-fit items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-400 mb-5">
-          <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> For GITAM students
-        </span>
-        <h1 className="font-extrabold tracking-tight leading-[0.93] text-[clamp(3.6rem,11vw,8.5rem)]">
-          {["Make.", "Exams.", "Easy."].map((w, i) => (
+      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 pt-36 sm:pt-40 pb-24 will-change-transform">
+        <h1 className="ld-display text-black font-extrabold leading-[0.98] tracking-tight text-[clamp(3.2rem,9.5vw,7.6rem)] max-w-5xl">
+          {["Unbox exam wins", "worth talking", "about"].map((w, i) => (
             <span key={w} className="block overflow-hidden">
-              <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.15 + i * 0.13}s both` }}>
-                {i === 2 ? <span style={{ color: "var(--td-accent-soft)" }}>{w}</span> : w}
-              </span>
+              <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.1 + i * 0.12}s both` }}>{w}</span>
             </span>
           ))}
         </h1>
-        <div className="ld-in-3 flex flex-wrap items-center gap-5 mt-8">
-          <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform">
-            Start studying free <ArrowRight className="w-4 h-4" />
-          </button>
-          <p className="text-zinc-300 font-semibold text-[15px]">Notes · PYQs · Study with AI</p>
-        </div>
+        <p className="ld-in-2 text-black/85 font-semibold text-[17px] leading-relaxed max-w-md mt-10">
+          Join the study club that's anything but traditional. Unlock any subject — or your whole
+          year — delivered instantly. Then dive into the notes, PYQs and AI answers.
+        </p>
+        <button onClick={goAuth} className="ld-in-3 mt-7 flex items-stretch w-fit rounded-xl overflow-hidden shadow-[0_18px_40px_-14px_rgba(0,0,0,0.45)] hover:scale-[1.03] active:scale-[0.99] transition-transform">
+          <span className="bg-[#FF1F8F] text-white font-extrabold text-[15px] px-6 py-4 flex items-center">Log-in / Sign-up now</span>
+          <span className="bg-[#E60C7B] text-white px-4 flex items-center"><ArrowRight className="w-4 h-4" /></span>
+        </button>
+      </div>
+
+      {/* white dino stamp bottom-right (Aardvark badge spot) */}
+      <div className="absolute bottom-8 right-8 z-10 w-16 h-16 rounded-full bg-white items-center justify-center shadow-[0_16px_40px_-12px_rgba(0,0,0,0.4)] hidden sm:flex">
+        <img src={dinoBlack} alt="" className="w-8 h-8" draggable={false} />
       </div>
 
       {/* scroll cue */}
-      <div ref={cueRef} className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-1.5 text-zinc-400">
-        <span className="text-[10px] font-bold tracking-[0.28em] uppercase">Scroll to explore</span>
+      <div ref={cueRef} className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-1 text-black/60">
+        <span className="text-[10px] font-black tracking-[0.28em] uppercase">Scroll to explore</span>
         <ChevronDown className="w-4 h-4" style={{ animation: "ld-cue 1.6s ease-in-out infinite" }} />
       </div>
     </section>
