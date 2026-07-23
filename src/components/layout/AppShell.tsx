@@ -8,6 +8,7 @@ import HelpDialog from "@/components/HelpDialog";
 import HelpBot from "@/components/HelpBot";
 import AccentPicker from "@/components/layout/AccentPicker";
 import NoticesBell from "@/components/layout/NoticesBell";
+import SideNav from "@/components/layout/SideNav";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -68,8 +69,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             <span className="font-bold tracking-tight hidden sm:block">TeamDino</span>
           </Link>
 
-          {/* Desktop inline nav */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Desktop inline nav — hidden on xl+ where the SideNav rail is the primary nav */}
+          <nav className="hidden lg:flex xl:hidden items-center gap-1">
             {links.map((item) => (
               <Link key={item.to} to={item.to} className={linkClass(item.to, "px-3.5 py-2 rounded-full text-[13px]")}>
                 <item.icon className="w-3.5 h-3.5" /> {item.label}
@@ -111,7 +112,12 @@ export default function AppShell({ children, hideHeader = false }: { children: R
       {/* Mobile bubble menu (landing-style) */}
       <MobileNavOverlay open={menuOpen} onClose={() => setMenuOpen(false)} items={mobileItems} />
 
-      <main key={location.pathname} className="td-page flex-1 container mx-auto px-3 sm:px-4 py-6 sm:py-8">{children}</main>
+      <div className="flex-1 container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+        <div className={hideHeader ? "" : "xl:grid xl:grid-cols-[216px_minmax(0,1fr)] xl:gap-6 items-start"}>
+          {!hideHeader && <SideNav />}
+          <main key={location.pathname} className="td-page min-w-0">{children}</main>
+        </div>
+      </div>
 
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} />

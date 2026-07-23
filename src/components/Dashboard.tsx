@@ -15,12 +15,11 @@ import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
 import { AnnouncementsSection } from "./AnnouncementsSection";
 import Footer from "./Footer";
-import dinoLogo from "@/assets/dinosaurWhite.png";
 
 import {
-  BookOpen, Library, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
+  BookOpen, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
   CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
-  Play, Flame, LayoutDashboard, Receipt, PenSquare, Shield, Settings, Info, TrendingUp,
+  Play, Flame, TrendingUp,
 } from "lucide-react";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
@@ -45,7 +44,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { role, isAdmin, isContributor } = useUserRole();
+  const { role } = useUserRole();
   const { addSubject, addCombo, isInCart } = useCart();
   const { isOn } = useFeatureFlags();
 
@@ -169,16 +168,6 @@ export default function Dashboard() {
       accent: "#f472b6", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
   ];
 
-  const sideNav = [
-    { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", active: true },
-    { label: "Store", icon: Store, to: "/store" },
-    { label: "My Library", icon: Library, to: "/library" },
-    { label: "Purchases", icon: Receipt, to: "/purchases" },
-    ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
-    ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),
-    ...(isAdmin ? [{ label: "Admin", icon: Shield, to: "/admin" }] : []),
-  ];
-
   const comboYear = years.find((y) => !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id));
 
   // ── Right rail cards (also stacked below content on smaller screens) ──
@@ -262,35 +251,8 @@ export default function Dashboard() {
       {/* ── 1st anniversary ── */}
       <AnniversaryBanner className="mb-6" />
 
-      <div className="xl:grid xl:grid-cols-[216px_minmax(0,1fr)_296px] xl:gap-6 items-start">
-
-        {/* ── LEFT RAIL — dark rounded sidebar (reference layout) ── */}
-        <aside className="hidden xl:flex flex-col bg-[#131316] border border-white/8 rounded-[28px] p-3.5 sticky top-24 min-h-[78vh]">
-          <div className="flex items-center gap-2.5 px-2.5 pt-1.5 pb-4">
-            <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
-              <img src={dinoLogo} alt="" className="w-5 h-5" />
-            </div>
-            <span className="text-white font-bold tracking-tight">TeamDino</span>
-          </div>
-          <nav className="space-y-1">
-            {sideNav.map((item) => (
-              <button key={item.label} onClick={() => navigate(item.to)}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors text-left ${
-                  item.active ? "bg-white text-black" : "text-zinc-400 hover:text-white hover:bg-white/5"
-                }`}>
-                <item.icon className="w-4 h-4 shrink-0" /> {item.label}
-              </button>
-            ))}
-          </nav>
-          <div className="mt-auto pt-3 border-t border-white/8 space-y-1">
-            <button onClick={() => navigate("/setup?edit=true")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-white/5 text-left">
-              <Settings className="w-4 h-4" /> Settings
-            </button>
-            <button onClick={() => navigate("/about")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-white/5 text-left">
-              <Info className="w-4 h-4" /> About us
-            </button>
-          </div>
-        </aside>
+      {/* SideNav rail comes from AppShell (global on xl+); here: center + right rail */}
+      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_296px] xl:gap-6 items-start">
 
         {/* ── CENTER ── */}
         <div className="min-w-0">
