@@ -96,7 +96,7 @@ export default function SubjectPage() {
         {subject.description && <p className="text-zinc-500 mt-1">{subject.description}</p>}
       </div>
 
-      <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+      <div className="grid lg:grid-cols-[260px_minmax(0,1fr)] gap-6">
         {/* Left nav */}
         <aside className="lg:sticky lg:top-24 self-start">
           <div className="td-surface rounded-3xl p-3 space-y-1">

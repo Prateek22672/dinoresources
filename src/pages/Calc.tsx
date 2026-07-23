@@ -51,7 +51,7 @@ export default function Calc({ initial = "sgpa" }: { initial?: Tab }) {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-6 items-start">
           {/* Calculator */}
           <div className="min-w-0">
             {tab === "attendance" && (

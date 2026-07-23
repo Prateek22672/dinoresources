@@ -78,7 +78,7 @@ export default function CGPAPredictor() {
           {sems.map((s, i) => (
             <div key={i} className="rounded-2xl border border-purple-500/20 p-4" style={{ background: "rgba(168,85,247,0.04)" }}>
               <p className="text-sm font-semibold text-white mb-2.5">Semester {i + 2} <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-600/30 text-purple-200 ml-1">What-If</span></p>
-              <div className="grid sm:grid-cols-[160px_1fr] gap-3 items-center">
+              <div className="grid sm:grid-cols-[160px_minmax(0,1fr)] gap-3 items-center">
                 <div><label className="text-[11px] text-zinc-500 mb-1 block">Credits</label>
                   <input className="gg-in" type="number" value={s.credits} onChange={(e) => updateSem(i, { credits: parseInt(e.target.value) || 0 })} /></div>
                 <div><label className="text-[11px] text-zinc-500 mb-1 block">SGPA ({s.sgpa.toFixed(1)})</label>

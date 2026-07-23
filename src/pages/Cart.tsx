@@ -151,7 +151,7 @@ export default function Cart() {
       ) : (
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Line items */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3 min-w-0">
             {items.map((item) => (
               <div key={item.id} className="td-surface rounded-2xl p-3.5 sm:p-4 flex items-center gap-3 sm:gap-4 td-in">
                 <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl td-surface-2 flex items-center justify-center shrink-0">
@@ -172,7 +172,7 @@ export default function Cart() {
           </div>
 
           {/* Summary */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 min-w-0">
             <div className="td-surface rounded-3xl p-5 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-white font-semibold mb-4">Order summary</h2>
 
@@ -207,18 +207,18 @@ export default function Cart() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex gap-2">
-                      <div className="flex-1 td-surface-2 rounded-xl flex items-center px-3 h-10">
+                    <div className="flex gap-2 min-w-0">
+                      <div className="flex-1 min-w-0 td-surface-2 rounded-xl flex items-center px-3 h-10">
                         <Tag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                         <input
                           value={couponInput}
                           onChange={(e) => { setCouponInput(e.target.value); setCouponMsg(null); }}
                           onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
                           placeholder="Coupon code"
-                          className="flex-1 bg-transparent outline-none text-sm px-2 text-white placeholder:text-zinc-600 uppercase"
+                          className="flex-1 min-w-0 w-full bg-transparent outline-none text-sm px-2 text-white placeholder:text-zinc-600 uppercase"
                         />
                       </div>
-                      <button onClick={() => applyCoupon()} disabled={checking || !couponInput.trim()} className="td-btn-ghost px-4 text-sm disabled:opacity-50">
+                      <button onClick={() => applyCoupon()} disabled={checking || !couponInput.trim()} className="td-btn-ghost px-4 text-sm shrink-0 disabled:opacity-50">
                         {checking ? "…" : "Apply"}
                       </button>
                     </div>

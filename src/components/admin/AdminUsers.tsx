@@ -116,7 +116,7 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="grid lg:grid-cols-[340px_1fr] gap-6">
+    <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-6">
       {/* Search + results */}
       <div className="space-y-3">
         <div className="td-surface rounded-2xl flex items-center px-3 h-11">

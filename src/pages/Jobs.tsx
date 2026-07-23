@@ -53,7 +53,7 @@ export default function Jobs() {
           <p className="text-zinc-400 font-medium">Placement content is coming soon.</p>
         </div>
       ) : (
-        <div className="grid lg:grid-cols-[240px_1fr] gap-6">
+        <div className="grid lg:grid-cols-[240px_minmax(0,1fr)] gap-6">
           {/* Company list */}
           <aside className="lg:sticky lg:top-24 self-start">
             <div className="td-surface rounded-3xl p-3 space-y-1">

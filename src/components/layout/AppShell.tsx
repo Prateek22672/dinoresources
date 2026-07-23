@@ -66,7 +66,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
     }`;
 
   return (
-    <div className="td-app min-h-screen td-base text-zinc-100 font-sans flex flex-col">
+    <div className="td-app min-h-screen td-base text-zinc-100 font-sans flex flex-col overflow-x-clip">
       {/* Top bar */}
       {!hideHeader && (
       <header className="sticky top-0 z-40 td-glass td-header-clear xl:pointer-events-none">
