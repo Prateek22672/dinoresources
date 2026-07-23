@@ -42,6 +42,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [editorial, setEditorial] = useState<EditorialRow[]>([]);
   const [topics, setTopics] = useState<TopicRow[]>([]);
+  const [activeTopic, setActiveTopic] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
   const [openMaterial, setOpenMaterial] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
   const load = useCallback(async () => {
     setLoading(true);
     setTab("ai");
+    setActiveTopic("all");
     if (isUnit) {
       const [qaRes, edRes, tpRes] = await Promise.all([
         tbl("subject_qa").select("*").eq("subject_id", subjectId).eq("unit_number", section).order("order_index", { ascending: true }),
@@ -117,7 +119,9 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
     }
     return (
       <div className="space-y-5">
-        {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }].map((group) => {
+        {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
+          .filter((g) => activeTopic === "all" || g.gid === activeTopic)
+          .map((group) => {
           const items = resources.filter((r) => (r.topic_id ?? null) === group.gid);
           // topic headings stay visible with a placeholder; General only when it has items
           if (items.length === 0 && group.gid === null) return null;
@@ -158,13 +162,23 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-white">{sectionTitle}</h2>
-        {/* Topic outline — the unit's structure at a glance */}
+        {/* Topic picker — select a topic to focus on just its content */}
         {topics.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
+            <button
+              onClick={() => setActiveTopic("all")}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${activeTopic === "all" ? "bg-white text-black" : "td-surface-2 text-zinc-300 hover:text-white"}`}
+            >
+              All topics
+            </button>
             {topics.map((t, i) => (
-              <span key={t.id} className="td-surface-2 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                <span className="td-accent-text font-bold">{i + 1}.</span> {t.title}
-              </span>
+              <button
+                key={t.id}
+                onClick={() => setActiveTopic(activeTopic === t.id ? "all" : t.id)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${activeTopic === t.id ? "bg-white text-black" : "td-surface-2 text-zinc-300 hover:text-white"}`}
+              >
+                <span className={activeTopic === t.id ? "font-bold" : "td-accent-text font-bold"}>{i + 1}.</span> {t.title}
+              </button>
             ))}
           </div>
         )}
@@ -186,7 +200,9 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
           <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No Q&amp;A added for this unit yet.</div>
         ) : (
           <div className="space-y-5">
-            {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }].map((group) => {
+            {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
+              .filter((g) => activeTopic === "all" || g.gid === activeTopic)
+              .map((group) => {
               const items = qa.filter((x) => ((x as any).topic_id ?? null) === group.gid);
               // topic headings always show (with a placeholder); General only when it has content
               if (items.length === 0 && group.gid === null) return null;
