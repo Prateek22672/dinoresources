@@ -138,6 +138,16 @@ export interface JobItemRow {
   created_at?: string;
 }
 
+export interface TopicRow {
+  id: string;
+  subject_id: string;
+  unit_number: number;
+  title: string;
+  order_index: number;
+  created_by?: string | null;
+  created_at?: string;
+}
+
 export interface EditorialRow {
   id: string;
   subject_id: string;

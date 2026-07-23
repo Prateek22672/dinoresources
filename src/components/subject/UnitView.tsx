@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { tbl, invokeFn, SubjectQARow, EditorialRow } from "@/integrations/supabase/revamp";
+import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
   Sparkles, FileText, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
@@ -8,7 +8,7 @@ import {
 
 interface ResourceRow {
   id: string; title: string; type: "pdf" | "youtube" | "link"; url: string;
-  category: string; unit_number: number | null;
+  category: string; unit_number: number | null; topic_id?: string | null;
 }
 
 type Section = "syllabus" | "pyq" | number;
@@ -41,6 +41,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
   const [qa, setQa] = useState<SubjectQARow[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [editorial, setEditorial] = useState<EditorialRow[]>([]);
+  const [topics, setTopics] = useState<TopicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
   const [openMaterial, setOpenMaterial] = useState<string | null>(null);
@@ -55,15 +56,17 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
     setLoading(true);
     setTab("ai");
     if (isUnit) {
-      const [qaRes, edRes] = await Promise.all([
+      const [qaRes, edRes, tpRes] = await Promise.all([
         tbl("subject_qa").select("*").eq("subject_id", subjectId).eq("unit_number", section).order("order_index", { ascending: true }),
         tbl("subject_editorial").select("*").eq("subject_id", subjectId).or(`unit_number.eq.${section},unit_number.is.null`).order("created_at", { ascending: false }),
+        tbl("unit_topics").select("*").eq("subject_id", subjectId).eq("unit_number", section).order("order_index", { ascending: true }),
       ]);
       setQa((qaRes.data ?? []) as SubjectQARow[]);
       setEditorial((edRes.data ?? []) as EditorialRow[]);
-    } else { setQa([]); setEditorial([]); }
+      setTopics((tpRes.data ?? []) as TopicRow[]);
+    } else { setQa([]); setEditorial([]); setTopics([]); }
 
-    const { data: allRes } = await supabase.from("resources").select("id, title, type, url, category, unit_number").eq("subject_id", subjectId);
+    const { data: allRes } = await (supabase.from("resources") as any).select("id, title, type, url, category, unit_number, topic_id").eq("subject_id", subjectId);
     const all = (allRes ?? []) as ResourceRow[];
     setResources(all.filter((r) => {
       if (section === "syllabus") return r.category === "Syllabus";
@@ -87,31 +90,48 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
 
   if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 rounded-2xl td-surface animate-pulse" />)}</div>;
 
-  // ── Non-unit sections: just materials ──
-  const Materials = () => (
-    resources.length === 0 ? (
-      <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No materials uploaded yet.</div>
-    ) : (
-      <div className="space-y-3">
-        {resources.map((r) => {
-          const Icon = resTypeIcon[r.type] ?? ExternalLink;
-          const embed = toEmbedUrl(r.url);
-          const open = openMaterial === r.id;
+  // ── Materials — grouped topic-wise inside units, flat elsewhere ──
+  const renderResource = (r: ResourceRow) => {
+    const Icon = resTypeIcon[r.type] ?? ExternalLink;
+    const embed = toEmbedUrl(r.url);
+    const open = openMaterial === r.id;
+    return (
+      <div key={r.id} className="td-surface rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-3 p-4">
+          <div className="w-10 h-10 rounded-xl td-surface-2 flex items-center justify-center shrink-0"><Icon className="w-4.5 h-4.5 text-zinc-300" /></div>
+          <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{r.title}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
+          {embed && <button onClick={() => setOpenMaterial(open ? null : r.id)} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
+          <a href={r.url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
+        </div>
+        {open && embed && <div className="border-t border-white/5 bg-black/40"><iframe src={embed} title={r.title} className="w-full h-[70vh]" allow="autoplay" allowFullScreen /></div>}
+      </div>
+    );
+  };
+
+  const Materials = () => {
+    if (resources.length === 0) {
+      return <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No materials uploaded yet.</div>;
+    }
+    if (!isUnit || topics.length === 0) {
+      return <div className="space-y-3">{resources.map(renderResource)}</div>;
+    }
+    return (
+      <div className="space-y-5">
+        {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }].map((group) => {
+          const items = resources.filter((r) => (r.topic_id ?? null) === group.gid);
+          if (items.length === 0) return null;
           return (
-            <div key={r.id} className="td-surface rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-3 p-4">
-                <div className="w-10 h-10 rounded-xl td-surface-2 flex items-center justify-center shrink-0"><Icon className="w-4.5 h-4.5 text-zinc-300" /></div>
-                <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{r.title}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
-                {embed && <button onClick={() => setOpenMaterial(open ? null : r.id)} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
-                <a href={r.url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
-              </div>
-              {open && embed && <div className="border-t border-white/5 bg-black/40"><iframe src={embed} title={r.title} className="w-full h-[70vh]" allow="autoplay" allowFullScreen /></div>}
+            <div key={group.gid ?? "general"} className="space-y-3">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-500 flex items-center gap-2 px-1">
+                <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
+              </p>
+              {items.map(renderResource)}
             </div>
           );
         })}
       </div>
-    )
-  );
+    );
+  };
 
   if (!isUnit) {
     return (
@@ -145,21 +165,34 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
         ))}
       </div>
 
-      {/* Study With AI */}
+      {/* Study With AI — grouped topic-wise */}
       {tab === "ai" && (
         qa.length === 0 ? (
           <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No Q&amp;A added for this unit yet.</div>
         ) : (
-          <div className="space-y-2.5">
-            {qa.map((item) => {
-              const open = openId === item.id;
+          <div className="space-y-5">
+            {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }].map((group) => {
+              const items = qa.filter((x) => ((x as any).topic_id ?? null) === group.gid);
+              if (items.length === 0) return null;
               return (
-                <div key={item.id} className="td-surface rounded-2xl overflow-hidden">
-                  <button onClick={() => setOpenId(open ? null : item.id)} className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left">
-                    <span className="text-white font-medium">{item.question}</span>
-                    <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-                  </button>
-                  {open && <div className="px-5 pb-5 pt-1 border-t border-white/5"><MarkdownRenderer content={item.answer_md || "_No answer yet._"} /></div>}
+                <div key={group.gid ?? "general"} className="space-y-2.5">
+                  {topics.length > 0 && (
+                    <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-500 flex items-center gap-2 px-1">
+                      <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
+                    </p>
+                  )}
+                  {items.map((item) => {
+                    const open = openId === item.id;
+                    return (
+                      <div key={item.id} className="td-surface rounded-2xl overflow-hidden">
+                        <button onClick={() => setOpenId(open ? null : item.id)} className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left">
+                          <span className="text-white font-medium">{item.question}</span>
+                          <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+                        </button>
+                        {open && <div className="px-5 pb-5 pt-1 border-t border-white/5"><MarkdownRenderer content={item.answer_md || "_No answer yet._"} /></div>}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
