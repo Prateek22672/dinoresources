@@ -273,7 +273,11 @@ function StackArt({ i }: { i: number }) {
 function PinnedShowcase() {
   const navigate = useNavigate();
   const [active, setActive] = useState(0);
-  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  // Set-based registry — the desktop AND mobile step elements both drive `active`
+  const refs = useRef<Set<HTMLElement>>(new Set());
+  const register = (i: number) => (el: HTMLElement | null) => {
+    if (el) { el.dataset.idx = String(i); refs.current.add(el); }
+  };
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -285,9 +289,9 @@ function PinnedShowcase() {
           }
         }
       },
-      { threshold: 0.55 },
+      { threshold: 0.45 },
     );
-    refs.current.forEach((el) => el && obs.observe(el));
+    refs.current.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -358,7 +362,7 @@ function PinnedShowcase() {
         {/* steps — normal flow, drive the active state */}
         <div>
           {SHOW.map((s, i) => (
-            <div key={s.eyebrow} ref={(el) => (refs.current[i] = el)} data-idx={i}
+            <div key={s.eyebrow} ref={register(i)}
               className="min-h-[88vh] flex flex-col justify-center">
               <p className="text-[12px] font-black tracking-[0.28em] uppercase mb-4" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
               <h2 className={`text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05] transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-40"}`}>{s.title}</h2>
@@ -388,21 +392,38 @@ function PinnedShowcase() {
         </div>
       </div>
 
-      {/* Mobile: simple stacked cards */}
-      <div className="lg:hidden space-y-10 py-6">
+      {/* Mobile: SAME pinned experience — mock panel sticks under the header, steps scroll beneath and swap it */}
+      <div className="lg:hidden py-4">
+        <div className="sticky top-[4.6rem] z-20 -mx-5 px-4 pb-3" style={{ background: "#F6F4EF" }}>
+          <div className="bg-[#131316] border border-white/10 rounded-[24px] p-5 min-h-[300px] shadow-[0_30px_70px_-25px_rgba(0,0,0,0.6)] relative overflow-hidden flex items-center">
+            {mocks.map((m, i) => (
+              <div key={i} className="absolute inset-5 flex items-center transition-all duration-500"
+                style={{ opacity: active === i ? 1 : 0, transform: active === i ? "translateY(0)" : "translateY(14px)", pointerEvents: active === i ? "auto" : "none" }}>
+                {m}
+              </div>
+            ))}
+          </div>
+          {/* step dots */}
+          <div className="flex items-center justify-center gap-1.5 mt-2.5">
+            {SHOW.map((_, i) => (
+              <span key={i} className="h-1.5 rounded-full transition-all duration-300"
+                style={{ width: active === i ? 20 : 6, background: active === i ? "var(--td-accent-strong)" : "rgba(0,0,0,0.18)" }} />
+            ))}
+          </div>
+        </div>
+
         {SHOW.map((s, i) => (
-          <div key={s.eyebrow}>
+          <div key={s.eyebrow} ref={register(i)} className="min-h-[62vh] flex flex-col justify-center py-8">
             <p className="text-[11px] font-black tracking-[0.25em] uppercase mb-2" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
-            <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{s.title}</h2>
-            <p className="text-zinc-600 leading-relaxed mt-2 mb-4">{s.desc}</p>
-            <div className="flex flex-wrap gap-2 mb-4">
+            <h2 className={`text-[1.7rem] font-extrabold tracking-tight leading-tight transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-45"}`}>{s.title}</h2>
+            <p className="text-zinc-600 leading-relaxed mt-2.5">{s.desc}</p>
+            <div className="flex flex-wrap gap-2 mt-5">
               {s.ctas.map((c) => (
-                <button key={c.to} onClick={() => navigate(c.to)} className="bg-black text-white rounded-full h-10 px-5 text-[13px] font-bold flex items-center gap-1.5">
+                <button key={c.to} onClick={() => navigate(c.to)} className="bg-black text-white rounded-full h-10 px-5 text-[13px] font-bold flex items-center gap-1.5 active:scale-[0.98] transition-transform">
                   {c.label} <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               ))}
             </div>
-            <div className="bg-[#131316] border border-white/10 rounded-[24px] p-5">{mocks[i]}</div>
           </div>
         ))}
       </div>
@@ -701,8 +722,8 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       <div aria-hidden className="absolute -bottom-32 left-[6%] w-[420px] h-[380px]" style={{ background: "#F59E0B", borderRadius: "52% 48% 58% 42% / 50% 55% 45% 50%", opacity: 0.55 }} />
       <div aria-hidden className="absolute bottom-[10%] right-[2%] w-[300px] h-[280px]" style={{ background: "#FCD34D", borderRadius: "44% 56% 50% 50% / 60% 42% 58% 40%" }} />
 
-      {/* corner book peeking top-left */}
-      <div ref={(el) => (frameRefs.current[1] = el)} className="absolute -top-24 left-[16%] w-[240px] rotate-[28deg] z-[5] hidden lg:block will-change-transform">
+      {/* corner book peeking top-left — smaller on phones, full at lg */}
+      <div ref={(el) => (frameRefs.current[1] = el)} className="absolute -top-14 -left-10 w-[135px] sm:w-[170px] lg:-top-24 lg:left-[16%] lg:w-[240px] rotate-[28deg] z-[5] will-change-transform">
         <div ref={(el) => (mouseEls.current[1] = el)} className="will-change-transform">
           <div style={pop("28deg", 0.35)}>
             <div style={{ animation: "ld-float2 6.5s ease-in-out 1.4s infinite" }}>
@@ -712,8 +733,8 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
         </div>
       </div>
 
-      {/* big book right */}
-      <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[4%] sm:right-[7%] top-[20%] w-[220px] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
+      {/* big book right — drops below the headline on phones so text stays clean */}
+      <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[3%] top-[42%] w-[175px] sm:right-[7%] sm:top-[20%] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
         <div ref={(el) => (mouseEls.current[0] = el)} className="will-change-transform">
           <div style={pop("10deg", 0.2)}>
             <div style={{ animation: "ld-float1 5.2s ease-in-out 1.3s infinite" }}>
@@ -723,10 +744,10 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
         </div>
       </div>
 
-      {/* handwritten note */}
-      <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[3%] bottom-[20%] rotate-[-10deg] z-[6] hidden md:block will-change-transform">
+      {/* handwritten note — on phones it sits above the big book */}
+      <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[6%] top-[36%] md:top-auto md:right-[3%] md:bottom-[20%] rotate-[-10deg] z-[6] will-change-transform">
         <div ref={(el) => (mouseEls.current[2] = el)} className="will-change-transform">
-          <p className="ld-hand text-[#6D5BD0] text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
+          <p className="ld-hand text-[#6D5BD0] text-xl sm:text-2xl md:text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
             made for<br />GITAM students
           </p>
         </div>
@@ -750,12 +771,12 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       </div>
 
       {/* white dino stamp bottom-right (Aardvark badge spot) */}
-      <div className="absolute bottom-8 right-8 z-10 w-16 h-16 rounded-full bg-white items-center justify-center shadow-[0_16px_40px_-12px_rgba(0,0,0,0.4)] hidden sm:flex">
-        <img src={dinoBlack} alt="" className="w-8 h-8" draggable={false} />
+      <div className="absolute bottom-6 right-5 sm:bottom-8 sm:right-8 z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white flex items-center justify-center shadow-[0_16px_40px_-12px_rgba(0,0,0,0.4)]">
+        <img src={dinoBlack} alt="" className="w-6 h-6 sm:w-8 sm:h-8" draggable={false} />
       </div>
 
       {/* scroll cue */}
-      <div ref={cueRef} className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-1 text-black/60">
+      <div ref={cueRef} className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 text-black/60">
         <span className="text-[10px] font-black tracking-[0.28em] uppercase">Scroll to explore</span>
         <ChevronDown className="w-4 h-4" style={{ animation: "ld-cue 1.6s ease-in-out infinite" }} />
       </div>
