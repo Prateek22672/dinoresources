@@ -164,18 +164,11 @@ All colors MUST be HSL.
   .td-accent-bg   { background: rgb(var(--td-accent-rgb) / 0.16); color: var(--td-accent-soft); }
   .td-accent-solid { background: var(--td-accent); }
 
-  /* Accent gradients — deploy ONLY where they elevate (hero numbers, key bars). */
-  .td-grad-text {
-    background: linear-gradient(120deg, var(--td-accent-soft) 0%, var(--td-accent) 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
-  }
-  .td-grad-bar { background: linear-gradient(90deg, var(--td-accent-soft), var(--td-accent)); }
-  /* Card with a soft accent wash bleeding from a corner — premium, not loud. */
+  /* Accent emphasis — SOLID only (no gradients anywhere, by design). */
+  .td-grad-text { color: var(--td-accent-soft); }
+  .td-grad-bar  { background: var(--td-accent); }
   .td-card-accent {
-    background:
-      radial-gradient(120% 110% at 100% 0%, rgb(var(--td-accent-rgb) / 0.16), transparent 55%),
-      #2a2a2a;
+    background: rgb(var(--td-accent-rgb) / 0.10);
     border: 1px solid rgb(var(--td-accent-rgb) / 0.28);
   }
 
@@ -204,13 +197,10 @@ All colors MUST be HSL.
   .td-btn-ghost:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.16); }
   .td-btn-ghost:active { transform: scale(.98); }
 
-  /* Modern hero banner: gradient mesh + grain on pure dark. */
+  /* Hero banner: deep solid panel + grain (no gradients, by design). */
   .td-hero {
     position: relative; overflow: hidden;
-    background:
-      radial-gradient(120% 140% at 15% 10%, rgb(var(--td-accent-rgb) / 0.18), transparent 45%),
-      radial-gradient(120% 140% at 95% 0%, rgba(255,255,255,0.06), transparent 40%),
-      linear-gradient(180deg, #0d0d10, #09090b);
+    background: #0e0e11;
     border: 1px solid rgba(255,255,255,0.08);
   }
   .td-hero::after {
@@ -270,15 +260,9 @@ iframe[src*="razorpay"] {
    and (scoped to .td-app) text colors so the app reads well on white.
    ===================================================================== */
 @layer utilities {
-  /* Light palette — e-learning lavender: soft accent wash, white cards,
-     accent-tinted borders & shadows (follows --td-accent). */
-  :root:not(.dark) .td-base {
-    background:
-      radial-gradient(90% 65% at 50% -10%, rgb(var(--td-accent-rgb) / 0.20), transparent 60%),
-      radial-gradient(70% 60% at 100% 100%, rgb(var(--td-accent-rgb) / 0.14), transparent 55%),
-      #f4f2f9;
-    background-attachment: fixed;
-  }
+  /* Light palette — e-learning lavender: flat wash, white cards,
+     accent-tinted borders & shadows (follows --td-accent). Solid only. */
+  :root:not(.dark) .td-base { background: #efecf7; }
   :root:not(.dark) .td-surface   {
     background: #ffffff; border-color: rgb(var(--td-accent-rgb) / 0.13);
     box-shadow: 0 2px 6px rgba(23,10,60,0.04), 0 12px 32px -16px rgb(var(--td-accent-rgb) / 0.30);
@@ -306,10 +290,7 @@ iframe[src*="razorpay"] {
   :root:not(.dark) .td-btn-ghost:hover { background: rgba(13,13,13,0.07); border-color: rgba(13,13,13,0.2); }
 
   :root:not(.dark) .td-hero {
-    background:
-      radial-gradient(120% 140% at 15% 10%, rgb(var(--td-accent-rgb) / 0.24), transparent 50%),
-      radial-gradient(100% 120% at 95% 5%, rgb(var(--td-accent-rgb) / 0.10), transparent 45%),
-      linear-gradient(180deg, #ffffff, #f4effc);
+    background: #ffffff;
     border-color: rgb(var(--td-accent-rgb) / 0.16);
   }
   :root:not(.dark) .td-hero::after { opacity: .25; }
@@ -350,7 +331,7 @@ iframe[src*="razorpay"] {
   }
   .td-page { animation: td-page-in .42s cubic-bezier(.22,1,.36,1) both; }
 
-  /* Banner cards: vivid gradient, cinematic hover zoom + glow. */
+  /* Banner cards: solid surfaces, cinematic hover zoom + glow. */
   .td-banner {
     position: relative; overflow: hidden; cursor: pointer;
     transform-origin: center top;   /* grow downward on hover, not up into the hero */
@@ -387,7 +368,7 @@ iframe[src*="razorpay"] {
 
   /* Anniversary banner sheen sweep */
   .td-anniv-shine {
-    background: linear-gradient(110deg, transparent 32%, rgba(255,255,255,0.22) 50%, transparent 68%);
+    background: rgba(255,255,255,0.10);
     transform: translateX(-100%);
     animation: td-anniv-sweep 4.5s ease-in-out infinite;
   }

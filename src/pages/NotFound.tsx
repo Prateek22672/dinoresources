@@ -8,7 +8,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 relative overflow-hidden"
-      style={{ background: "linear-gradient(180deg, #0a0a0c, #060608)" }}>
+      style={{ background: "#08080a" }}>
       {/* premium backdrop */}
       <div aria-hidden className="absolute inset-0 pointer-events-none" style={{
         backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0)",
@@ -39,7 +39,7 @@ const NotFound = () => {
         {/* loading shimmer */}
         <div className="mt-6 w-44 h-[3px] rounded-full bg-white/8 overflow-hidden relative">
           <div className="absolute top-0 left-0 h-full w-1/3 rounded-full"
-            style={{ background: "linear-gradient(90deg, transparent, #a9a0f5, transparent)", animation: "ntfBar 1.3s ease-in-out infinite" }} />
+            style={{ background: "#a9a0f5", animation: "ntfBar 1.3s ease-in-out infinite" }} />
         </div>
 
         <div className="flex items-center gap-2 mt-8">

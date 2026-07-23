@@ -57,7 +57,7 @@ export default function AboutPage() {
 
           <h2 className="pb-2 text-4xl font-light leading-[1.12] tracking-tight text-white sm:text-6xl">
             Engineered by students, <br className="hidden sm:block" />
-            <span className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 via-white to-zinc-500"
+            <span className="font-medium text-zinc-300"
               style={{ backgroundSize: "200% auto", animation: "aboutGradient 6s linear infinite" }}>
               for the students.
             </span>

@@ -6,7 +6,7 @@ import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supab
 import { useCart } from "@/context/CartContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { formatPaise } from "@/lib/money";
-import { getRecentSubject, bumpStreak, type RecentSubject } from "@/lib/recent";
+import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@/lib/recent";
 
 import AppShell from "@/components/layout/AppShell";
 import SplashScreen from "@/components/layout/SplashScreen";
@@ -15,11 +15,12 @@ import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
 import { AnnouncementsSection } from "./AnnouncementsSection";
 import Footer from "./Footer";
+import dinoLogo from "@/assets/dinosaurWhite.png";
 
 import {
   BookOpen, Library, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
-  CalendarDays, Megaphone, Globe, Package, Sparkles, GraduationCap, Briefcase, Bot,
-  Play, Flame,
+  CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
+  Play, Flame, LayoutDashboard, Receipt, PenSquare, Shield, Settings, Info, TrendingUp,
 } from "lucide-react";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
@@ -35,9 +36,16 @@ interface Banner {
   onClick: () => void;
 }
 
+// Deterministic colorful thumbnails for subject cards — SOLID colors only.
+const GRADS = ["#7c6cf0", "#f472b6", "#34d399", "#f59e0b", "#6b8afd", "#a78bfa"];
+const grad = (name: string) =>
+  GRADS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % GRADS.length];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { role } = useUserRole();
+  const { role, isAdmin, isContributor } = useUserRole();
   const { addSubject, addCombo, isInCart } = useCart();
   const { isOn } = useFeatureFlags();
 
@@ -51,8 +59,9 @@ export default function Dashboard() {
   const [tool, setTool] = useState<ToolView>(null);
   const [recent, setRecent] = useState<RecentSubject | null>(null);
   const [streak, setStreak] = useState(0);
+  const [activity, setActivity] = useState<string[]>([]);
 
-  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); }, []);
+  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); setActivity(logActivity()); }, []);
 
   const checkAuthAndLoad = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -102,6 +111,18 @@ export default function Dashboard() {
   // only surface the resume card when the user actually owns that subject
   const resume = recent && owned.some((s) => (s.slug ?? String(s.id)) === recent.slug) ? recent : null;
 
+  // ── Calendar + productivity data ──
+  const now = new Date();
+  const monthLabel = now.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const startDow = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7; // Mon-first
+  const cellIso = (d: number) => `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(d)}`;
+  const todayIso = now.toLocaleDateString("en-CA");
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    return { label: d.toLocaleDateString("en-IN", { weekday: "short" }).slice(0, 2), iso: d.toLocaleDateString("en-CA") };
+  });
+
   if (loading) return <SplashScreen />;
 
   // ── Tool view (SGPA / Attendance / Announcements) ──
@@ -148,265 +169,292 @@ export default function Dashboard() {
       accent: "#f472b6", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
   ];
 
+  const sideNav = [
+    { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", active: true },
+    { label: "Store", icon: Store, to: "/store" },
+    { label: "My Library", icon: Library, to: "/library" },
+    { label: "Purchases", icon: Receipt, to: "/purchases" },
+    ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
+    ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),
+    ...(isAdmin ? [{ label: "Admin", icon: Shield, to: "/admin" }] : []),
+  ];
+
+  const comboYear = years.find((y) => !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id));
+
+  // ── Right rail cards (also stacked below content on smaller screens) ──
+  const rightCards = (
+    <>
+      {/* Calendar */}
+      <div className="td-surface rounded-[24px] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-white font-semibold text-sm">{monthLabel}</p>
+          <CalendarDays className="w-4 h-4 td-accent-text" />
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center">
+          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+            <span key={d} className="text-[10px] font-semibold text-zinc-500 pb-1">{d}</span>
+          ))}
+          {Array.from({ length: startDow }).map((_, i) => <span key={`b${i}`} />)}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const d = i + 1;
+            const iso = cellIso(d);
+            const isToday = iso === todayIso;
+            const active = activity.includes(iso);
+            return (
+              <span key={d}
+                className={`h-7 w-7 mx-auto flex items-center justify-center rounded-full text-[11px] font-medium
+                  ${isToday ? "td-accent-solid text-white font-bold" : active ? "td-accent-bg" : "text-zinc-400"}`}>
+                {d}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Overall information */}
+      <div className="td-surface rounded-[24px] p-5">
+        <p className="text-white font-semibold text-sm mb-3">Overall information</p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center shrink-0"><TrendingUp className="w-4 h-4" /></span>
+            <div className="flex-1"><p className="text-zinc-500 text-xs">Library unlocked</p><p className="td-grad-text text-lg font-extrabold w-fit">{pct}%</p></div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl td-surface-2 flex items-center justify-center shrink-0 text-zinc-300"><BookOpen className="w-4 h-4" /></span>
+            <div className="flex-1"><p className="text-zinc-500 text-xs">Subjects owned</p><p className="text-white text-lg font-extrabold">{owned.length} <span className="text-zinc-500 text-sm font-medium">/ {subjects.length}</span></p></div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center shrink-0"><Flame className="w-4 h-4" /></span>
+            <div className="flex-1"><p className="text-zinc-500 text-xs">Login streak</p><p className="text-white text-lg font-extrabold">{streak} day{streak === 1 ? "" : "s"}</p></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Productivity */}
+      <div className="td-surface rounded-[24px] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-white font-semibold text-sm">Productivity</p>
+          <span className="text-zinc-600 text-[11px]">last 7 days</span>
+        </div>
+        <div className="flex items-end gap-2 h-24">
+          {last7.map((d) => {
+            const active = activity.includes(d.iso);
+            return (
+              <div key={d.iso} className="flex-1 flex flex-col items-center gap-1.5 h-full">
+                <div className="flex-1 w-full max-w-[18px] mx-auto rounded-full bg-white/6 overflow-hidden flex items-end">
+                  <div className={`w-full rounded-full ${active ? "td-grad-bar" : "bg-white/12"}`} style={{ height: active ? "85%" : "16%" }} />
+                </div>
+                <span className={`text-[9px] font-semibold ${d.iso === todayIso ? "td-accent-text" : "text-zinc-600"}`}>{d.label}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-4 mt-3">
+          <span className="flex items-center gap-1.5 text-[10px] text-zinc-500"><span className="w-2 h-2 rounded-full td-accent-solid inline-block" /> Studied</span>
+          <span className="flex items-center gap-1.5 text-[10px] text-zinc-500"><span className="w-2 h-2 rounded-full bg-white/15 inline-block" /> Away</span>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <AppShell>
       {/* ── 1st anniversary ── */}
       <AnniversaryBanner className="mb-6" />
 
-      {/* ── Welcome hero — depth (radial glow + grain) with a live progress panel ── */}
-      <section className="td-hero td-in rounded-[28px] p-6 sm:p-9 mb-7">
-        <div className="relative z-10 grid lg:grid-cols-[1.4fr_.85fr] gap-7 lg:gap-10 items-center">
-          {/* Left — greeting, resume, actions */}
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="td-accent-text text-sm font-semibold">{greeting}</span>
-              <span className="text-base" aria-hidden>👋</span>
-              <span className="td-glass inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-zinc-400">
-                <GraduationCap className="w-3.5 h-3.5" /> {profile?.department} · {profile?.semester}
-              </span>
+      <div className="xl:grid xl:grid-cols-[216px_minmax(0,1fr)_296px] xl:gap-6 items-start">
+
+        {/* ── LEFT RAIL — dark rounded sidebar (reference layout) ── */}
+        <aside className="hidden xl:flex flex-col bg-[#131316] border border-white/8 rounded-[28px] p-3.5 sticky top-24 min-h-[78vh]">
+          <div className="flex items-center gap-2.5 px-2.5 pt-1.5 pb-4">
+            <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
+              <img src={dinoLogo} alt="" className="w-5 h-5" />
             </div>
-
-            <h1 className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-tight leading-[1.05] text-white">
-              Hey {profile?.name}.
-            </h1>
-            <p className="text-zinc-400 mt-3 max-w-md leading-relaxed">
-              {resume
-                ? "Jump back into your last subject, or unlock something new."
-                : owned.length > 0
-                  ? "Your subjects are ready — pick one up and keep the streak alive."
-                  : "Unlock your first subject to access notes, PYQs and Study-With-AI."}
-            </p>
-
-            {/* Resume card — the primary next-action */}
-            {resume && (
-              <button
-                onClick={() => navigate(`/subject/${resume.slug}`)}
-                className="group mt-6 w-full sm:max-w-md td-surface td-card-click rounded-2xl p-3.5 flex items-center gap-3 text-left"
-              >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
-                  <Play className="w-5 h-5" fill="currentColor" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-zinc-500">Continue learning</p>
-                  <p className="text-white font-semibold truncate">{resume.name}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
-              </button>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-wrap items-center gap-2.5 mt-6">
-              {owned.length > 0 ? (
-                <button onClick={() => navigate("/library")} className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
-                  <Library className="w-4 h-4" /> {resume ? "My Library" : "Start learning"}
-                </button>
-              ) : (
-                <button onClick={() => navigate("/store")} className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
-                  <Store className="w-4 h-4" /> Browse Store
-                </button>
-              )}
-              {owned.length > 0 && (
-                <button onClick={() => navigate("/store")} className="td-btn-ghost px-5 py-3 text-sm flex items-center gap-1.5">
-                  <Store className="w-4 h-4" /> Browse Store
-                </button>
-              )}
-            </div>
+            <span className="text-white font-bold tracking-tight">TeamDino</span>
           </div>
-
-          {/* Right — live progress panel (fills the space, adds "alive" feel) */}
-          <div className="td-glass rounded-3xl p-5 sm:p-6">
-            <div className="flex items-center gap-5">
-              {/* progress ring */}
-              <div className="relative w-[120px] h-[120px] shrink-0">
-                <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgb(var(--td-accent-rgb) / 0.16)" strokeWidth="10" />
-                  <circle
-                    cx="60" cy="60" r="52" fill="none" stroke="url(#tdRing)" strokeWidth="10" strokeLinecap="round"
-                    strokeDasharray={2 * Math.PI * 52}
-                    strokeDashoffset={2 * Math.PI * 52 * (1 - pct / 100)}
-                    style={{ transition: "stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)" }}
-                  />
-                  <defs>
-                    <linearGradient id="tdRing" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="var(--td-accent-soft)" />
-                      <stop offset="100%" stopColor="var(--td-accent)" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="td-grad-text text-2xl font-extrabold leading-none">{pct}%</span>
-                  <span className="text-[10px] text-zinc-500 mt-1">unlocked</span>
-                </div>
-              </div>
-              {/* stat tiles */}
-              <div className="flex-1 min-w-0 space-y-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
-                    <Flame className="w-4.5 h-4.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white font-bold leading-none">{streak} day{streak === 1 ? "" : "s"}</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Login streak</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl td-surface-2 flex items-center justify-center shrink-0 text-zinc-300">
-                    <BookOpen className="w-4.5 h-4.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white font-bold leading-none">{owned.length} <span className="text-zinc-500 font-medium text-sm">/ {subjects.length}</span></p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Subjects owned</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* footer chips */}
-            <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/8">
-              <span className="td-surface-2 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5" /> {ownedYearIds.size} combo{ownedYearIds.size === 1 ? "" : "s"}
-              </span>
-              <button onClick={() => navigate("/store")} className="td-surface-2 td-card-click rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5" /> {available.length} to unlock
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Quick access ── */}
-      <div className="flex items-baseline justify-between mb-3 px-0.5">
-        <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
-        <span className="text-[11px] text-zinc-600 hidden sm:block">swipe →</span>
-      </div>
-      {/* ── Banner cards ── */}
-      <div className="flex gap-4 overflow-x-auto pt-3 pb-5 pl-2 -mr-4 pr-4 mb-9 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
-        {banners.map((b) => (
-          <button
-            key={b.key}
-            onClick={b.onClick}
-            className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[280px] h-[300px] sm:h-[340px] rounded-[28px] p-6 flex flex-col justify-between text-left"
-          >
-            <div className="relative z-10">
-              {/* chip inverts against the card */}
-              <div className="td-bw-chip w-11 h-11 rounded-2xl flex items-center justify-center mb-5">
-                <b.icon className="w-5 h-5" strokeWidth={1.7} />
-              </div>
-              <p className="td-bw-soft text-[10px] font-semibold tracking-[0.22em] uppercase mb-2">{b.overline}</p>
-              <h3 className="text-[22px] font-semibold leading-tight tracking-tight">{b.title}</h3>
-              <p className="td-bw-soft text-sm mt-2 leading-relaxed">{b.desc}</p>
-            </div>
-
-            <div className="relative z-10 td-banner-cta inline-flex items-center gap-2 text-sm font-semibold">
-              {b.cta} <span className="td-bw-chip w-7 h-7 rounded-full flex items-center justify-center"><ArrowRight className="w-3.5 h-3.5" /></span>
-            </div>
-
-            <b.icon className="td-banner-icon absolute -bottom-6 -right-5 w-36 h-36" style={{ opacity: 0.05 }} strokeWidth={1} />
-          </button>
-        ))}
-      </div>
-
-      {/* ── My Library ── */}
-      <section className="mb-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2"><Library className="w-5 h-5 td-accent-text" /> My Library</h2>
-          {owned.length > 0 && (
-            <button onClick={() => navigate("/library")} className="text-sm text-zinc-400 hover:text-white flex items-center gap-1">
-              View all <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {owned.length === 0 ? (
-          <div className="td-surface rounded-[28px] p-8 sm:p-10 text-center">
-            <div className="w-14 h-14 rounded-2xl td-surface-2 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-6 h-6 text-zinc-400" />
-            </div>
-            <h3 className="text-white font-semibold text-lg">No subjects unlocked yet</h3>
-            <p className="text-zinc-500 text-sm mt-1 max-w-sm mx-auto">
-              Each subject includes a syllabus, 5 units of notes &amp; Study-With-AI, and previous year questions.
-            </p>
-            <button onClick={() => navigate("/store")} className="td-btn-primary px-6 py-3 text-sm mt-5 inline-flex items-center gap-2">
-              Explore the Store <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {owned.slice(0, 8).map((s) => (
-              <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="td-surface td-card-click rounded-2xl p-5 text-left">
-                <div className="flex items-start justify-between">
-                  <div className="w-10 h-10 rounded-2xl td-surface-2 flex items-center justify-center mb-3"><BookOpen className="w-4.5 h-4.5 text-zinc-300" /></div>
-                  <ArrowUpRight className="td-go w-4 h-4" />
-                </div>
-                <h3 className="text-white font-semibold leading-snug line-clamp-2">{s.name}</h3>
-                <p className="text-zinc-600 text-xs mt-1.5">{yearName(s.year_id) ?? "Subject"} · 5 units</p>
+          <nav className="space-y-1">
+            {sideNav.map((item) => (
+              <button key={item.label} onClick={() => navigate(item.to)}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors text-left ${
+                  item.active ? "bg-white text-black" : "text-zinc-400 hover:text-white hover:bg-white/5"
+                }`}>
+                <item.icon className="w-4 h-4 shrink-0" /> {item.label}
               </button>
             ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── Unlock more ── */}
-      {available.length > 0 && (
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2"><Sparkles className="w-5 h-5 td-accent-text" /> Unlock more</h2>
-            <button onClick={() => navigate("/store")} className="text-sm text-zinc-400 hover:text-white flex items-center gap-1">
-              Full store <ArrowRight className="w-3.5 h-3.5" />
+          </nav>
+          <div className="mt-auto pt-3 border-t border-white/8 space-y-1">
+            <button onClick={() => navigate("/setup?edit=true")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-white/5 text-left">
+              <Settings className="w-4 h-4" /> Settings
+            </button>
+            <button onClick={() => navigate("/about")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-white/5 text-left">
+              <Info className="w-4 h-4" /> About us
             </button>
           </div>
+        </aside>
 
-          {years.filter((y) => !ownedYearIds.has(y.id) && subjects.some((s) => s.year_id === y.id)).slice(0, 1).map((y) => (
-            <div key={y.id} className="td-hero rounded-3xl p-5 sm:p-6 mb-4 flex items-center justify-between gap-4 flex-wrap">
+        {/* ── CENTER ── */}
+        <div className="min-w-0">
+          {/* compact greeting + resume */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <p className="td-accent-text text-[13px] font-semibold">{greeting} <span aria-hidden>👋</span>
+                <span className="text-zinc-500 font-medium ml-2"><GraduationCap className="w-3.5 h-3.5 inline -mt-0.5" /> {profile?.department} · {profile?.semester}</span>
+              </p>
+              <h1 className="text-2xl sm:text-[1.7rem] font-extrabold tracking-tight text-white leading-tight">Hey {profile?.name}.</h1>
+            </div>
+            {resume && (
+              <button onClick={() => navigate(`/subject/${resume.slug}`)}
+                className="group td-surface td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
+                <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                  <Play className="w-4 h-4" fill="currentColor" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">Continue learning</span>
+                  <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{resume.name}</span>
+                </span>
+                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+              </button>
+            )}
+          </div>
+
+          {/* ── Top picks (reference: "Top courses you may like") ── */}
+          {available.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-baseline justify-between mb-3">
+                <h2 className="text-white font-bold">Top picks for you</h2>
+                <button onClick={() => navigate("/store")} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></button>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {available.slice(0, 4).map((s) => {
+                  const inCart = isInCart("subject", s.id);
+                  return (
+                    <div key={s.id} className="td-surface td-card-click rounded-[22px] p-3 flex flex-col">
+                      {/* colorful thumb */}
+                      <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
+                        className="relative h-24 rounded-2xl overflow-hidden mb-3 text-left" style={{ background: grad(s.name) }}>
+                        <span className="absolute inset-0 flex items-center justify-center text-white/40 text-5xl font-black select-none">
+                          {s.name.trim().charAt(0).toUpperCase()}
+                        </span>
+                        <span className="absolute top-2 left-2 bg-white/90 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {yearName(s.year_id) ?? "Subject"}
+                        </span>
+                      </button>
+                      <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="text-left">
+                        <h3 className="text-white text-sm font-semibold leading-snug line-clamp-2">{s.name}</h3>
+                      </button>
+                      <p className="text-zinc-600 text-[11px] mt-0.5 mb-3">5 units · notes · PYQs · AI</p>
+                      <div className="mt-auto flex items-center justify-between gap-2">
+                        <div className="leading-none">
+                          <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
+                          <span className="block text-[9px] text-zinc-500 mt-0.5">Lifetime</span>
+                        </div>
+                        {inCart ? (
+                          <button onClick={() => navigate("/cart")} className="td-btn-ghost px-3.5 py-2 text-xs flex items-center gap-1"><Check className="w-3 h-3" /> In cart</button>
+                        ) : (
+                          <button onClick={() => addSubject(s.id, s.name)} className="td-btn-primary px-3.5 py-2 text-xs flex items-center gap-1"><Plus className="w-3 h-3" /> Add</button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* combo strip */}
+          {comboYear && (
+            <div className="td-hero rounded-3xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
               <div className="relative z-10 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl td-surface-2 flex items-center justify-center"><Package className="w-5 h-5 td-accent-text" /></div>
+                <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center"><Package className="w-5 h-5" /></div>
                 <div>
-                  <p className="text-white font-semibold">{y.name} — Complete Access</p>
-                  <p className="text-zinc-400 text-sm">Unlock every {y.name} subject at once.</p>
+                  <p className="text-white font-semibold">{comboYear.name} — Complete Access</p>
+                  <p className="text-zinc-400 text-sm">Unlock every {comboYear.name} subject at once.</p>
                 </div>
               </div>
               <div className="relative z-10 flex items-center gap-3">
-                <span className="text-white font-bold text-lg">{formatPaise(y.combo_price_paise)}</span>
-                {isInCart("combo", y.id) ? (
+                <span className="text-white font-bold text-lg">{formatPaise(comboYear.combo_price_paise)}</span>
+                {isInCart("combo", comboYear.id) ? (
                   <button onClick={() => navigate("/cart")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Check className="w-4 h-4" /> In cart</button>
                 ) : (
-                  <button onClick={() => addCombo(y.id, y.name)} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Plus className="w-4 h-4" /> Add combo</button>
+                  <button onClick={() => addCombo(comboYear.id, comboYear.name)} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Plus className="w-4 h-4" /> Add combo</button>
                 )}
               </div>
             </div>
-          ))}
+          )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {available.slice(0, 8).map((s) => {
-              const inCart = isInCart("subject", s.id);
-              return (
-                <div key={s.id} className="td-surface rounded-2xl p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between">
-                      <div className="w-10 h-10 rounded-2xl td-surface-2 flex items-center justify-center mb-3"><BookOpen className="w-4.5 h-4.5 text-zinc-300" /></div>
-                      <div className="text-right leading-none">
-                        <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
-                        <p className="text-[10px] text-zinc-500 mt-0.5">Lifetime</p>
-                      </div>
-                    </div>
-                    <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="block text-left">
-                      <h3 className="text-white font-semibold leading-snug line-clamp-2 hover:underline">{s.name}</h3>
-                    </button>
-                    <p className="text-zinc-600 text-xs mt-1">{yearName(s.year_id) ?? "Subject"} · 5 units</p>
-                  </div>
-                  <div className="mt-4">
-                    {inCart ? (
-                      <button onClick={() => navigate("/cart")} className="w-full td-btn-ghost py-2.5 text-[13px] flex items-center justify-center gap-1.5"><Check className="w-3.5 h-3.5" /> In cart</button>
-                    ) : (
-                      <button onClick={() => addSubject(s.id, s.name)} className="w-full td-btn-primary py-2.5 text-[13px] flex items-center justify-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add to cart</button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          {/* ── My subjects (reference: "My Courses" rows) ── */}
+          <section className="mb-8">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-white font-bold">My subjects</h2>
+              {owned.length > 0 && (
+                <button onClick={() => navigate("/library")} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></button>
+              )}
+            </div>
+            {owned.length === 0 ? (
+              <div className="td-surface rounded-[24px] p-8 text-center">
+                <div className="w-12 h-12 rounded-2xl td-surface-2 flex items-center justify-center mx-auto mb-3"><BookOpen className="w-5 h-5 text-zinc-400" /></div>
+                <p className="text-white font-semibold">No subjects unlocked yet</p>
+                <p className="text-zinc-500 text-sm mt-1 mb-4">Notes, PYQs and Study-With-AI — from {formatPaise(Math.min(...(available.map((s) => s.price_paise).concat([1100]))))}.</p>
+                <button onClick={() => navigate("/store")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5">Explore the Store <ArrowRight className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <div className="td-surface rounded-[24px] overflow-hidden">
+                {owned.slice(0, 6).map((s) => (
+                  <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors group">
+                    <span className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-white/60 font-black" style={{ background: grad(s.name) }}>
+                      {s.name.trim().charAt(0).toUpperCase()}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-white text-sm font-semibold truncate">{s.name}</span>
+                      <span className="block text-zinc-600 text-[11px]">{yearName(s.year_id) ?? "Subject"} · 5 units</span>
+                    </span>
+                    <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Quick access carousel ── */}
+          <div className="flex items-baseline justify-between mb-3 px-0.5">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
+            <span className="text-[11px] text-zinc-600 hidden sm:block">swipe →</span>
           </div>
-        </section>
-      )}
+          <div className="flex gap-4 overflow-x-auto pt-3 pb-5 pl-2 -mr-4 pr-4 mb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
+            {banners.map((b) => (
+              <button
+                key={b.key}
+                onClick={b.onClick}
+                className="td-banner td-banner-bw snap-start shrink-0 w-[230px] sm:w-[250px] h-[280px] sm:h-[300px] rounded-[26px] p-5 flex flex-col justify-between text-left"
+              >
+                <div className="relative z-10">
+                  <div className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center mb-4">
+                    <b.icon className="w-4.5 h-4.5" strokeWidth={1.7} />
+                  </div>
+                  <p className="td-bw-soft text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5">{b.overline}</p>
+                  <h3 className="text-[20px] font-semibold leading-tight tracking-tight">{b.title}</h3>
+                  <p className="td-bw-soft text-[13px] mt-1.5 leading-relaxed">{b.desc}</p>
+                </div>
+                <div className="relative z-10 td-banner-cta inline-flex items-center gap-2 text-[13px] font-semibold">
+                  {b.cta} <span className="td-bw-chip w-6 h-6 rounded-full flex items-center justify-center"><ArrowRight className="w-3 h-3" /></span>
+                </div>
+                <b.icon className="td-banner-icon absolute -bottom-6 -right-5 w-32 h-32" style={{ opacity: 0.05 }} strokeWidth={1} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── RIGHT RAIL (xl+) ── */}
+        <aside className="hidden xl:flex flex-col gap-4 sticky top-24">
+          {rightCards}
+        </aside>
+      </div>
+
+      {/* right-rail cards stacked for smaller screens */}
+      <div className="xl:hidden grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        {rightCards}
+      </div>
 
       <Footer />
     </AppShell>

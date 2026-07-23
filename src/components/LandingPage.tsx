@@ -177,7 +177,7 @@ export default function LandingPage() {
         .landing-root {
           min-height: 100vh;
           background:
-            linear-gradient(180deg, #0a0a0c 0%, #08080a 40%, #060608 100%);
+            #08080a;
           color: #e4e4e7;
           font-family: 'Outfit', system-ui, sans-serif;
           overflow-x: hidden;
@@ -218,19 +218,19 @@ export default function LandingPage() {
         .orb-1 {
           width: 620px; height: 620px;
           top: -220px; left: -120px;
-          background: radial-gradient(circle, rgba(124,108,240,0.06), transparent 70%);
+          background: rgba(124,108,240,0.05);
           animation-delay: 0s;
         }
         .orb-2 {
           width: 520px; height: 520px;
           top: 120px; right: -160px;
-          background: radial-gradient(circle, rgba(255,255,255,0.035), transparent 70%);
+          background: rgba(255,255,255,0.03);
           animation-delay: 3s;
         }
         .orb-3 {
           width: 420px; height: 420px;
           bottom: 0; left: 50%;
-          background: radial-gradient(circle, rgba(124,108,240,0.04), transparent 70%);
+          background: rgba(124,108,240,0.035);
           animation-delay: 5s;
         }
         @keyframes orbFloat {
@@ -267,7 +267,7 @@ export default function LandingPage() {
           position: absolute;
           inset: 0;
           border-radius: inherit;
-          background: radial-gradient(circle at var(--sx,50%) var(--sy,50%), rgba(255,255,255,0.05) 0%, transparent 60%);
+          background: rgba(255,255,255,0.03);
           opacity: 0;
           transition: opacity 0.2s;
           pointer-events: none;
@@ -322,14 +322,14 @@ export default function LandingPage() {
         /* ── Separator line ── */
         .sep-line {
           height: 1px;
-          background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+          background: rgba(255,255,255,0.08);
         }
 
         /* ── Feature card inner (premium frosted glass, matches the hero card) ── */
         .feat-card-inner {
           position: relative;
           z-index: 2;
-          background: linear-gradient(180deg, rgba(30,30,34,0.55), rgba(16,16,19,0.55));
+          background: rgba(23,23,27,0.55);
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 26px;
           padding: 2rem;
@@ -374,7 +374,7 @@ export default function LandingPage() {
         .stat-card {
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 22px;
-          background: linear-gradient(180deg, rgba(30,30,34,0.5), rgba(16,16,19,0.5));
+          background: rgba(23,23,27,0.5);
           padding: 1.75rem 1.5rem;
           text-align: center;
           backdrop-filter: blur(12px);
@@ -405,7 +405,7 @@ export default function LandingPage() {
 
         /* ── Gradient text ── */
         .grad-cyan {
-          background: linear-gradient(135deg, #67e8f9 0%, #34d399 50%, #67e8f9 100%);
+          background: none; color: #34d399;
           background-size: 200% 200%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -440,15 +440,15 @@ export default function LandingPage() {
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(48% 34% at 50% -4%, rgba(124,108,240,0.16), transparent 62%)," +
-            "radial-gradient(55% 45% at 50% 104%, rgba(124,108,240,0.06), transparent 62%)",
+            "none",
+
         }}
       />
       {/* crisp top hairline */}
       <div
         aria-hidden
         className="fixed inset-x-0 top-0 z-0 pointer-events-none h-px"
-        style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent)" }}
+        style={{ background: "rgba(255,255,255,0.10)" }}
       />
 
       {/* ── Desktop: floating pill nav ── */}

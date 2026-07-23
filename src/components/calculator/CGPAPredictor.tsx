@@ -96,7 +96,7 @@ export default function CGPAPredictor() {
         <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full bg-sky-500/15 text-sky-300 font-semibold">{band(projected)}</span>
         <p className="text-xs text-zinc-500 mt-3">Previous: <strong className="text-zinc-300">{cur.toFixed(2)}</strong> → Projected: <strong className="text-sky-300">{projected.toFixed(2)}</strong>
           <span className={delta >= 0 ? "text-emerald-400 ml-1.5" : "text-red-400 ml-1.5"}>{delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(2)}</span></p>
-        <div className="h-2 rounded-full bg-white/8 overflow-hidden mt-3"><div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: `${Math.min(100, projected * 10)}%` }} /></div>
+        <div className="h-2 rounded-full bg-white/8 overflow-hidden mt-3"><div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.min(100, projected * 10)}%` }} /></div>
       </div>
 
       {/* required */}

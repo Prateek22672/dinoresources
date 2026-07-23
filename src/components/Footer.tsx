@@ -11,7 +11,7 @@ export default function Footer() {
   return (
     <footer className="mt-12 td-surface rounded-[32px] p-7 sm:p-10 relative overflow-hidden">
       {/* top sheen */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-white/10" />
 
       {/* Falling-text play band (desktop) — drag the words around */}
       <div className="hidden md:block h-36 mb-8 text-zinc-300 font-semibold">

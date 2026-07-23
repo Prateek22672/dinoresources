@@ -83,7 +83,7 @@ export function GeneratePanel({
             {/* All questions button */}
             <button
               onClick={() => startGenerate(mixAllTopics())}
-              className="w-full mb-6 rounded-[22px] border border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 to-purple-500/5 hover:from-indigo-500/20 hover:to-purple-500/10 p-5 sm:p-6 text-left flex items-center justify-between transition-all group shadow-xl"
+              className="w-full mb-6 rounded-[22px] border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 p-5 sm:p-6 text-left flex items-center justify-between transition-all group shadow-xl"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0">

@@ -45,8 +45,8 @@ export default function GradeGuru() {
       <style>{`
         .gg { --gg-pink:#ec4899; --gg-purple:#a855f7; --gg-cyan:#22d3ee; }
         .gg-dots { background-image: radial-gradient(circle at 1px 1px, rgba(168,85,247,0.18) 1px, transparent 0); background-size: 22px 22px; }
-        .gg-grad { background: linear-gradient(90deg, rgba(236,72,153,0.18), rgba(168,85,247,0.14), rgba(34,211,238,0.16)); }
-        .gg-card-head { background: linear-gradient(90deg, rgba(236,72,153,0.16), rgba(168,85,247,0.10)); }
+        .gg-grad { background: rgba(168,85,247,0.15); }
+        .gg-card-head { background: rgba(168,85,247,0.12); }
         .gg-sel { background:#18181b; border:1px solid rgba(168,85,247,0.25); color:#fafafa; border-radius:9999px; padding:6px 12px; font-size:13px; outline:none; }
         .gg-sel:focus { border-color: rgba(168,85,247,0.6); }
         .gg-in { background:#18181b; border:1px solid rgba(255,255,255,0.10); color:#fafafa; border-radius:12px; padding:9px 12px; font-size:14px; outline:none; width:100%; }
@@ -70,7 +70,7 @@ export default function GradeGuru() {
           return (
             <div key={s.label} className="flex items-center gap-1 sm:gap-2">
               <div className="flex flex-col items-center gap-1">
-                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-colors ${active ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white" : "bg-white/5 text-zinc-500 border border-white/10"}`}>
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center transition-colors ${active ? "bg-purple-600 text-white" : "bg-white/5 text-zinc-500 border border-white/10"}`}>
                   <s.icon className="w-5 h-5" />
                 </div>
                 <span className={`text-[10px] sm:text-[11px] font-semibold ${active ? "text-purple-300" : "text-zinc-600"}`}>{s.label}</span>
@@ -107,7 +107,7 @@ export default function GradeGuru() {
             <div key={c.id} className="rounded-3xl border border-purple-500/25 overflow-hidden" style={{ background: "rgba(24,24,27,0.6)" }}>
               <div className="gg-card-head flex items-center justify-between px-5 py-3.5">
                 <span className="flex items-center gap-2.5 font-bold text-white">
-                  <span className="w-9 h-9 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center"><BookOpen className="w-4.5 h-4.5 text-white" /></span>
+                  <span className="w-9 h-9 rounded-2xl bg-purple-600 flex items-center justify-center"><BookOpen className="w-4.5 h-4.5 text-white" /></span>
                   Course {idx + 1}
                 </span>
                 {courses.length > 1 && <button onClick={() => remove(c.id)} className="w-8 h-8 rounded-full hover:bg-red-500/20 flex items-center justify-center"><Trash2 className="w-4 h-4 text-red-400" /></button>}
@@ -163,7 +163,7 @@ export default function GradeGuru() {
 
                 {/* WGP + final */}
                 {f && (
-                  <div className="flex items-center justify-between rounded-2xl px-4 py-3 bg-gradient-to-r from-purple-600/15 to-pink-600/10 border border-purple-500/25">
+                  <div className="flex items-center justify-between rounded-2xl px-4 py-3 bg-purple-600/15 border border-purple-500/25">
                     <span className="text-sm text-zinc-300">WGP = <strong className="text-white font-mono">{f.wgp.toFixed(2)}</strong></span>
                     <span className="inline-flex items-center gap-2 text-sm">Final:
                       <span className="px-2.5 py-1 rounded-lg font-bold text-white" style={{ background: gradeColor(f.letter) }}>{f.letter}</span>
@@ -187,7 +187,7 @@ export default function GradeGuru() {
       {/* SGPA */}
       {hasResult && (
         <div className="rounded-3xl border border-emerald-500/30 overflow-hidden">
-          <div className="px-5 py-4 text-center bg-gradient-to-br from-emerald-500/10 to-cyan-500/10">
+          <div className="px-5 py-4 text-center bg-emerald-500/10">
             <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Your SGPA</p>
             <div className="text-5xl sm:text-6xl font-black text-emerald-400">{sg.sgpa.toFixed(2)}</div>
             <div className="flex items-center justify-center gap-3 mt-3 text-xs text-zinc-400">
@@ -212,7 +212,7 @@ export default function GradeGuru() {
               <input className="gg-in" type="number" placeholder="e.g. 80" value={prevCredits} onChange={(e) => setPrevCredits(e.target.value)} /></div>
           </div>
           {prevCGPA && prevCredits && (
-            <div className="text-center rounded-2xl px-4 py-4 bg-gradient-to-br from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+            <div className="text-center rounded-2xl px-4 py-4 bg-orange-500/10 border border-orange-500/20">
               <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Projected CGPA</p>
               <div className="text-4xl font-black text-orange-400">{cgpa.toFixed(2)}</div>
             </div>

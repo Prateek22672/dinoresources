@@ -30,6 +30,22 @@ export function getRecentSubject(): RecentSubject | null {
   }
 }
 
+const ACTIVITY_KEY = "td:activity";
+
+/** Records today as an active day; returns recent active days (ISO yyyy-mm-dd, max 14). */
+export function logActivity(): string[] {
+  try {
+    const iso = new Date().toLocaleDateString("en-CA"); // local yyyy-mm-dd
+    const arr: string[] = JSON.parse(localStorage.getItem(ACTIVITY_KEY) || "[]");
+    if (!arr.includes(iso)) arr.push(iso);
+    const trimmed = arr.slice(-14);
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(trimmed));
+    return trimmed;
+  } catch {
+    return [];
+  }
+}
+
 /** Increments once per calendar day; resets if a day is skipped. Returns the current streak. */
 export function bumpStreak(): number {
   try {

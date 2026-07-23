@@ -83,12 +83,7 @@ export default function AuthPage() {
         .td-auth-in2 { animation: tdAuthIn .6s cubic-bezier(.22,1,.36,1) both; animation-delay:.1s; }
       `}</style>
 
-      {/* Depth: accent glow + faint grid */}
-      <div className="pointer-events-none absolute inset-0 z-0" style={{
-        background:
-          "radial-gradient(55% 45% at 15% 15%, rgb(var(--td-accent-rgb) / 0.16), transparent 60%)," +
-          "radial-gradient(45% 40% at 92% 95%, rgb(var(--td-accent-rgb) / 0.10), transparent 60%)",
-      }} />
+      {/* Faint grid (renders as solid hairlines) */}
       <div className="pointer-events-none absolute inset-0 z-0" style={{
         backgroundImage:
           "linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px)," +

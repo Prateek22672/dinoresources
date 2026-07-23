@@ -32,7 +32,7 @@ export default function SplashScreen({ label = "Loading workspace" }: { label?: 
         {/* shimmer progress bar */}
         <div className="mt-4 w-44 h-[3px] rounded-full bg-white/8 overflow-hidden relative">
           <div className="absolute top-0 left-0 h-full w-1/3 rounded-full"
-            style={{ background: "linear-gradient(90deg, transparent, #a9a0f5, transparent)", animation: "td-splash-bar 1.3s ease-in-out infinite" }} />
+            style={{ background: "#a9a0f5", animation: "td-splash-bar 1.3s ease-in-out infinite" }} />
         </div>
       </div>
     </div>
