@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Calculator, Briefcase, ChevronDown, Check, Sparkles, BookOpen,
+  ArrowRight, ArrowUpRight, Calculator, Briefcase, ChevronDown, Check, Sparkles, BookOpen, Globe,
 } from "lucide-react";
 import Footer from "./Footer";
-import { AiIcon } from "@/components/BrandIcons";
+import { AiIcon, GenAiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 
@@ -416,6 +416,41 @@ export default function LandingPage() {
               <figcaption className="text-zinc-600 text-xs font-semibold mt-5">{q.who}</figcaption>
             </figure>
           ))}
+        </div>
+      </Section>
+
+      {/* ── Also from us: Agent Fury + FolioFYX ── */}
+      <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
+        <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+          <a href="https://agentfury.foliofyx.in/" target="_blank" rel="noopener noreferrer"
+            className="group bg-[#131316] border border-white/8 rounded-[28px] p-8 hover:border-white/25 hover:-translate-y-1 transition-all">
+            <div className="flex items-start justify-between">
+              <span className="w-12 h-12 rounded-2xl td-accent-bg flex items-center justify-center mb-5">
+                <GenAiIcon className="w-6 h-6" />
+              </span>
+              <ArrowUpRight className="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+            </div>
+            <h3 className="text-white font-extrabold text-xl tracking-tight">Agent Fury</h3>
+            <p className="text-zinc-500 text-sm leading-relaxed mt-2">
+              Create your own AI agents — e.g. an email fetch &amp; summarizer that works while you study.
+            </p>
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mt-5" style={{ color: "var(--td-accent-soft)" }}>agentfury.foliofyx.in</p>
+          </a>
+
+          <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
+            className="group bg-[#131316] border border-white/8 rounded-[28px] p-8 hover:border-white/25 hover:-translate-y-1 transition-all">
+            <div className="flex items-start justify-between">
+              <span className="w-12 h-12 rounded-2xl bg-[#f472b6]/15 text-[#f472b6] flex items-center justify-center mb-5">
+                <Globe className="w-5 h-5" />
+              </span>
+              <ArrowUpRight className="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+            </div>
+            <h3 className="text-white font-extrabold text-xl tracking-tight">FolioFYX</h3>
+            <p className="text-zinc-500 text-sm leading-relaxed mt-2">
+              Build a standout portfolio site in minutes — because placements don't wait for perfect.
+            </p>
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mt-5 text-[#f472b6]">foliofyx.in</p>
+          </a>
         </div>
       </Section>
 
