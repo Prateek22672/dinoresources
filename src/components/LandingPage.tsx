@@ -162,33 +162,112 @@ const SHOW = [
   },
 ];
 
-/* Final stacked-scroll cards — photo-backed (Fluently-style) */
+/* Final stacked-scroll cards — hand-illustrated, hero-style (no stock photos) */
 const STACK = [
   {
     title: "Find the right notes in seconds",
     desc: "No more digging through 10 WhatsApp groups and dead drive links — every subject lives in one organised place.",
     icon: BookOpen,
-    img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1600&auto=format&fit=crop",
+    bg: "#FFB61E",
+    dark: false,
   },
   {
     title: "Walk into exams calm",
     desc: "PYQs tell you what's coming, Study-With-AI explains what you missed, and the exam countdown keeps you honest.",
     icon: Sparkles,
-    img: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1600&auto=format&fit=crop",
+    bg: "#131316",
+    dark: true,
   },
   {
     title: "Track SGPA & attendance without guesswork",
     desc: "Predict your CGPA, plan the classes you can skip, and always know exactly where you stand.",
     icon: Calculator,
-    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop",
+    bg: "#ffffff",
+    dark: false,
   },
   {
     title: "Crack placements company by company",
     desc: "Patterns, materials and real questions for the companies that actually visit campus.",
     icon: Briefcase,
-    img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1600&auto=format&fit=crop",
+    bg: "#0F9D9A",
+    dark: true,
   },
 ];
+
+/* Per-card illustration scenes for the stack — built from the hero's own parts */
+function StackArt({ i }: { i: number }) {
+  if (i === 0)
+    return (
+      <>
+        {/* yellow card: blobs + two hardcovers spilling out of the corner */}
+        <div aria-hidden className="absolute -top-14 -left-10 w-64 h-56" style={{ background: "#FCD34D", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
+        <div aria-hidden className="absolute -bottom-20 left-[38%] w-72 h-64" style={{ background: "#FDE68A", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%" }} />
+        <div aria-hidden className="absolute right-32 -bottom-24 w-[190px] rotate-[9deg] hidden lg:block">
+          <BookMock cover="#0F9D9A" spine="#0B7A78" title="COA" />
+        </div>
+        <div aria-hidden className="absolute -right-8 -bottom-12 w-[235px] rotate-[-10deg] hidden sm:block">
+          <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
+        </div>
+      </>
+    );
+  if (i === 1)
+    return (
+      <>
+        {/* dark card: floating countdown widget + progress sticker */}
+        <div aria-hidden className="absolute -top-16 -right-12 w-64 h-56" style={{ background: "#1d1d23", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
+        <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[240px]">
+          <div className="bg-white text-black rounded-[22px] p-4 rotate-[3deg] shadow-2xl">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500">DBMS · External</div>
+            <div className="text-3xl font-black mt-1 leading-none">12 days <span className="text-sm font-bold text-zinc-500">to go</span></div>
+            <div className="grid grid-cols-7 gap-1.5 mt-3.5">
+              {Array.from({ length: 21 }).map((_, d) => (
+                <span key={d} className="h-2.5 rounded-full" style={{ background: d === 16 ? "#FFB61E" : "#e4e4e7" }} />
+              ))}
+            </div>
+          </div>
+          <div className="bg-[#FFB61E] text-black rounded-full px-4 py-2 text-[13px] font-extrabold w-max mt-3 ml-5 -rotate-2 shadow-xl flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5" /> Syllabus 80% done
+          </div>
+        </div>
+      </>
+    );
+  if (i === 2)
+    return (
+      <>
+        {/* white card: soft blob + ring gauge + attendance sticker */}
+        <div aria-hidden className="absolute -bottom-16 -right-10 w-72 h-64" style={{ background: "#FFF3D6", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%" }} />
+        <div aria-hidden className="absolute right-10 sm:right-16 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center">
+          <svg viewBox="0 0 100 100" className="w-40 h-40 drop-shadow-xl">
+            <circle cx="50" cy="50" r="42" fill="#ffffff" />
+            <circle cx="50" cy="50" r="42" stroke="#eeede8" strokeWidth="9" fill="none" />
+            <circle cx="50" cy="50" r="42" stroke="#0F9D9A" strokeWidth="9" fill="none" strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 42} strokeDashoffset={2 * Math.PI * 42 * 0.13} transform="rotate(-90 50 50)" />
+            <text x="50" y="50" textAnchor="middle" fill="#0a0a0a" fontWeight="900" fontSize="24">8.7</text>
+            <text x="50" y="65" textAnchor="middle" fill="#71717a" fontWeight="700" fontSize="9">SGPA</text>
+          </svg>
+          <div className="bg-black text-white rounded-full px-4 py-2 text-[13px] font-extrabold mt-2 rotate-2 shadow-xl">Can skip 2 classes — still 76%</div>
+        </div>
+      </>
+    );
+  return (
+    <>
+      {/* teal card: campus-drive widget + shortlist sticker */}
+      <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56" style={{ background: "#0B7A78", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
+      <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[250px]">
+        <div className="bg-white text-black rounded-[22px] p-4 -rotate-2 shadow-2xl">
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500">This season on campus</div>
+          <div className="flex flex-wrap gap-1.5 mt-2.5">
+            {["TCS", "Infosys", "Wipro", "Accenture"].map((n) => (
+              <span key={n} className="bg-black text-white rounded-full px-3 py-1 text-[12px] font-bold">{n}</span>
+            ))}
+          </div>
+          <div className="mt-3 text-[13px] font-semibold text-zinc-600">Pattern · Aptitude · 40 real PYQs</div>
+        </div>
+        <div className="bg-[#FFB61E] text-black rounded-full px-4 py-2 text-[13px] font-extrabold w-max mt-3 ml-8 rotate-2 shadow-xl">Shortlisted — Round 2</div>
+      </div>
+    </>
+  );
+}
 
 /* ─── Pinned showcase (sticky panel, steps swap on one continuous scroll) ─── */
 function PinnedShowcase() {
@@ -488,21 +567,22 @@ export default function LandingPage() {
         </div>
         {STACK.map((c, i) => (
           <div key={c.title} className="sticky mb-6" style={{ top: `${84 + i * 14}px`, zIndex: i + 1 }}>
-            <div className="relative rounded-[28px] sm:rounded-[32px] overflow-hidden min-h-[320px] sm:min-h-[360px] border border-white/10 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.8)]">
-              {/* photo + legibility scrim */}
-              <img src={c.img} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-              <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(9,9,11,0.35) 0%, rgba(9,9,11,0.55) 55%, rgba(9,9,11,0.92) 100%)" }} />
+            <div
+              className={`relative rounded-[28px] sm:rounded-[32px] overflow-hidden min-h-[300px] sm:min-h-[380px] shadow-[0_30px_80px_-25px_rgba(0,0,0,0.45)] ${c.bg === "#ffffff" ? "border border-zinc-200" : ""}`}
+              style={{ background: c.bg, color: c.dark ? "#ffffff" : "#0a0a0a" }}
+            >
+              <StackArt i={i} />
 
-              <div className="relative z-10 p-6 sm:p-12 min-h-[320px] sm:min-h-[360px] flex flex-col justify-between text-white">
+              <div className="relative z-10 p-6 sm:p-12 min-h-[300px] sm:min-h-[380px] flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <span className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${c.dark ? "bg-white/10 border-white/15" : "bg-black/8 border-black/10"}`}>
                     <c.icon className="w-5 h-5" />
                   </span>
-                  <span className="text-[13px] font-black tracking-widest text-white/50">0{i + 1} / 0{STACK.length}</span>
+                  <span className={`text-[13px] font-black tracking-widest ${c.dark ? "text-white/40" : "text-black/35"}`}>0{i + 1} / 0{STACK.length}</span>
                 </div>
-                <div>
-                  <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight max-w-lg">{c.title}</h3>
-                  <p className="text-white/70 text-base leading-relaxed max-w-md mt-3">{c.desc}</p>
+                <div className="md:max-w-[54%]">
+                  <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">{c.title}</h3>
+                  <p className={`text-base leading-relaxed mt-3 ${c.dark ? "text-white/70" : "text-black/65"}`}>{c.desc}</p>
                 </div>
               </div>
             </div>
