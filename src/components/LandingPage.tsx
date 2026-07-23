@@ -425,35 +425,33 @@ export default function LandingPage() {
       <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
         <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
           <a href="https://agentfury.foliofyx.in/" target="_blank" rel="noopener noreferrer"
-            className="group rounded-[28px] p-8 text-white hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-25px_rgba(88,71,235,0.55)]"
-            style={{ background: "#5847EB" }}>
+            className="group rounded-[28px] p-8 bg-white text-black hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)]">
             <div className="flex items-start justify-between">
-              <span className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-lg">
+              <span className="w-14 h-14 rounded-2xl bg-black/[0.05] border border-black/10 flex items-center justify-center mb-5">
                 <img src={agentFuryLogo} alt="Agent Fury" className="w-9 h-9 rounded-lg" draggable={false} />
               </span>
-              <ArrowUpRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-5 h-5 text-black/35 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
             <h3 className="font-extrabold text-2xl tracking-tight">Agent Fury</h3>
-            <p className="text-white/70 text-sm leading-relaxed mt-2">
+            <p className="text-black/60 text-sm leading-relaxed mt-2">
               Create your own AI agents — e.g. an email fetch &amp; summarizer that works while you study.
             </p>
-            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/80">agentfury.foliofyx.in</p>
+            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-black/70">agentfury.foliofyx.in</p>
           </a>
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
-            className="group rounded-[28px] p-8 text-white hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-25px_rgba(219,39,119,0.55)]"
-            style={{ background: "#DB2777" }}>
+            className="group rounded-[28px] p-8 bg-[#0d0d0f] border border-white/12 text-white hover:-translate-y-1.5 hover:border-white/25 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9)]">
             <div className="flex items-start justify-between">
-              <span className="w-14 h-14 rounded-2xl bg-black/25 flex items-center justify-center mb-5 shadow-lg">
+              <span className="w-14 h-14 rounded-2xl bg-white/[0.08] border border-white/10 flex items-center justify-center mb-5">
                 <img src={fyxLogo} alt="FolioFYX" className="w-9 h-auto brightness-0 invert" draggable={false} />
               </span>
-              <ArrowUpRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-5 h-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
             <h3 className="font-extrabold text-2xl tracking-tight">FolioFYX</h3>
-            <p className="text-white/70 text-sm leading-relaxed mt-2">
+            <p className="text-white/60 text-sm leading-relaxed mt-2">
               Build a standout portfolio site in minutes — because placements don't wait for perfect.
             </p>
-            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/80">foliofyx.in</p>
+            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/70">foliofyx.in</p>
           </a>
         </div>
       </Section>
