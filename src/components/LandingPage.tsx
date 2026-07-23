@@ -221,15 +221,40 @@ function PinnedShowcase() {
       </div>
       <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-semibold"><AiIcon className="w-3.5 h-3.5" /> Unit 3 · DBMS — mapped to your syllabus</div>
     </div>,
-    /* SGPA mock */
-    <div key="tools" className="w-full text-center">
-      <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-zinc-500">Predicted SGPA</p>
-      <p className="text-6xl font-extrabold text-white mt-2" style={{ fontVariantNumeric: "tabular-nums" }}>8.7</p>
-      <div className="mt-5 space-y-2.5 text-left">
-        {[["DBMS", 92], ["COA", 78], ["FLAT", 64]].map(([n, v]) => (
-          <div key={n as string}>
-            <div className="flex justify-between text-xs text-zinc-400 mb-1"><span>{n}</span><span>{v}%</span></div>
-            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden"><div className="h-full rounded-full td-accent-solid" style={{ width: `${v}%` }} /></div>
+    /* SGPA mock — ring gauge + graded subjects + goal line */
+    <div key="tools" className="w-full">
+      <div className="flex items-center justify-center gap-6">
+        <div className="relative w-28 h-28 shrink-0">
+          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--td-accent)" strokeWidth="9" strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 42} strokeDashoffset={2 * Math.PI * 42 * (1 - 0.87)} />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-extrabold text-white leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>8.7</span>
+            <span className="text-[9px] font-bold tracking-[0.2em] text-zinc-500 uppercase mt-1">SGPA</span>
+          </div>
+        </div>
+        <div className="min-w-0">
+          <span className="td-accent-bg inline-block px-2.5 py-1 rounded-full text-[11px] font-bold">Excellent</span>
+          <p className="text-zinc-500 text-xs mt-2.5">Predicted this semester</p>
+          <p className="text-zinc-300 text-xs mt-1">Need <strong className="text-white">9.2 avg</strong> for a 9.0 CGPA</p>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3.5">
+        {([["DBMS", "O", 92, "#34d399"], ["COA", "A+", 78, "var(--td-accent)"], ["FLAT", "B+", 64, "#f59e0b"]] as const).map(([n, g, v, c]) => (
+          <div key={n}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="flex items-center gap-2 text-xs text-zinc-300 font-semibold">
+                <span className="w-6 h-6 rounded-md text-[10px] font-black text-white flex items-center justify-center" style={{ background: c }}>{g}</span>
+                {n}
+              </span>
+              <span className="text-xs text-zinc-500" style={{ fontVariantNumeric: "tabular-nums" }}>{v}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${v}%`, background: c }} />
+            </div>
           </div>
         ))}
       </div>
