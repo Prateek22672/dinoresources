@@ -65,7 +65,7 @@ export default function NoticesBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 td-glass border border-white/10 rounded-2xl w-[320px] max-h-[420px] overflow-y-auto shadow-2xl td-in">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-50 td-glass border border-white/10 rounded-2xl w-[min(320px,calc(100vw-1.5rem))] max-h-[min(420px,70dvh)] overflow-y-auto overscroll-contain shadow-2xl td-in">
           <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 px-4 pt-3.5 pb-2">Notifications</p>
           {notices.length === 0 ? (
             <p className="text-zinc-500 text-sm px-4 pb-4">Nothing here yet.</p>

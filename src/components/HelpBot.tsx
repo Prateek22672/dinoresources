@@ -116,8 +116,8 @@ export default function HelpBot({
           <div ref={endRef} />
         </div>
 
-        {/* Ticket handoff + input */}
-        <div className="px-4 pb-4 pt-2 border-t border-white/8 shrink-0 space-y-2.5">
+        {/* Ticket handoff + input (safe-area padded for iOS home bar) */}
+        <div className="px-4 pt-2 border-t border-white/8 shrink-0 space-y-2.5 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button onClick={() => { onClose(); onRaiseTicket(); }}
             className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5">
             <Ticket className="w-4 h-4 td-accent-text" /> Raise a ticket — team replies in 24h
