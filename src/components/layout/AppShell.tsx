@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
-  LifeBuoy, Menu, X, Briefcase,
+  Zap, Menu, X, Briefcase,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
 import HelpBot from "@/components/HelpBot";
@@ -55,7 +55,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const mobileItems: MobileNavItem[] = [
     ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
     { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
-    { label: "Help", icon: LifeBuoy, bottom: true, onClick: () => setBotOpen(true) },
+    { label: "Instant Help", icon: Zap, bottom: true, onClick: () => setBotOpen(true) },
     { label: "Settings", icon: UserCog, bottom: true, onClick: () => navigate("/setup?edit=true") },
     { label: "Sign out", icon: LogOut, danger: true, bottom: true, onClick: signOut },
   ];
@@ -98,7 +98,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             </button>
             <AccentPicker />
             <button onClick={() => setBotOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">
-              <LifeBuoy className="w-4 h-4" /> Help
+              <Zap className="w-4 h-4 td-accent-text" /> Instant Help
             </button>
             <NoticesBell />
             <Link to="/cart" className="relative w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Cart" title="Cart">
