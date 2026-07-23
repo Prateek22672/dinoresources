@@ -529,19 +529,35 @@ export default function LandingPage() {
         </div>
       </Section>
 
-      {/* ── Final CTA ── */}
-      <section className="relative z-10 max-w-4xl mx-auto px-5 pb-20">
-        <div className="text-black rounded-[32px] p-10 sm:p-14 text-center" style={{ background: "#FFB61E" }}>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-            Your last-minute survival kit<br className="hidden sm:block" /> is one click away.
-          </h2>
-          <p className="text-black/70 mt-3 max-w-md mx-auto font-medium">Free tools forever. Full subjects from ₹11. Exams, handled.</p>
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-7">
-            <button onClick={goAuth} className="bg-black text-white rounded-full h-12 px-7 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.02] transition-transform">
-              Get started free <ArrowRight className="w-4 h-4" />
-            </button>
-            <div className="flex items-center gap-2 text-sm font-semibold text-black/70">
-              <Check className="w-4 h-4" /> No card needed
+      {/* ── Final CTA — yellow bookend with the hero's personality ── */}
+      <section className="relative z-10 max-w-5xl mx-auto px-5 pb-20">
+        <div className="relative overflow-hidden text-black rounded-[36px] p-9 sm:p-14" style={{ background: "#FFB61E" }}>
+          {/* blobs */}
+          <div aria-hidden className="absolute -top-16 -left-12 w-72 h-64" style={{ background: "#FCD34D", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
+          <div aria-hidden className="absolute -bottom-24 right-[28%] w-80 h-72" style={{ background: "#FDE68A", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%" }} />
+
+          {/* book peeking from the corner */}
+          <div aria-hidden className="absolute -right-10 -bottom-14 w-[210px] rotate-[-14deg] hidden md:block">
+            <BookMock cover="#0F9D9A" spine="#0B7A78" title="AI" />
+          </div>
+
+          {/* dino stamp */}
+          <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white items-center justify-center shadow-lg hidden sm:flex">
+            <img src={dinoBlack} alt="" className="w-6 h-6" draggable={false} />
+          </div>
+
+          <div className="relative z-10 max-w-xl">
+            <h2 className="text-3xl sm:text-[2.6rem] font-extrabold tracking-tight leading-[1.08]">
+              Your last-minute survival kit is one click away.
+            </h2>
+            <p className="text-black/70 mt-3 font-medium">Free tools forever. Full subjects from ₹11. Exams, handled.</p>
+            <div className="flex flex-wrap items-center gap-4 mt-7">
+              <button onClick={goAuth} className="bg-black text-white rounded-full h-13 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform" style={{ height: "3.25rem" }}>
+                Get started free <ArrowRight className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-2 text-sm font-bold text-black/70">
+                <Check className="w-4 h-4" /> No card needed
+              </div>
             </div>
           </div>
         </div>
