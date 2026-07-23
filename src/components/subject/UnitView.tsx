@@ -35,6 +35,11 @@ function toEmbedUrl(url: string): string | null {
 
 const resTypeIcon = { pdf: FileIcon, youtube: Youtube, link: ExternalLink };
 
+/** Extract a YouTube video id (for thumbnails). */
+function ytId(url: string): string | null {
+  return url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/)?.[1] ?? null;
+}
+
 export default function UnitView({ subjectId, subjectName, section }: UnitViewProps) {
   const isUnit = typeof section === "number";
   const [tab, setTab] = useState<UnitTab>("ai");
@@ -53,6 +58,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [relatedTried, setRelatedTried] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [edPlaying, setEdPlaying] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,7 +82,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
       if (section === "pyq") return r.category === "Previous Papers" || r.category === "PYQs";
       return r.category === `Unit ${section}` || r.unit_number === section;
     }));
-    setRelated([]); setRelatedTried(false);
+    setRelated([]); setRelatedTried(false); setEdPlaying(null);
     setLoading(false);
   }, [subjectId, section, isUnit]);
   useEffect(() => { load(); }, [load]);
@@ -149,9 +155,6 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
       </div>
     );
   }
-
-  const mainEditorial = editorial[0];
-  const mainEmbed = mainEditorial ? toEmbedUrl(mainEditorial.youtube_url) : null;
 
   const tabs: { id: UnitTab; label: string; icon: any }[] = [
     { id: "ai", label: "Study With AI", icon: AiIcon },
@@ -243,30 +246,77 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
         )
       )}
 
-      {/* Editorial */}
+      {/* Editorial — topic-grouped mini-YT cards; one compact in-site player */}
       {tab === "editorial" && (
         <div className="space-y-6">
-          {!mainEditorial ? (
-            <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No editorial video added for this unit yet.</div>
-          ) : (
-            <div className="td-surface rounded-2xl overflow-hidden">
-              {mainEmbed
-                ? <div className="aspect-video bg-black"><iframe src={mainEmbed} title={mainEditorial.title ?? "Editorial"} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /></div>
-                : <a href={mainEditorial.youtube_url} target="_blank" rel="noopener noreferrer" className="block p-6 text-center text-zinc-400">Open video ↗</a>}
-              {mainEditorial.title && <div className="p-4"><p className="text-white font-semibold">{mainEditorial.title}</p></div>}
-            </div>
-          )}
-
-          {/* extra editorials */}
-          {editorial.slice(1).map((e) => {
-            const em = toEmbedUrl(e.youtube_url);
+          {/* compact player — plays whichever mini card was tapped */}
+          {edPlaying && (() => {
+            const e = editorial.find((x) => x.id === edPlaying);
+            const em = e ? toEmbedUrl(e.youtube_url) : null;
+            if (!e || !em) return null;
             return (
-              <div key={e.id} className="td-surface rounded-2xl overflow-hidden">
-                {em && <div className="aspect-video bg-black"><iframe src={em} title={e.title ?? "Editorial"} className="w-full h-full" allow="encrypted-media" allowFullScreen /></div>}
-                {e.title && <div className="p-3"><p className="text-zinc-200 text-sm font-medium">{e.title}</p></div>}
+              <div className="td-surface rounded-2xl overflow-hidden max-w-2xl">
+                <div className="aspect-video bg-black">
+                  <iframe src={`${em}${em.includes("?") ? "&" : "?"}autoplay=1`} title={e.title ?? "Editorial"} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+                </div>
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <p className="text-white text-sm font-semibold truncate">{e.title || "Editorial video"}</p>
+                  <button onClick={() => setEdPlaying(null)} className="td-btn-ghost px-3 py-1.5 text-xs shrink-0">Close</button>
+                </div>
               </div>
             );
-          })}
+          })()}
+
+          {editorial.length === 0 && topics.length === 0 ? (
+            <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No editorial video added for this unit yet.</div>
+          ) : (
+            <div className="space-y-5">
+              {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
+                .filter((g) => activeTopic === "all" || g.gid === activeTopic)
+                .map((group) => {
+                  const items = editorial.filter((e) => ((e as any).topic_id ?? null) === group.gid);
+                  // topic headings stay visible with a placeholder; General only when it has videos
+                  if (items.length === 0 && group.gid === null) return null;
+                  return (
+                    <div key={group.gid ?? "general"} className="space-y-2.5">
+                      {topics.length > 0 && (
+                        <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-500 flex items-center gap-2 px-1">
+                          <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
+                        </p>
+                      )}
+                      {items.length === 0 ? (
+                        <div className="td-surface rounded-2xl p-4 text-center text-zinc-600 text-xs">Videos for this topic are coming soon.</div>
+                      ) : (
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                          {items.map((e) => {
+                            const vid = ytId(e.youtube_url);
+                            const active = edPlaying === e.id;
+                            return (
+                              <button key={e.id} onClick={() => setEdPlaying(active ? null : e.id)}
+                                className={`td-surface td-card-click rounded-2xl overflow-hidden text-left group ${active ? "ring-2 ring-[var(--td-accent)]" : ""}`}>
+                                <div className="relative aspect-video bg-black">
+                                  {vid
+                                    ? <img src={`https://i.ytimg.com/vi/${vid}/hqdefault.jpg`} alt="" loading="lazy" className="w-full h-full object-cover" />
+                                    : <span className="absolute inset-0 flex items-center justify-center"><Clapperboard className="w-6 h-6 text-zinc-600" /></span>}
+                                  <span className="absolute inset-0 flex items-center justify-center">
+                                    <span className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                      <Play className="w-4 h-4 text-white fill-white" />
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="px-3 py-2.5">
+                                  <p className="text-white text-[13px] font-medium line-clamp-2">{e.title || "Editorial video"}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
 
           {/* Groq related rail */}
           <div>

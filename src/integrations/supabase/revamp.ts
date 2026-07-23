@@ -152,6 +152,7 @@ export interface EditorialRow {
   id: string;
   subject_id: string;
   unit_number: number | null;
+  topic_id?: string | null;
   title: string | null;
   youtube_url: string;
   created_by?: string | null;

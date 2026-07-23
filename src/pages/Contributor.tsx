@@ -73,6 +73,7 @@ export default function Contributor() {
   const [editorials, setEditorials] = useState<EditorialRow[]>([]);
   const [edTitle, setEdTitle] = useState("");
   const [edUrl, setEdUrl] = useState("");
+  const [edTopic, setEdTopic] = useState("");
 
   // per-unit Q&A counts + existing materials
   const [unitCounts, setUnitCounts] = useState<Record<number, number>>({});
@@ -132,10 +133,10 @@ export default function Contributor() {
     if (!edUrl.trim()) { toast.error("YouTube URL required"); return; }
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await tbl("subject_editorial").insert({
-      subject_id: subjectId, unit_number: unit, title: edTitle.trim() || null, youtube_url: edUrl.trim(), created_by: user?.id,
+      subject_id: subjectId, unit_number: unit, topic_id: edTopic || null, title: edTitle.trim() || null, youtube_url: edUrl.trim(), created_by: user?.id,
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("Editorial added"); setEdTitle(""); setEdUrl(""); loadEditorials();
+    toast.success("Editorial added"); setEdTitle(""); setEdUrl(""); setEdTopic(""); loadEditorials();
   };
 
   const deleteEditorial = async (id: string) => {
@@ -386,13 +387,34 @@ export default function Contributor() {
                 className="flex-1 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
               <button onClick={addEditorial} className="td-btn-primary px-4 text-sm flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add</button>
             </div>
-            <p className="text-zinc-600 text-xs mt-2">Plays embedded on the subject’s Editorial tab.</p>
+            {topics.length > 0 && (
+              <select value={edTopic} onChange={(e) => setEdTopic(e.target.value)}
+                className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none mt-2">
+                <option value="">Topic: General</option>
+                {topics.map((t) => <option key={t.id} value={t.id}>Topic: {t.title}</option>)}
+              </select>
+            )}
+            <p className="text-zinc-600 text-xs mt-2">Plays embedded on the subject’s Editorial tab — grouped under the topic you pick.</p>
             {editorials.length > 0 && (
               <div className="space-y-2 mt-3">
                 {editorials.map((e) => (
                   <div key={e.id} className="td-surface-2 rounded-xl p-3 flex items-center gap-3">
                     <Clapperboard className="w-4 h-4 text-zinc-400 shrink-0" />
                     <div className="min-w-0 flex-1"><p className="text-zinc-200 text-sm font-medium truncate">{e.title || "Editorial"}</p><p className="text-zinc-600 text-xs truncate">{e.youtube_url}</p></div>
+                    {topics.length > 0 && (
+                      <select
+                        value={(e as any).topic_id ?? ""}
+                        onChange={async (ev) => {
+                          const v = ev.target.value || null;
+                          const { error } = await tbl("subject_editorial").update({ topic_id: v }).eq("id", e.id);
+                          if (error) toast.error(error.message); else { toast.success("Topic updated"); loadEditorials(); }
+                        }}
+                        className="td-surface-2 rounded-lg px-2 h-7 text-[11px] text-zinc-300 outline-none shrink-0 max-w-[110px]"
+                      >
+                        <option value="">General</option>
+                        {topics.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                      </select>
+                    )}
                     <button onClick={() => deleteEditorial(e.id)} className="w-8 h-8 rounded-full hover:bg-red-500/20 flex items-center justify-center shrink-0"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
                   </div>
                 ))}
