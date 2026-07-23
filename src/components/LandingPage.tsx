@@ -279,12 +279,12 @@ export default function LandingPage() {
 
       {/* ── Nav — floating pill over the hero ── */}
       <header className="sticky top-4 z-50 px-4">
-        <div className="max-w-2xl mx-auto bg-[#131316]/90 backdrop-blur-xl border border-white/10 rounded-full pl-2.5 pr-2 h-14 flex items-center justify-between shadow-[0_16px_50px_-16px_rgba(0,0,0,0.8)]">
+        <div className="max-w-2xl mx-auto bg-[#131316]/95 backdrop-blur-xl border border-white/10 rounded-full pl-2.5 pr-2 h-14 flex items-center justify-between shadow-[0_16px_50px_-16px_rgba(0,0,0,0.8)]">
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2.5">
             <span className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center">
               <img src={dinoLogo} alt="" className="w-5 h-5" />
             </span>
-            <span className="font-bold tracking-tight hidden sm:block">Team Dino</span>
+            <span className="font-bold tracking-tight">Team Dino</span>
           </button>
           <nav className="flex items-center gap-1">
             <button onClick={() => navigate("/about")} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-300 hover:text-white transition-colors hidden sm:block">About</button>
@@ -300,7 +300,7 @@ export default function LandingPage() {
       <HeroSection goAuth={goAuth} />
 
       {/* ── Social proof — one giant number (Fluently-style) ── */}
-      <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 pt-24 pb-16 text-center ld-reveal ${statsReveal.visible ? "on" : ""}`}>
+      <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 pt-14 sm:pt-24 pb-14 text-center ld-reveal ${statsReveal.visible ? "on" : ""}`}>
         <p className="text-[11px] font-black tracking-[0.3em] uppercase mb-4" style={{ color: "var(--td-accent-soft)" }}>
           Students trust TeamDino
         </p>
@@ -331,8 +331,8 @@ export default function LandingPage() {
         <div className="flex w-max items-center" style={{ animation: "ld-marquee 38s linear infinite", maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}>
           {[...MARQUEE, ...MARQUEE].map((m, i) => (
             <span key={i} className="flex items-center shrink-0">
-              <span className="text-2xl sm:text-[1.7rem] font-extrabold tracking-tight text-zinc-700 whitespace-nowrap hover:text-zinc-400 transition-colors">{m}</span>
-              <span className="mx-7 w-1.5 h-1.5 rounded-full td-accent-solid opacity-40 inline-block shrink-0" />
+              <span className="text-lg sm:text-[1.7rem] font-extrabold tracking-tight text-zinc-700 whitespace-nowrap hover:text-zinc-400 transition-colors">{m}</span>
+              <span className="mx-4 sm:mx-7 w-1.5 h-1.5 rounded-full td-accent-solid opacity-40 inline-block shrink-0" />
             </span>
           ))}
         </div>
@@ -361,13 +361,13 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">With TeamDino<br />you can finally</h2>
         </div>
         {STACK.map((c, i) => (
-          <div key={c.title} className="sticky mb-6" style={{ top: `${96 + i * 18}px`, zIndex: i + 1 }}>
-            <div className="relative rounded-[32px] overflow-hidden min-h-[360px] border border-white/10 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.8)]">
+          <div key={c.title} className="sticky mb-6" style={{ top: `${84 + i * 14}px`, zIndex: i + 1 }}>
+            <div className="relative rounded-[28px] sm:rounded-[32px] overflow-hidden min-h-[320px] sm:min-h-[360px] border border-white/10 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.8)]">
               {/* photo + legibility scrim */}
               <img src={c.img} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
               <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(9,9,11,0.35) 0%, rgba(9,9,11,0.55) 55%, rgba(9,9,11,0.92) 100%)" }} />
 
-              <div className="relative z-10 p-8 sm:p-12 min-h-[360px] flex flex-col justify-between text-white">
+              <div className="relative z-10 p-6 sm:p-12 min-h-[320px] sm:min-h-[360px] flex flex-col justify-between text-white">
                 <div className="flex items-center justify-between">
                   <span className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm flex items-center justify-center">
                     <c.icon className="w-5 h-5" />
