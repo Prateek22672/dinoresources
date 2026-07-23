@@ -8,6 +8,43 @@ import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 
+/* Cursor-follow: elements drift toward/away from the mouse at their own
+ * strengths, smoothly lerped (springy, 60fps, transform-only). */
+function useMouseFloat(strengths: { x: number; y: number; r: number }[]) {
+  const els = useRef<(HTMLDivElement | null)[]>([]);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const target = { x: 0, y: 0 };
+    const cur = strengths.map(() => ({ x: 0, y: 0 }));
+    let raf = 0;
+    const onMove = (e: MouseEvent) => {
+      target.x = e.clientX / window.innerWidth - 0.5;
+      target.y = e.clientY / window.innerHeight - 0.5;
+    };
+    const onLeave = () => { target.x = 0; target.y = 0; };
+    const tick = () => {
+      els.current.forEach((el, i) => {
+        if (!el) return;
+        const s = strengths[i];
+        cur[i].x += (target.x * s.x - cur[i].x) * 0.055;
+        cur[i].y += (target.y * s.y - cur[i].y) * 0.055;
+        el.style.transform = `translate(${cur[i].x.toFixed(2)}px, ${cur[i].y.toFixed(2)}px) rotate(${(cur[i].x * s.r).toFixed(3)}deg)`;
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    document.documentElement.addEventListener("mouseleave", onLeave);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      document.documentElement.removeEventListener("mouseleave", onLeave);
+      cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return els;
+}
+
 /* Hero scroll FX: content fades up, frames drift at their own depths. */
 function useHeroParallax(depths: number[]) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -277,6 +314,8 @@ export default function LandingPage() {
           from { opacity:0; transform: translateY(150px) rotate(calc(var(--rot) * 0.2)) scale(.9); }
           to   { opacity:1; transform: translateY(0) rotate(var(--rot)) scale(1); }
         }
+        @keyframes ld-float1 { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-14px) rotate(1.3deg); } }
+        @keyframes ld-float2 { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-9px) rotate(-1.6deg); } }
         @keyframes ld-cue { 0%,100% { transform:translateY(0); } 50% { transform:translateY(6px); } }
         .ld-reveal { opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
         .ld-reveal.on { opacity:1; transform:none; }
@@ -468,6 +507,12 @@ function BookMock({ cover, spine, title }: { cover: string; spine: string; title
 /* ─── Hero: exact Aardvark mimic — yellow blobs, chunky black type, books ─── */
 function HeroSection({ goAuth }: { goAuth: () => void }) {
   const { contentRef, cueRef, frameRefs } = useHeroParallax([0.1, -0.06, 0.16]);
+  // cursor drift strengths: [big DBMS, corner COA (moves opposite = depth), note]
+  const mouseEls = useMouseFloat([
+    { x: 34, y: 24, r: 0.09 },
+    { x: -26, y: -18, r: -0.07 },
+    { x: 16, y: 12, r: 0.14 },
+  ]);
   const pop = (rot: string, delay: number) => ({ ["--rot" as any]: rot, animation: `ld-pop 1s cubic-bezier(.16,1,.3,1) ${delay}s both` });
 
   return (
@@ -480,23 +525,33 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
 
       {/* corner book peeking top-left */}
       <div ref={(el) => (frameRefs.current[1] = el)} className="absolute -top-24 left-[16%] w-[240px] rotate-[28deg] z-[5] hidden lg:block will-change-transform">
-        <div style={pop("28deg", 0.35)}>
-          <BookMock cover="#0F9D9A" spine="#0B7A78" title="COA" />
+        <div ref={(el) => (mouseEls.current[1] = el)} className="will-change-transform">
+          <div style={pop("28deg", 0.35)}>
+            <div style={{ animation: "ld-float2 6.5s ease-in-out 1.4s infinite" }}>
+              <BookMock cover="#0F9D9A" spine="#0B7A78" title="COA" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* big book right */}
       <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[4%] sm:right-[7%] top-[20%] w-[220px] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
-        <div style={pop("10deg", 0.2)}>
-          <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
+        <div ref={(el) => (mouseEls.current[0] = el)} className="will-change-transform">
+          <div style={pop("10deg", 0.2)}>
+            <div style={{ animation: "ld-float1 5.2s ease-in-out 1.3s infinite" }}>
+              <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* handwritten note */}
       <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[3%] bottom-[20%] rotate-[-10deg] z-[6] hidden md:block will-change-transform">
-        <p className="ld-hand text-[#6D5BD0] text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
-          made for<br />GITAM students
-        </p>
+        <div ref={(el) => (mouseEls.current[2] = el)} className="will-change-transform">
+          <p className="ld-hand text-[#6D5BD0] text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
+            made for<br />GITAM students
+          </p>
+        </div>
       </div>
 
       {/* content — old-style headline + CTA on the new stage */}
