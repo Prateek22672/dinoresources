@@ -14,9 +14,10 @@ import AdminSharing from "@/components/admin/AdminSharing";
 import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminFeatures from "@/components/admin/AdminFeatures";
 import AdminCharges from "@/components/admin/AdminCharges";
-import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt } from "lucide-react";
+import AdminNotices from "@/components/admin/AdminNotices";
+import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell } from "lucide-react";
 
-type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database";
+type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -24,6 +25,7 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "subjects", label: "Subjects & Pricing", icon: BookOpen },
   { id: "coupons", label: "Coupons", icon: Ticket },
   { id: "charges", label: "Charges & GST", icon: Receipt },
+  { id: "notices", label: "Notices", icon: Bell },
   { id: "features", label: "Cards & Features", icon: LayoutGrid },
   { id: "tickets", label: "Support Tickets", icon: LifeBuoy },
   { id: "team", label: "Team", icon: UsersRound },
@@ -123,6 +125,7 @@ export default function Admin() {
       {tab === "team" && <AdminTeam />}
       {tab === "coupons" && <AdminCoupons />}
       {tab === "charges" && <AdminCharges />}
+      {tab === "notices" && <AdminNotices />}
       {tab === "features" && <AdminFeatures />}
       {tab === "security" && <AdminSecurity />}
       {tab === "access" && <AdminAccessAudit />}

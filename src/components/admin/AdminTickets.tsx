@@ -3,7 +3,44 @@ import {
   tbl, ticketCategoryLabel, SupportTicketRow, TicketStatus,
 } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { LifeBuoy, Filter, Clock, Loader2, CheckCircle2, Save } from "lucide-react";
+import { LifeBuoy, Filter, Clock, Loader2, CheckCircle2, Save, Bot } from "lucide-react";
+
+/** Admin-editable brain for DinoBot (the help chat). Stored in app_settings. */
+function HelpBotBrain() {
+  const [prompt, setPrompt] = useState("");
+  const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    tbl("app_settings").select("id, helpbot_prompt").maybeSingle().then(({ data }: any) => {
+      if (data) { setSettingsId(data.id); setPrompt(data.helpbot_prompt ?? ""); }
+    });
+  }, []);
+
+  const save = async () => {
+    if (!settingsId) return;
+    setSaving(true);
+    const { error } = await tbl("app_settings").update({ helpbot_prompt: prompt }).eq("id", settingsId);
+    setSaving(false);
+    if (error) toast.error(error.message); else toast.success("Bot brain updated — applies to the next chat");
+  };
+
+  return (
+    <section className="td-surface rounded-2xl p-5 mb-6">
+      <h3 className="text-white font-semibold flex items-center gap-2 mb-1"><Bot className="w-4 h-4 td-accent-text" /> DinoBot brain</h3>
+      <p className="text-zinc-500 text-xs mb-3 leading-relaxed">
+        The help bot's personality and rules. The live subject list, prices and free tools are injected
+        automatically — write behaviour here, not the catalog. Turn the bot on/off via the
+        <span className="text-zinc-300"> helpbot</span> flag in Cards &amp; Features.
+      </p>
+      <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={6}
+        className="w-full td-surface-2 rounded-xl px-3 py-2.5 text-sm text-zinc-200 outline-none resize-y leading-relaxed" />
+      <button onClick={save} disabled={saving} className="td-btn-primary px-4 py-2 text-sm mt-3 disabled:opacity-60">
+        {saving ? "Saving…" : "Save brain"}
+      </button>
+    </section>
+  );
+}
 
 type FilterT = "all" | TicketStatus;
 
@@ -57,6 +94,8 @@ export default function AdminTickets() {
 
   return (
     <div>
+      <HelpBotBrain />
+
       <div className="flex items-center gap-2 mb-5 flex-wrap">
         <Filter className="w-4 h-4 text-zinc-500" />
         {(["all", "open", "in_progress", "resolved"] as FilterT[]).map((f) => (

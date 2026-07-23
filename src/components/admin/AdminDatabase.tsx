@@ -27,7 +27,7 @@ export default function AdminDatabase() {
     const [s, t, c] = await Promise.all([
       (supabase as any).rpc("get_db_size"),
       (supabase as any).rpc("get_db_usage"),
-      (supabase as any).rpc("get_cleanup_suggestions"),
+      (supabase as any).rpc("get_cleanup_suggestions_v2"),
     ]);
     setSize(Number(s.data ?? 0));
     setTables((t.data ?? []) as TableRow[]);
@@ -39,7 +39,7 @@ export default function AdminDatabase() {
   const clean = async (s: Suggestion) => {
     if (!confirm(`Delete ${s.count} rows — "${s.label}"? This cannot be undone.`)) return;
     setBusy(s.key);
-    const { data, error } = await (supabase as any).rpc("run_cleanup", { _key: s.key });
+    const { data, error } = await (supabase as any).rpc("run_cleanup_v2", { _key: s.key });
     setBusy(null);
     if (error) { toast.error(error.message); return; }
     toast.success(`Removed ${data ?? 0} rows`);
@@ -61,14 +61,18 @@ export default function AdminDatabase() {
         </div>
         <p className="text-3xl font-bold text-white mt-2">{fmtBytes(size)} <span className="text-zinc-500 text-lg font-medium">/ {fmtBytes(FREE_LIMIT)}</span></p>
         <div className="h-3 rounded-full bg-white/8 overflow-hidden mt-3">
-          <div className={`h-full rounded-full ${pct > 85 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "bg-[#7c6cf0]"}`} style={{ width: `${pct}%` }} />
+          <div className={`h-full rounded-full ${pct > 85 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "td-grad-bar"}`} style={{ width: `${pct}%` }} />
         </div>
         <p className="text-zinc-500 text-xs mt-2">{pct.toFixed(1)}% of the free-tier limit used · {fmtBytes(FREE_LIMIT - size)} free</p>
       </section>
 
       {/* Smart cleanup suggestions */}
       <section>
-        <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Smart cleanup</h3>
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Smart cleanup</h3>
+        <p className="text-zinc-500 text-xs mb-3 leading-relaxed">
+          Only disposable data is ever suggested — unpaid checkouts, old logs, expired notices, old help-bot chats.
+          <span className="text-zinc-300"> Paid orders, user access, subjects, notes and coupons can never be deleted from here.</span>
+        </p>
         {suggestions.length === 0 ? (
           <div className="td-surface rounded-2xl p-6 flex items-center gap-3 text-sm text-emerald-400">
             <Check className="w-5 h-5" /> Nothing to clean — no abandoned orders, stale logs or revoked rows piling up.

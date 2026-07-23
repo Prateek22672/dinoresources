@@ -5,7 +5,9 @@ import {
   LifeBuoy, Menu, X, Briefcase,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
+import HelpBot from "@/components/HelpBot";
 import AccentPicker from "@/components/layout/AccentPicker";
+import NoticesBell from "@/components/layout/NoticesBell";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -26,7 +28,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const { isAdmin, isContributor } = useUserRole();
   const { count } = useCart();
   const { isOn } = useFeatureFlags();
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);   // classic ticket form
+  const [botOpen, setBotOpen] = useState(false);     // DinoBot chat (opens first)
   const [menuOpen, setMenuOpen] = useState(false);
 
   const signOut = async () => { await supabase.auth.signOut(); navigate("/auth"); };
@@ -42,7 +45,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const mobileItems: MobileNavItem[] = [
     ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
     { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
-    { label: "Help", icon: LifeBuoy, onClick: () => setHelpOpen(true) },
+    { label: "Help", icon: LifeBuoy, onClick: () => setBotOpen(true) },
     { label: "Profile", icon: UserCog, onClick: () => navigate("/setup?edit=true") },
     { label: "Sign out", icon: LogOut, danger: true, onClick: signOut },
   ];
@@ -81,10 +84,11 @@ export default function AppShell({ children, hideHeader = false }: { children: R
                 <span className="td-accent-solid absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center">{count}</span>
               )}
             </Link>
+            <NoticesBell />
             <AccentPicker />
 
             {/* Desktop-only actions */}
-            <button onClick={() => setHelpOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">
+            <button onClick={() => setBotOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">
               <LifeBuoy className="w-4 h-4" /> Help
             </button>
             <button onClick={() => navigate("/setup?edit=true")} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Profile">
@@ -110,6 +114,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
       <main key={location.pathname} className="td-page flex-1 container mx-auto px-3 sm:px-4 py-6 sm:py-8">{children}</main>
 
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} />
     </div>
   );
 }
