@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight, ArrowUpRight, Calculator, Briefcase, ChevronDown, Check, Sparkles, BookOpen, Globe,
+  ArrowRight, ArrowUpRight, Calculator, Briefcase, ChevronDown, Check, Sparkles, BookOpen,
 } from "lucide-react";
 import Footer from "./Footer";
-import { AiIcon, GenAiIcon } from "@/components/BrandIcons";
+import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 import agentFuryLogo from "@/assets/icon-192.png";
@@ -441,14 +441,12 @@ export default function LandingPage() {
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
             className="group rounded-[28px] p-8 bg-[#0d0d0f] border border-white/12 text-white hover:-translate-y-1.5 hover:border-white/25 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9)]">
-            <div className="flex items-start justify-between">
-              <span className="w-14 h-14 rounded-2xl bg-white/[0.08] border border-white/10 flex items-center justify-center mb-5">
-                <img src={fyxLogo} alt="FolioFYX" className="w-9 h-auto brightness-0 invert" draggable={false} />
-              </span>
+            <div className="flex items-start justify-between mb-5">
+              <span className="h-14" aria-hidden />
               <ArrowUpRight className="w-5 h-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <h3 className="font-extrabold text-2xl tracking-tight">FolioFYX</h3>
-            <p className="text-white/60 text-sm leading-relaxed mt-2">
+            <img src={fyxLogo} alt="FolioFYX" className="h-9 w-auto brightness-0 invert" draggable={false} />
+            <p className="text-white/60 text-sm leading-relaxed mt-3">
               Build a standout portfolio site in minutes — because placements don't wait for perfect.
             </p>
             <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/70">foliofyx.in</p>
