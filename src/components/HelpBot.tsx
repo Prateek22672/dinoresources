@@ -34,6 +34,16 @@ export default function HelpBot({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Mobile: lock the page scroll while the sheet is open (desktop stays free —
+  // the docked panel intentionally leaves the page usable).
+  useEffect(() => {
+    if (!open) return;
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
   if (!open) return null;
 
   const send = async (text?: string) => {
@@ -51,8 +61,12 @@ export default function HelpBot({
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-end sm:items-center justify-center sm:p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
-      <div className="td-surface w-full sm:max-w-md h-[85dvh] sm:h-[600px] sm:rounded-[28px] rounded-t-[28px] flex flex-col overflow-hidden td-in">
+    <>
+      {/* Mobile-only light dim (no blur) — tap to close. Desktop has NO backdrop:
+          the panel docks bottom-right so the page stays usable while chatting. */}
+      <div className="sm:hidden fixed inset-0 z-[94] bg-black/45" onClick={onClose} />
+      <div className="fixed z-[95] inset-x-0 bottom-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px]">
+        <div className="td-surface w-full h-[88dvh] sm:h-[600px] sm:max-h-[calc(100dvh-3rem)] rounded-t-[28px] sm:rounded-[28px] flex flex-col overflow-hidden td-in border border-white/10 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.65)]">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/8 shrink-0">
           <span className="w-10 h-10 rounded-2xl td-accent-bg flex items-center justify-center"><Bot className="w-5 h-5" /></span>
@@ -65,8 +79,8 @@ export default function HelpBot({
           </button>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {/* Messages — overscroll-contain stops scroll chaining to the page */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
           {messages.length === 0 && (
             <div className="td-in">
               <div className="td-surface-2 rounded-2xl rounded-tl-md px-4 py-3 max-w-[90%]">
@@ -125,7 +139,8 @@ export default function HelpBot({
             <Sparkles className="w-3 h-3" /> AI assistant — may make mistakes; the team confirms via tickets.
           </p>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

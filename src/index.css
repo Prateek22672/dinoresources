@@ -270,17 +270,24 @@ iframe[src*="razorpay"] {
    and (scoped to .td-app) text colors so the app reads well on white.
    ===================================================================== */
 @layer utilities {
-  /* Light palette — ChatGPT-style soft white (not pure-bright). */
-  :root:not(.dark) .td-base      { background: #f7f7f8; }
-  :root:not(.dark) .td-surface   {
-    background: #ffffff; border-color: rgba(13,13,13,0.10);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px -6px rgba(0,0,0,0.08);
+  /* Light palette — e-learning lavender: soft accent wash, white cards,
+     accent-tinted borders & shadows (follows --td-accent). */
+  :root:not(.dark) .td-base {
+    background:
+      radial-gradient(90% 65% at 50% -10%, rgb(var(--td-accent-rgb) / 0.20), transparent 60%),
+      radial-gradient(70% 60% at 100% 100%, rgb(var(--td-accent-rgb) / 0.14), transparent 55%),
+      #f4f2f9;
+    background-attachment: fixed;
   }
-  :root:not(.dark) .td-surface-2 { background: #ececec; border-color: rgba(13,13,13,0.08); }
-  :root:not(.dark) .td-hairline  { border-color: rgba(13,13,13,0.10); }
+  :root:not(.dark) .td-surface   {
+    background: #ffffff; border-color: rgb(var(--td-accent-rgb) / 0.13);
+    box-shadow: 0 2px 6px rgba(23,10,60,0.04), 0 12px 32px -16px rgb(var(--td-accent-rgb) / 0.30);
+  }
+  :root:not(.dark) .td-surface-2 { background: #f5f2fb; border-color: rgb(var(--td-accent-rgb) / 0.10); }
+  :root:not(.dark) .td-hairline  { border-color: rgb(var(--td-accent-rgb) / 0.14); }
   :root:not(.dark) .td-glass     {
-    background: rgba(255,255,255,0.85); border-color: rgba(0,0,0,0.10);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    background: rgba(255,255,255,0.82); border-color: rgb(var(--td-accent-rgb) / 0.16);
+    box-shadow: 0 1px 0 rgba(23,10,60,0.04);
   }
   :root:not(.dark) .td-card-click:hover {
     box-shadow: 0 26px 50px -24px rgba(0,0,0,0.28) !important;
@@ -289,8 +296,8 @@ iframe[src*="razorpay"] {
     box-shadow: 0 28px 52px -26px rgba(0,0,0,0.30) !important;
   }
   :root:not(.dark) .td-accent-text { color: var(--td-accent-strong); }
-  :root:not(.dark) .td-edge-l { background: linear-gradient(to right, #f7f7f8, transparent); }
-  :root:not(.dark) .td-edge-r { background: linear-gradient(to left,  #f7f7f8, transparent); }
+  :root:not(.dark) .td-edge-l { background: linear-gradient(to right, #f4f2f9, transparent); }
+  :root:not(.dark) .td-edge-r { background: linear-gradient(to left,  #f4f2f9, transparent); }
 
   :root:not(.dark) .td-btn-primary { background: #0d0d0d; color: #ffffff; }
   :root:not(.dark) .td-btn-primary:hover { background: #000; box-shadow: 0 10px 30px -12px rgba(0,0,0,0.35); }
@@ -300,9 +307,10 @@ iframe[src*="razorpay"] {
 
   :root:not(.dark) .td-hero {
     background:
-      radial-gradient(120% 140% at 15% 10%, rgb(var(--td-accent-rgb) / 0.14), transparent 45%),
-      linear-gradient(180deg, #ffffff, #f3f3f5);
-    border-color: rgba(0,0,0,0.08);
+      radial-gradient(120% 140% at 15% 10%, rgb(var(--td-accent-rgb) / 0.24), transparent 50%),
+      radial-gradient(100% 120% at 95% 5%, rgb(var(--td-accent-rgb) / 0.10), transparent 45%),
+      linear-gradient(180deg, #ffffff, #f4effc);
+    border-color: rgb(var(--td-accent-rgb) / 0.16);
   }
   :root:not(.dark) .td-hero::after { opacity: .25; }
 
