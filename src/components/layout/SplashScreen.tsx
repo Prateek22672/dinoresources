@@ -1,6 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
+/**
+ * Keeps the splash visible for a minimum time so the runner is actually seen.
+ * The clock is shared across mounts (Index → Dashboard both splash), so the
+ * minimum applies ONCE per page load — never stacked.
+ */
+let firstShownAt: number | null = null;
+export function useMinSplash(loading: boolean, minMs = 1800): boolean {
+  const [, force] = useState(0);
+  if (loading && firstShownAt === null) firstShownAt = Date.now();
+  const elapsed = firstShownAt === null ? minMs : Date.now() - firstShownAt;
+  const show = loading || elapsed < minMs;
+
+  useEffect(() => {
+    if (!loading && elapsed < minMs) {
+      const t = setTimeout(() => force((x) => x + 1), minMs - elapsed + 30);
+      return () => clearTimeout(t);
+    }
+  }, [loading, elapsed, minMs]);
+
+  return show;
+}
+
 const TIPS = [
   "Dusting off the notes",
   "Counting PYQs",
@@ -74,7 +96,7 @@ export default function SplashScreen({ label = "Loading workspace" }: { label?: 
             className="absolute left-7 bottom-[10px] w-14 h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center shadow-2xl z-10"
             style={{ animation: jumping ? "td-jump .56s cubic-bezier(.3,0,.4,1)" : "td-run .45s ease-in-out infinite" }}
           >
-            <img src={dinoLogo} alt="Team Dino" className="w-8 h-8" draggable={false} />
+            <img src={dinoLogo} alt="Team Dino" className="w-8 h-8" draggable={false} decoding="sync" />
           </div>
 
           {/* cacti scrolling past */}

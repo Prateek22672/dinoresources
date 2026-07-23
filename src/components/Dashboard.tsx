@@ -9,7 +9,7 @@ import { formatPaise } from "@/lib/money";
 import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@/lib/recent";
 
 import AppShell from "@/components/layout/AppShell";
-import SplashScreen from "@/components/layout/SplashScreen";
+import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
 import AnniversaryBanner from "./AnniversaryBanner";
 import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
@@ -51,6 +51,7 @@ export default function Dashboard() {
 
   const [profile, setProfile] = useState<{ name: string; department: string; semester: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const showSplash = useMinSplash(loading);
 
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [years, setYears] = useState<YearRow[]>([]);
@@ -157,7 +158,7 @@ export default function Dashboard() {
     return { label: d.toLocaleDateString("en-IN", { weekday: "short" }).slice(0, 2), iso: d.toLocaleDateString("en-CA") };
   });
 
-  if (loading) return <SplashScreen />;
+  if (showSplash) return <SplashScreen />;
 
   // ── Tool view (SGPA / Attendance / Announcements) ──
   if (tool) {

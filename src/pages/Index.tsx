@@ -255,8 +255,7 @@ import AuthPage from "@/components/AuthPage";
 import ProfileSetup from "@/components/ProfileSetup";
 import Dashboard from "@/components/Dashboard";
 import LandingPage from "@/components/LandingPage";
-
-import dinoLogo from "@/assets/dinosaurWhite.png";
+import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
 
 const Index = () => {
   const location = useLocation();
@@ -264,6 +263,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<any | null>(null);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
+  const showSplash = useMinSplash(isLoading);
 
   const isEditMode =
     new URLSearchParams(location.search).get("edit") === "true";
@@ -342,23 +342,8 @@ const Index = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-[#121214] flex items-center justify-center mx-auto">
-            <img
-              src={dinoLogo}
-              alt="Team Dino Logo"
-              className="w-12 h-12 opacity-80"
-            />
-          </div>
-          <p className="text-zinc-500 text-xs tracking-widest uppercase">
-            Loading Workspace...
-          </p>
-        </div>
-      </div>
-    );
+  if (showSplash) {
+    return <SplashScreen />;
   }
 
   if (!session) {
