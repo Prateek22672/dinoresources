@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, SubjectRow, SubjectQARow, EditorialRow } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
+import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
 import {
   PenSquare, Plus, Trash2, Save, Eye, EyeOff, Sparkles, FileUp, ExternalLink, Clapperboard, Briefcase,
+  FileText, Youtube, Link2,
 } from "lucide-react";
 
 const UNITS = [1, 2, 3, 4, 5];
@@ -35,6 +37,32 @@ export default function Contributor() {
   const [editorials, setEditorials] = useState<EditorialRow[]>([]);
   const [edTitle, setEdTitle] = useState("");
   const [edUrl, setEdUrl] = useState("");
+
+  // per-unit Q&A counts + existing materials
+  const [unitCounts, setUnitCounts] = useState<Record<number, number>>({});
+  const [materials, setMaterials] = useState<any[]>([]);
+
+  const loadCounts = useCallback(async () => {
+    if (!subjectId) return;
+    const { data } = await tbl("subject_qa").select("unit_number").eq("subject_id", subjectId);
+    const map: Record<number, number> = {};
+    (data ?? []).forEach((r: any) => { map[r.unit_number] = (map[r.unit_number] ?? 0) + 1; });
+    setUnitCounts(map);
+  }, [subjectId]);
+  useEffect(() => { loadCounts(); }, [loadCounts]);
+
+  const loadMaterials = useCallback(async () => {
+    if (!subjectId) return;
+    const { data } = await supabase.from("resources").select("*").eq("subject_id", subjectId);
+    setMaterials((data ?? []) as any[]);
+  }, [subjectId]);
+  useEffect(() => { loadMaterials(); }, [loadMaterials]);
+
+  const deleteMaterial = async (id: string) => {
+    if (!confirm("Remove this material?")) return;
+    const { error } = await supabase.from("resources").delete().eq("id", id);
+    if (error) toast.error(error.message); else { toast.success("Removed"); loadMaterials(); }
+  };
 
   useEffect(() => {
     (async () => {
@@ -88,7 +116,7 @@ export default function Contributor() {
       is_free: isFree, order_index: qa.length, created_by: user?.id,
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("Q&A added"); setQ(""); setA(""); setIsFree(false); loadQa();
+    toast.success("Q&A added"); setQ(""); setA(""); setIsFree(false); loadQa(); loadCounts();
   };
 
   const saveQa = async (item: SubjectQARow) => {
@@ -101,7 +129,7 @@ export default function Contributor() {
   const deleteQa = async (id: string) => {
     if (!confirm("Delete this Q&A?")) return;
     const { error } = await tbl("subject_qa").delete().eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Deleted"); loadQa(); }
+    if (error) toast.error(error.message); else { toast.success("Deleted"); loadQa(); loadCounts(); }
   };
 
   const addMaterial = async () => {
@@ -113,32 +141,43 @@ export default function Contributor() {
       category: mCat as any, unit_number: unitNum ? Number(unitNum) : null, created_by: user?.id,
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("Material added"); setMTitle(""); setMUrl("");
+    toast.success("Material added"); setMTitle(""); setMUrl(""); loadMaterials();
   };
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-        <div className="flex items-center gap-2.5">
-          <PenSquare className="w-6 h-6 td-accent-text" />
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Contributor Studio</h1>
-        </div>
-        <Link to="/contributor/jobs" className="td-btn-ghost px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5">
-          <Briefcase className="w-4 h-4" /> Jobs content
-        </Link>
-      </div>
+      <PageHero
+        eyebrow="Contributor"
+        eyebrowIcon={PenSquare}
+        title="Contributor Studio"
+        subtitle="Add Study-With-AI Q&A, upload materials and drop editorial videos — unit by unit."
+        actions={
+          <Link to="/contributor/jobs" className="td-btn-ghost px-5 py-3 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <Briefcase className="w-4 h-4" /> Jobs content
+          </Link>
+        }
+        stats={[
+          { label: "Q&A in subject", value: Object.values(unitCounts).reduce((n, c) => n + c, 0), icon: Sparkles },
+          { label: "Materials", value: materials.length, icon: FileUp },
+        ]}
+      />
 
       {/* selectors */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2.5 mb-6">
         <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)}
-          className="td-surface-2 rounded-xl px-3 h-11 text-sm text-white outline-none min-w-[200px]">
+          className="td-surface-2 rounded-full px-4 h-11 text-sm text-white outline-none min-w-[200px] max-w-full">
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mb-1 [&::-webkit-scrollbar]:hidden">
           {UNITS.map((u) => (
             <button key={u} onClick={() => setUnit(u)}
-              className={`px-3.5 h-11 rounded-xl text-sm font-medium ${unit === u ? "bg-white text-black" : "td-btn-ghost"}`}>
+              className={`shrink-0 px-3.5 h-11 rounded-full text-sm font-medium flex items-center gap-1.5 ${unit === u ? "bg-white text-black" : "td-btn-ghost"}`}>
               Unit {u}
+              {unitCounts[u] ? (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${unit === u ? "bg-black/10 text-black" : "td-surface-2 text-zinc-400"}`}>
+                  {unitCounts[u]}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>
@@ -208,6 +247,31 @@ export default function Contributor() {
               <button onClick={addMaterial} className="td-btn-primary px-4 text-sm flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add</button>
             </div>
             <p className="text-zinc-600 text-xs mt-2 flex items-center gap-1"><ExternalLink className="w-3 h-3" /> Upload files to Supabase Storage / Drive and paste the link here.</p>
+
+            {/* existing materials for this subject */}
+            {materials.length > 0 && (
+              <div className="mt-4 space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-600 mb-1.5">In this subject ({materials.length})</p>
+                {materials.map((m) => {
+                  const TypeIcon = m.type === "youtube" ? Youtube : m.type === "pdf" ? FileText : Link2;
+                  return (
+                    <div key={m.id} className="td-surface-2 rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <TypeIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-zinc-200 text-[13px] font-medium truncate">{m.title}</p>
+                        <p className="text-zinc-600 text-[11px] truncate">{m.category}</p>
+                      </div>
+                      <a href={m.url} target="_blank" rel="noreferrer" className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center shrink-0" title="Open">
+                        <ExternalLink className="w-3 h-3 text-zinc-500" />
+                      </a>
+                      <button onClick={() => deleteMaterial(m.id)} className="w-7 h-7 rounded-full hover:bg-red-500/20 flex items-center justify-center shrink-0" title="Remove">
+                        <Trash2 className="w-3 h-3 text-red-400" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Editorial (YouTube) */}

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Plus, Save, Trash2, Receipt, Lock, Heart } from "lucide-react";
+import { Plus, Save, Trash2, Receipt, ShieldCheck, Heart } from "lucide-react";
 
 interface ChargeRow {
   id: string; label: string; description: string | null;
@@ -113,7 +113,7 @@ export default function AdminCharges() {
             {rows.map((c, idx) => (
               <div key={c.id} className="td-surface rounded-2xl p-4 flex flex-wrap items-center gap-2">
                 <span className="w-7 h-7 rounded-lg td-surface-2 flex items-center justify-center shrink-0" title={c.mandatory ? "Mandatory" : "Optional"}>
-                  {c.mandatory ? <Lock className="w-3.5 h-3.5 td-accent-text" /> : <Heart className="w-3.5 h-3.5 text-zinc-400" />}
+                  {c.mandatory ? <ShieldCheck className="w-3.5 h-3.5 td-accent-text" /> : <Heart className="w-3.5 h-3.5 text-zinc-400" />}
                 </span>
                 <input value={c.label} onChange={(e) => field(idx, "label", e.target.value)}
                   className="td-surface-2 rounded-lg px-3 h-9 text-sm text-white outline-none w-40" />
