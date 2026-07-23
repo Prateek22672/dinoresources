@@ -88,7 +88,9 @@ export default function AdminAnalytics() {
     <div className="td-surface rounded-3xl p-5">
       <div className="flex items-center justify-between">
         <p className="text-zinc-500 text-sm font-medium">{label}</p>
-        <Icon className="w-4 h-4 text-zinc-600" />
+        <span className="w-8 h-8 rounded-xl td-accent-bg flex items-center justify-center">
+          <Icon className="w-4 h-4" />
+        </span>
       </div>
       <p className="text-3xl font-bold text-white mt-2 tracking-tight">{value}</p>
       {sub && <p className="text-zinc-600 text-xs mt-1">{sub}</p>}
@@ -97,26 +99,26 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* ── Earnings hero ── */}
-      <div className="td-banner-bw rounded-[28px] p-6 sm:p-8 relative overflow-hidden">
+      {/* ── Earnings hero — accent glow + gradient headline ── */}
+      <div className="td-hero rounded-[28px] p-6 sm:p-8">
         <div className="relative z-10 grid sm:grid-cols-[1.4fr_1fr_1fr] gap-6">
           <div>
-            <p className="td-bw-soft text-[11px] font-semibold tracking-[0.2em] uppercase mb-2">Earned till date</p>
-            <p className="text-4xl sm:text-5xl font-extrabold tracking-tight">{formatPaise(stats.revenueTotal)}</p>
-            <p className="td-bw-soft text-sm mt-2">
-              across <span className="font-semibold">{stats.paymentsCount}</span> payment{stats.paymentsCount === 1 ? "" : "s"}
+            <p className="text-zinc-500 text-[11px] font-semibold tracking-[0.2em] uppercase mb-2">Earned till date</p>
+            <p className="td-grad-text text-4xl sm:text-5xl font-extrabold tracking-tight w-fit">{formatPaise(stats.revenueTotal)}</p>
+            <p className="text-zinc-400 text-sm mt-2">
+              across <span className="font-semibold text-white">{stats.paymentsCount}</span> payment{stats.paymentsCount === 1 ? "" : "s"}
               {stats.discountsTotal > 0 ? ` · ${formatPaise(stats.discountsTotal)} given as discounts` : ""}
             </p>
           </div>
-          <div className="sm:border-l sm:border-current/10 sm:pl-6 flex flex-col justify-center">
-            <p className="td-bw-soft text-xs font-medium uppercase tracking-wider">Payments done</p>
-            <p className="text-2xl font-bold mt-1">{stats.paymentsCount}</p>
-            <p className="td-bw-soft text-xs mt-1">{stats.paymentsToday} today · {stats.paymentsMonth} this month</p>
+          <div className="sm:border-l sm:border-white/10 sm:pl-6 flex flex-col justify-center">
+            <p className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Payments done</p>
+            <p className="text-2xl font-bold text-white mt-1">{stats.paymentsCount}</p>
+            <p className="text-zinc-500 text-xs mt-1">{stats.paymentsToday} today · {stats.paymentsMonth} this month</p>
           </div>
-          <div className="sm:border-l sm:border-current/10 sm:pl-6 flex flex-col justify-center">
-            <p className="td-bw-soft text-xs font-medium uppercase tracking-wider">Avg. order</p>
-            <p className="text-2xl font-bold mt-1">{formatPaise(stats.avgOrder)}</p>
-            <p className="td-bw-soft text-xs mt-1">today {formatPaise(stats.revenueToday)}</p>
+          <div className="sm:border-l sm:border-white/10 sm:pl-6 flex flex-col justify-center">
+            <p className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Avg. order</p>
+            <p className="text-2xl font-bold text-white mt-1">{formatPaise(stats.avgOrder)}</p>
+            <p className="text-zinc-500 text-xs mt-1">today {formatPaise(stats.revenueToday)}</p>
           </div>
         </div>
       </div>
@@ -143,7 +145,7 @@ export default function AdminAnalytics() {
                     <span className="text-zinc-500">{y.count}</span>
                   </div>
                   <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                    <div className="h-full bg-[#7c6cf0] rounded-full" style={{ width: `${(y.count / max) * 100}%` }} />
+                    <div className="h-full td-grad-bar rounded-full" style={{ width: `${(y.count / max) * 100}%` }} />
                   </div>
                 </div>
               );
@@ -155,12 +157,12 @@ export default function AdminAnalytics() {
           <h3 className="text-white font-semibold mb-4">Sales mix</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="td-surface-2 rounded-2xl p-5 text-center">
-              <BookOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
+              <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center mx-auto mb-2"><BookOpen className="w-4.5 h-4.5" /></span>
               <p className="text-2xl font-bold text-white">{stats.subjectSales}</p>
               <p className="text-zinc-500 text-xs mt-1">Subject purchases</p>
             </div>
-            <div className="td-surface-2 rounded-2xl p-5 text-center">
-              <Package className="w-5 h-5 td-accent-text mx-auto mb-2" />
+            <div className="td-card-accent rounded-2xl p-5 text-center">
+              <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center mx-auto mb-2"><Package className="w-4.5 h-4.5" /></span>
               <p className="text-2xl font-bold text-white">{stats.comboSales}</p>
               <p className="text-zinc-500 text-xs mt-1">Combo purchases</p>
             </div>

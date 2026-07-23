@@ -15,7 +15,10 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#212121" />
     
-    <link rel="icon" href="/src/assets/dinosaurWhite.png" type="image/png" />
+    <!-- Favicon — the TeamDino dino (lives in /public so it survives the build) -->
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.png" />
 
     <!-- Premium UI font -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -36,13 +39,53 @@
     <meta property="og:site_name" content="Team Dino" />
     <meta property="og:title" content="Team Dino | The Ultimate Student Workspace" />
     <meta property="og:description" content="Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking. Stop searching for notes, start mastering your subjects." />
-    <meta property="og:image" content="/src/assets/dinosaurBlack.png" />
+    <meta property="og:image" content="https://teamdino.in/teamdinoimage.png" />
+    <meta property="og:locale" content="en_IN" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://teamdino.in/" />
     <meta name="twitter:title" content="Team Dino | The Ultimate Student Workspace" />
     <meta name="twitter:description" content="Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking." />
-    <meta name="twitter:image" content="/src/assets/dinosaurBlack.png" />
+    <meta name="twitter:image" content="https://teamdino.in/teamdinoimage.png" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "Team Dino",
+          "url": "https://teamdino.in/",
+          "logo": "https://teamdino.in/favicon.png"
+        },
+        {
+          "@type": "WebSite",
+          "name": "Team Dino",
+          "url": "https://teamdino.in/",
+          "description": "The ultimate student workspace — notes, PYQs, Study-With-AI, placement prep and free calculators."
+        },
+        {
+          "@type": "WebApplication",
+          "name": "SGPA Calculator (GITAM)",
+          "url": "https://teamdino.in/sgpa-calc",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+          "description": "Free SGPA & CGPA calculator using the GITAM grade chart — Sessional 1, Sessional 2 and Lab/External weights. No login required."
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Attendance Calculator",
+          "url": "https://teamdino.in/attendance-calc",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Web",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+          "description": "Free attendance calculator — find exactly how many classes you can miss and still hit 75%. No login required."
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>

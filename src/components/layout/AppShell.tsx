@@ -1,9 +1,8 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTheme } from "next-themes";
 import {
   LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
-  Sun, Moon, LifeBuoy, Menu, X, Briefcase,
+  LifeBuoy, Menu, X, Briefcase,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
 import AccentPicker from "@/components/layout/AccentPicker";
@@ -26,7 +25,6 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const navigate = useNavigate();
   const { isAdmin, isContributor } = useUserRole();
   const { count } = useCart();
-  const { theme, setTheme } = useTheme();
   const { isOn } = useFeatureFlags();
   const [helpOpen, setHelpOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,9 +82,6 @@ export default function AppShell({ children, hideHeader = false }: { children: R
               )}
             </Link>
             <AccentPicker />
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Toggle theme">
-              <Sun className="w-4 h-4 hidden dark:block" /><Moon className="w-4 h-4 dark:hidden" />
-            </button>
 
             {/* Desktop-only actions */}
             <button onClick={() => setHelpOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">

@@ -164,9 +164,28 @@ All colors MUST be HSL.
   .td-accent-bg   { background: rgb(var(--td-accent-rgb) / 0.16); color: var(--td-accent-soft); }
   .td-accent-solid { background: var(--td-accent); }
 
+  /* Accent gradients — deploy ONLY where they elevate (hero numbers, key bars). */
+  .td-grad-text {
+    background: linear-gradient(120deg, var(--td-accent-soft) 0%, var(--td-accent) 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+  .td-grad-bar { background: linear-gradient(90deg, var(--td-accent-soft), var(--td-accent)); }
+  /* Card with a soft accent wash bleeding from a corner — premium, not loud. */
+  .td-card-accent {
+    background:
+      radial-gradient(120% 110% at 100% 0%, rgb(var(--td-accent-rgb) / 0.16), transparent 55%),
+      #2a2a2a;
+    border: 1px solid rgb(var(--td-accent-rgb) / 0.28);
+  }
+
   /* Edge fades for horizontally scrollable strips (theme-aware, match base bg). */
   .td-edge-l { background: linear-gradient(to right, #212121, transparent); }
   .td-edge-r { background: linear-gradient(to left,  #212121, transparent); }
+
+  /* Screenshot shield (security L3): blur all content while the window is
+     unfocused or right after PrintScreen, so grabs land on blurred pixels. */
+  .td-shield #root { filter: blur(18px) !important; transition: filter .12s ease; }
 
   /* Premium primary button: white-on-black, high contrast. */
   .td-btn-primary {

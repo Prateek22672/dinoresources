@@ -70,9 +70,14 @@ export default function Admin() {
 
   return (
     <AppShell>
-      <div className="flex items-center gap-2.5 mb-6">
-        <Shield className="w-6 h-6 td-accent-text shrink-0" />
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Admin Console</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0">
+          <Shield className="w-5 h-5" />
+        </span>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">Admin Console</h1>
+          <p className="text-zinc-500 text-sm hidden sm:block">Everything about users, content, money and security.</p>
+        </div>
       </div>
 
       {/* Scrollable tab strip with left/right controls + edge fades */}

@@ -1,7 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Plus, Save, Trash2, Ticket } from "lucide-react";
+import { Plus, Save, Trash2, Ticket, Disc3 } from "lucide-react";
+
+interface SpinSeg {
+  id: string; label: string; percent: number; weight: number; active: boolean; order_index: number;
+}
 
 interface CouponRow {
   id: string; code: string; discount_type: "percent" | "flat"; discount_value: number;
@@ -16,13 +20,63 @@ export default function AdminCoupons() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState({ ...blank });
 
+  // Spin & Win
+  const [segs, setSegs] = useState<SpinSeg[]>([]);
+  const [segDraft, setSegDraft] = useState({ label: "", percent: "5", weight: "10" });
+  const [cooldown, setCooldown] = useState("30");
+  const [settingsId, setSettingsId] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await tbl("coupons").select("*").order("created_at", { ascending: false });
+    const [{ data }, { data: sg }, { data: st }] = await Promise.all([
+      tbl("coupons").select("*").order("created_at", { ascending: false }),
+      tbl("spin_segments").select("*").order("order_index", { ascending: true }),
+      tbl("app_settings").select("id, spin_cooldown_days").maybeSingle(),
+    ]);
     setRows((data ?? []) as CouponRow[]);
+    setSegs((sg ?? []) as SpinSeg[]);
+    if (st) { setSettingsId(st.id); setCooldown(String(st.spin_cooldown_days ?? 30)); }
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  const totalWeight = segs.filter((s) => s.active).reduce((n, s) => n + (s.weight || 0), 0);
+  const odds = (s: SpinSeg) => (s.active && totalWeight > 0 ? Math.round((s.weight / totalWeight) * 1000) / 10 : 0);
+
+  const segField = (idx: number, key: keyof SpinSeg, value: any) =>
+    setSegs((p) => p.map((r, i) => (i === idx ? { ...r, [key]: value } : r)));
+
+  const segAdd = async () => {
+    if (!segDraft.label.trim()) { toast.error("Label required"); return; }
+    const { error } = await tbl("spin_segments").insert({
+      label: segDraft.label.trim(),
+      percent: Math.max(1, Math.min(100, parseInt(segDraft.percent) || 5)),
+      weight: Math.max(0, parseInt(segDraft.weight) || 0),
+      active: true,
+      order_index: segs.length,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Segment added"); setSegDraft({ label: "", percent: "5", weight: "10" }); load();
+  };
+
+  const segSave = async (s: SpinSeg) => {
+    const { error } = await tbl("spin_segments").update({
+      label: s.label, percent: s.percent, weight: s.weight, active: s.active, order_index: s.order_index,
+    }).eq("id", s.id);
+    if (error) toast.error(error.message); else toast.success("Saved");
+  };
+
+  const segDel = async (s: SpinSeg) => {
+    if (!confirm(`Delete segment "${s.label}"?`)) return;
+    const { error } = await tbl("spin_segments").delete().eq("id", s.id);
+    if (error) toast.error(error.message); else { toast.success("Deleted"); load(); }
+  };
+
+  const saveCooldown = async () => {
+    if (!settingsId) return;
+    const { error } = await tbl("app_settings").update({ spin_cooldown_days: Math.max(0, parseInt(cooldown) || 30) }).eq("id", settingsId);
+    if (error) toast.error(error.message); else toast.success("Cooldown saved");
+  };
 
   const valueToStored = (type: "percent" | "flat", v: string) =>
     type === "percent" ? Math.max(0, Math.min(100, Math.round(parseFloat(v) || 0))) : Math.round((parseFloat(v) || 0) * 100);
@@ -115,6 +169,67 @@ export default function AdminCoupons() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* ── Spin & Win wheel ── */}
+      <section className="td-surface rounded-2xl p-5">
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2"><Disc3 className="w-4 h-4 td-accent-text" /> Spin &amp; Win wheel</h3>
+        <p className="text-zinc-500 text-xs mb-4 leading-relaxed">
+          The cart shows a one-free-spin wheel (toggle the <span className="text-zinc-300">spin</span> flag in Cards &amp; Features).
+          <span className="text-zinc-300"> Weight</span> = relative probability — the live odds are shown per segment, so keep big
+          discounts on tiny weights and you never lose. Winners get a one-use coupon valid 48 hours.
+        </p>
+
+        {/* cooldown */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center td-surface-2 rounded-xl px-3 h-10">
+            <input type="number" value={cooldown} onChange={(e) => setCooldown(e.target.value)}
+              className="w-16 bg-transparent text-sm text-white outline-none" />
+            <span className="text-zinc-500 text-xs">days between spins / user</span>
+          </div>
+          <button onClick={saveCooldown} className="td-btn-ghost px-4 h-10 text-sm">Save</button>
+        </div>
+
+        {/* segments */}
+        <div className="space-y-2 mb-4">
+          {segs.map((s, idx) => (
+            <div key={s.id} className="td-surface-2 rounded-xl p-3 flex flex-wrap items-center gap-2">
+              <input value={s.label} onChange={(e) => segField(idx, "label", e.target.value)}
+                className="bg-transparent border border-white/10 rounded-lg px-2.5 h-9 text-sm text-white outline-none w-28" />
+              <div className="flex items-center border border-white/10 rounded-lg px-2 h-9">
+                <input type="number" value={s.percent} onChange={(e) => segField(idx, "percent", parseInt(e.target.value) || 0)}
+                  className="w-12 bg-transparent text-sm text-white outline-none" />
+                <span className="text-zinc-500 text-xs">% off</span>
+              </div>
+              <div className="flex items-center border border-white/10 rounded-lg px-2 h-9">
+                <input type="number" value={s.weight} onChange={(e) => segField(idx, "weight", parseInt(e.target.value) || 0)}
+                  className="w-12 bg-transparent text-sm text-white outline-none" />
+                <span className="text-zinc-500 text-xs">weight</span>
+              </div>
+              <span className="text-xs font-semibold td-accent-text">{odds(s)}% odds</span>
+              <label className="flex items-center gap-1 text-xs text-zinc-400 ml-auto">
+                <input type="checkbox" checked={s.active} onChange={(e) => segField(idx, "active", e.target.checked)} /> Active
+              </label>
+              <button onClick={() => segSave(s)} className="td-btn-ghost w-9 h-9 flex items-center justify-center" title="Save"><Save className="w-4 h-4" /></button>
+              <button onClick={() => segDel(s)} className="w-9 h-9 rounded-full hover:bg-red-500/20 flex items-center justify-center" title="Delete"><Trash2 className="w-4 h-4 text-red-400" /></button>
+            </div>
+          ))}
+        </div>
+
+        {/* add segment */}
+        <div className="flex flex-wrap items-center gap-2">
+          <input value={segDraft.label} onChange={(e) => setSegDraft({ ...segDraft, label: e.target.value })} placeholder='Label (e.g. "20% OFF")'
+            className="td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 w-40" />
+          <div className="flex items-center td-surface-2 rounded-xl px-3 h-10">
+            <input type="number" value={segDraft.percent} onChange={(e) => setSegDraft({ ...segDraft, percent: e.target.value })}
+              className="w-12 bg-transparent text-sm text-white outline-none" /><span className="text-zinc-500 text-xs">% off</span>
+          </div>
+          <div className="flex items-center td-surface-2 rounded-xl px-3 h-10">
+            <input type="number" value={segDraft.weight} onChange={(e) => setSegDraft({ ...segDraft, weight: e.target.value })}
+              className="w-12 bg-transparent text-sm text-white outline-none" /><span className="text-zinc-500 text-xs">weight</span>
+          </div>
+          <button onClick={segAdd} className="td-btn-primary px-4 h-10 text-sm">Add segment</button>
+        </div>
       </section>
     </div>
   );

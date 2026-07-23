@@ -230,7 +230,7 @@ export default function Dashboard() {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-extrabold text-white leading-none">{pct}%</span>
+                  <span className="td-grad-text text-2xl font-extrabold leading-none">{pct}%</span>
                   <span className="text-[10px] text-zinc-500 mt-1">unlocked</span>
                 </div>
               </div>

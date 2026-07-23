@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import GradeGuru from "@/components/calculator/GradeGuru";
 import CGPAPredictor from "@/components/calculator/CGPAPredictor";
 import AttendanceCalculator from "@/components/AttendanceCalculator";
@@ -13,11 +14,12 @@ type Tab = "sgpa" | "cgpa" | "attendance";
 export default function Calc({ initial = "sgpa" }: { initial?: Tab }) {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>(initial);
+  const { isOn } = useFeatureFlags();
 
   const promos = [
     { title: "Explore subjects", desc: "Notes, PYQs & Study-With-AI.", icon: BookOpen, onClick: () => navigate("/store"), accent: "#6b8afd" },
-    { title: "Placement Prep", desc: "Company patterns & questions.", icon: Briefcase, onClick: () => navigate("/jobs"), accent: "#34d399" },
-    { title: "Agent Fury", desc: "Create agents — email fetch & summarize.", icon: Bot, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank"), accent: "#7c6cf0" },
+    ...(isOn("jobs") ? [{ title: "Placement Prep", desc: "Company patterns & questions.", icon: Briefcase, onClick: () => navigate("/jobs"), accent: "#34d399" }] : []),
+    ...(isOn("agent") ? [{ title: "Agent Fury", desc: "Create agents — email fetch & summarize.", icon: Bot, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank"), accent: "#7c6cf0" }] : []),
     { title: "FolioFYX", desc: "Build your portfolio site.", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank"), accent: "#f472b6" },
   ];
 
