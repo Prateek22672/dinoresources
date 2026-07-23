@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight, BookOpen, Calculator, Briefcase, ChevronDown, Check, Sparkles,
+  ArrowRight, Calculator, Briefcase, ChevronDown, Check, Sparkles, BookOpen,
 } from "lucide-react";
 import Footer from "./Footer";
 import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
+
+/* Full-bleed hero background (as before). */
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=2400&auto=format&fit=crop";
 
 /* ─── Scroll reveal ──────────────────────────────────────────── */
 function useReveal(threshold = 0.12) {
@@ -51,33 +55,10 @@ const STATS = [
 ];
 
 const TILE_COLORS = ["#7c6cf0", "#f472b6", "#34d399", "#f59e0b", "#6b8afd", "#a78bfa"];
-const HERO_TILES = ["DBMS", "COA", "AI", "OS", "SE", "FLAT"];
 const MARQUEE = [
   "DBMS", "Computer Organization", "Artificial Intelligence", "Operating Systems",
   "Software Engineering", "Compiler Design", "FLAT", "Data Structures", "DAA",
   "Computer Networks", "Machine Learning", "OOPs with Java",
-];
-
-const STEPS = [
-  { n: "01", title: "Pick your year", desc: "First year to supplementary — the store opens on your year automatically." },
-  { n: "02", title: "Unlock a subject — or the whole year", desc: "Single subjects from ₹11, or grab the full-year combo and save. One payment via UPI." },
-  { n: "03", title: "Study smart", desc: "Every subject: 5 units of notes, PYQs, editorial videos and Study-With-AI answers mapped to your syllabus." },
-  { n: "04", title: "Stay on track", desc: "Exam countdowns, SGPA & CGPA predictors and an attendance planner keep panic off the table." },
-];
-
-const FEATURES = [
-  {
-    icon: AiIcon, title: "Study With AI",
-    desc: "Unit-wise answers mapped to your exact syllabus — not generic chatbot rambling. Stuck at 2AM? It's awake.",
-  },
-  {
-    icon: Calculator, title: "Free forever tools",
-    desc: "SGPA calculator, CGPA predictor and attendance planner. No login, no card — just open and use.",
-  },
-  {
-    icon: Briefcase, title: "Placement prep",
-    desc: "Exam patterns, curated materials and previous questions — organised company by company.",
-  },
 ];
 
 const QUOTES = [
@@ -93,6 +74,153 @@ const FAQS = [
   { q: "I paid but can't access — what now?", a: "Tap Instant Help inside the app — DinoBot files a support ticket for you and the team resolves it within 24 hours." },
   { q: "Which college is this for?", a: "Built by and for GITAM students — the grade chart, units and PYQs match GITAM's actual pattern." },
 ];
+
+/* Pinned showcase steps (Fluently-style: one scroll, panel swaps in place) */
+const SHOW = [
+  {
+    eyebrow: "Study With AI",
+    title: "Answers that follow your syllabus",
+    desc: "Unit-wise explanations mapped to your exact units — not generic chatbot rambling. Stuck at 2AM? It's awake.",
+  },
+  {
+    eyebrow: "Free tools",
+    title: "Know exactly where you stand",
+    desc: "SGPA calculator, CGPA predictor and attendance planner. Free forever, no login, no card.",
+  },
+  {
+    eyebrow: "Placement prep",
+    title: "Walk into interviews ready",
+    desc: "Exam patterns, curated materials and previous questions — organised company by company.",
+  },
+];
+
+/* Final stacked-scroll cards — photo-backed (Fluently-style) */
+const STACK = [
+  {
+    title: "Find the right notes in seconds",
+    desc: "No more digging through 10 WhatsApp groups and dead drive links — every subject lives in one organised place.",
+    icon: BookOpen,
+    img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1600&auto=format&fit=crop",
+  },
+  {
+    title: "Walk into exams calm",
+    desc: "PYQs tell you what's coming, Study-With-AI explains what you missed, and the exam countdown keeps you honest.",
+    icon: Sparkles,
+    img: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=1600&auto=format&fit=crop",
+  },
+  {
+    title: "Track SGPA & attendance without guesswork",
+    desc: "Predict your CGPA, plan the classes you can skip, and always know exactly where you stand.",
+    icon: Calculator,
+    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop",
+  },
+  {
+    title: "Crack placements company by company",
+    desc: "Patterns, materials and real questions for the companies that actually visit campus.",
+    icon: Briefcase,
+    img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1600&auto=format&fit=crop",
+  },
+];
+
+/* ─── Pinned showcase (sticky panel, steps swap on one continuous scroll) ─── */
+function PinnedShowcase() {
+  const [active, setActive] = useState(0);
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const idx = Number((e.target as HTMLElement).dataset.idx);
+            if (!Number.isNaN(idx)) setActive(idx);
+          }
+        }
+      },
+      { threshold: 0.55 },
+    );
+    refs.current.forEach((el) => el && obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
+  const mocks = [
+    /* AI chat mock */
+    <div key="ai" className="space-y-3 w-full">
+      <div className="bg-white text-black rounded-2xl rounded-br-md px-4 py-3 text-sm font-medium ml-auto w-fit max-w-[85%]">Explain normalization like I'm 5 🙏</div>
+      <div className="bg-white/[0.07] border border-white/10 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-zinc-200 max-w-[90%] leading-relaxed">
+        Imagine your toy box. 1NF = every toy in its own slot. 2NF = toys grouped by the game they belong to. 3NF = no toy depends on another toy…
+      </div>
+      <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-semibold"><AiIcon className="w-3.5 h-3.5" /> Unit 3 · DBMS — mapped to your syllabus</div>
+    </div>,
+    /* SGPA mock */
+    <div key="tools" className="w-full text-center">
+      <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-zinc-500">Predicted SGPA</p>
+      <p className="text-6xl font-extrabold text-white mt-2" style={{ fontVariantNumeric: "tabular-nums" }}>8.7</p>
+      <div className="mt-5 space-y-2.5 text-left">
+        {[["DBMS", 92], ["COA", 78], ["FLAT", 64]].map(([n, v]) => (
+          <div key={n as string}>
+            <div className="flex justify-between text-xs text-zinc-400 mb-1"><span>{n}</span><span>{v}%</span></div>
+            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden"><div className="h-full rounded-full td-accent-solid" style={{ width: `${v}%` }} /></div>
+          </div>
+        ))}
+      </div>
+    </div>,
+    /* Placement mock */
+    <div key="prep" className="w-full space-y-2.5">
+      {[["TCS NQT", "Pattern · 40 questions"], ["Infosys", "Materials · 12 sets"], ["Wipro", "PYQs · 3 rounds"]].map(([c, m]) => (
+        <div key={c} className="flex items-center gap-3 bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5">
+          <span className="w-9 h-9 rounded-xl bg-white text-black font-black flex items-center justify-center text-sm">{(c as string).charAt(0)}</span>
+          <div className="min-w-0"><p className="text-white text-sm font-bold">{c}</p><p className="text-zinc-500 text-[11px]">{m}</p></div>
+          <ArrowRight className="w-4 h-4 text-zinc-600 ml-auto" />
+        </div>
+      ))}
+    </div>,
+  ];
+
+  return (
+    <section className="relative z-10 max-w-6xl mx-auto px-5">
+      {/* Desktop: pinned panel + scrolling steps (one continuous scroll) */}
+      <div className="hidden lg:grid grid-cols-2 gap-16">
+        {/* steps — normal flow, drive the active state */}
+        <div>
+          {SHOW.map((s, i) => (
+            <div key={s.eyebrow} ref={(el) => (refs.current[i] = el)} data-idx={i}
+              className="min-h-[88vh] flex flex-col justify-center">
+              <p className="text-[12px] font-black tracking-[0.28em] uppercase mb-4" style={{ color: "var(--td-accent-soft)" }}>{s.eyebrow}</p>
+              <h2 className={`text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05] transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-40"}`}>{s.title}</h2>
+              <p className="text-zinc-400 text-lg leading-relaxed max-w-md mt-5">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+        {/* pinned mock panel */}
+        <div className="relative">
+          <div className="sticky top-0 h-screen flex items-center">
+            <div className="w-full bg-[#131316] border border-white/10 rounded-[32px] p-8 min-h-[420px] flex items-center shadow-[0_40px_100px_-30px_rgba(0,0,0,0.8)] relative overflow-hidden">
+              {mocks.map((m, i) => (
+                <div key={i} className="absolute inset-8 flex items-center transition-all duration-500"
+                  style={{ opacity: active === i ? 1 : 0, transform: active === i ? "translateY(0)" : "translateY(16px)", pointerEvents: active === i ? "auto" : "none" }}>
+                  {m}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile: simple stacked cards */}
+      <div className="lg:hidden space-y-10 py-6">
+        {SHOW.map((s, i) => (
+          <div key={s.eyebrow}>
+            <p className="text-[11px] font-black tracking-[0.25em] uppercase mb-2" style={{ color: "var(--td-accent-soft)" }}>{s.eyebrow}</p>
+            <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{s.title}</h2>
+            <p className="text-zinc-400 leading-relaxed mt-2 mb-4">{s.desc}</p>
+            <div className="bg-[#131316] border border-white/10 rounded-[24px] p-5">{mocks[i]}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /* ─── Page ───────────────────────────────────────────────────── */
 export default function LandingPage() {
@@ -120,17 +248,7 @@ export default function LandingPage() {
         @media (prefers-reduced-motion: reduce) { .ld-in,.ld-in-2,.ld-in-3 { animation:none; } .ld-reveal { opacity:1; transform:none; transition:none; } }
       `}</style>
 
-      {/* faint grid */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage:
-          "linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px)," +
-          "linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)",
-        backgroundSize: "44px 44px",
-        maskImage: "radial-gradient(ellipse 80% 55% at 50% 0%, black 30%, transparent 100%)",
-        WebkitMaskImage: "radial-gradient(ellipse 80% 55% at 50% 0%, black 30%, transparent 100%)",
-      }} />
-
-      {/* ── Nav ── */}
+      {/* ── Nav — floating pill over the hero ── */}
       <header className="sticky top-4 z-50 px-4">
         <div className="max-w-2xl mx-auto bg-[#131316]/90 backdrop-blur-xl border border-white/10 rounded-full pl-2.5 pr-2 h-14 flex items-center justify-between shadow-[0_16px_50px_-16px_rgba(0,0,0,0.8)]">
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2.5">
@@ -140,9 +258,8 @@ export default function LandingPage() {
             <span className="font-bold tracking-tight hidden sm:block">Team Dino</span>
           </button>
           <nav className="flex items-center gap-1">
-            <button onClick={() => navigate("/about")} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-400 hover:text-white transition-colors hidden sm:block">About</button>
-            <button onClick={() => navigate("/sgpa-calc")} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-400 hover:text-white transition-colors hidden md:block">Free tools</button>
-            <button onClick={goAuth} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-400 hover:text-white transition-colors">Sign in</button>
+            <button onClick={() => navigate("/about")} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-300 hover:text-white transition-colors hidden sm:block">About</button>
+            <button onClick={goAuth} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-300 hover:text-white transition-colors">Sign in</button>
             <button onClick={goAuth} className="td-btn-primary h-10 px-4 text-[13px] font-bold flex items-center gap-1.5">
               Get started <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -150,65 +267,41 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ── Hero — type-led, product-forward ── */}
-      <section className="relative z-10 max-w-6xl mx-auto px-5 pt-16 sm:pt-24 pb-14 grid lg:grid-cols-[1.1fr_.9fr] gap-12 items-center">
-        <div>
-          <span className="ld-in inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px] font-bold tracking-[0.18em] uppercase text-zinc-400">
-            <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> For GITAM students
-          </span>
-          <h1 className="ld-in text-[2.8rem] sm:text-6xl font-extrabold tracking-tight leading-[1.02] mt-6">
-            Stop hunting notes.<br />
-            <span style={{ color: "var(--td-accent-soft)" }}>Start topping exams.</span>
+      {/* ── Hero — full-bleed photo, as before ── */}
+      <section className="relative -mt-[4.5rem] h-[96vh] min-h-[600px] overflow-hidden">
+        <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        {/* legibility scrims */}
+        <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(9,9,11,0.45) 0%, rgba(9,9,11,0.08) 30%, rgba(9,9,11,0.92) 88%, rgba(9,9,11,1) 100%)" }} />
+        <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(9,9,11,0.88) 0%, rgba(9,9,11,0.25) 45%, transparent 74%)" }} />
+
+        <div className="relative z-10 h-full max-w-7xl mx-auto px-5 sm:px-8 flex flex-col justify-end pb-12">
+          <h1 className="ld-in font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
+            Make.<br />Exams.<br />Easy.
           </h1>
-          <p className="ld-in-2 text-zinc-400 text-lg leading-relaxed max-w-md mt-6">
-            Notes, PYQs and AI explanations for every subject — organised, exam-ready,
-            and yours the night you actually need them.
-          </p>
-          <div className="ld-in-2 flex flex-wrap items-center gap-3 mt-8">
-            <button onClick={goAuth} className="td-btn-primary h-13 px-7 text-[15px] font-bold flex items-center gap-2" style={{ height: "3.25rem" }}>
+          <div className="ld-in-2 flex flex-wrap items-center gap-5 mt-8">
+            <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.02] transition-transform">
               Start studying free <ArrowRight className="w-4 h-4" />
             </button>
-            <button onClick={() => navigate("/sgpa-calc")} className="td-btn-ghost h-13 px-6 text-[15px] font-semibold" style={{ height: "3.25rem" }}>
-              Try the free calculators
-            </button>
-          </div>
-          <div className="ld-in-3 flex items-center gap-3 mt-8">
-            <div className="flex -space-x-2">
-              {["A", "R", "S", "K"].map((l) => (
-                <span key={l} className="w-8 h-8 rounded-full bg-white/[0.07] border-2 border-[#0b0b0e] flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
-              ))}
-              <span className="w-8 h-8 rounded-full td-accent-solid border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black text-white">1.4k</span>
-            </div>
-            <p className="text-sm text-zinc-500 font-medium">1400+ students already inside</p>
+            <p className="text-zinc-300 font-semibold text-[15px]">Notes · PYQs · Study with AI</p>
           </div>
         </div>
 
-        {/* product collage — real subject tiles, no stock photos */}
-        <div className="ld-in-3 relative hidden lg:block" aria-hidden>
-          <div className="grid grid-cols-2 gap-4 rotate-[3deg]">
-            {HERO_TILES.map((t, i) => (
-              <div key={t}
-                className="rounded-[22px] p-4 h-32 flex flex-col justify-between border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.7)]"
-                style={{ background: "#131316", transform: `translateY(${(i % 2) * 14}px)` }}>
-                <span className="w-11 h-11 rounded-xl flex items-center justify-center text-white/70 font-black text-lg" style={{ background: TILE_COLORS[i % TILE_COLORS.length] }}>
-                  {t.charAt(0)}
-                </span>
-                <div>
-                  <p className="text-white font-bold text-sm">{t}</p>
-                  <p className="text-zinc-600 text-[11px]">5 units · notes · PYQs · AI</p>
-                </div>
-              </div>
-            ))}
+        {/* get-started mini card (as before) */}
+        <button onClick={goAuth}
+          className="ld-in-3 absolute bottom-10 right-6 sm:right-10 z-10 hidden md:block w-[300px] rounded-[24px] overflow-hidden border border-white/15 bg-[#131316] text-left hover:scale-[1.02] transition-transform shadow-2xl">
+          <img src={HERO_IMAGE} alt="" className="h-28 w-full object-cover" />
+          <div className="p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-zinc-500">Get started</p>
+              <p className="text-white font-bold mt-0.5">Your study workspace</p>
+            </div>
+            <span className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0"><ArrowRight className="w-4 h-4" /></span>
           </div>
-          <div className="absolute -bottom-5 -left-6 bg-white text-black rounded-2xl px-4 py-3 shadow-2xl -rotate-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase opacity-60">From</p>
-            <p className="text-2xl font-black leading-none">₹11<span className="text-sm font-bold opacity-60">/subject</span></p>
-          </div>
-        </div>
+        </button>
       </section>
 
       {/* ── Stats band ── */}
-      <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 pb-20 ld-reveal ${statsReveal.visible ? "on" : ""}`}>
+      <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 py-16 ld-reveal ${statsReveal.visible ? "on" : ""}`}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {STATS.map((s, i) => (
             <div key={s.label} className="bg-[#131316] border border-white/8 rounded-[22px] py-7 text-center">
@@ -221,8 +314,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Subjects marquee — the "shelf" ── */}
-      <section className="relative z-10 pb-20 overflow-hidden">
+      {/* ── Subjects marquee ── */}
+      <section className="relative z-10 pb-10 overflow-hidden">
         <p className="text-center text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-600 mb-6">On the shelf right now</p>
         <div className="flex w-max" style={{ animation: "ld-marquee 32s linear infinite", maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)" }}>
           {[...MARQUEE, ...MARQUEE].map((m, i) => (
@@ -236,33 +329,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How it works ── */}
-      <Section eyebrow="How it works" title="Four steps. Zero panic.">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {STEPS.map((s) => (
-            <div key={s.n} className="bg-[#131316] border border-white/8 rounded-[24px] p-6 flex flex-col">
-              <span className="text-[13px] font-black tracking-wider mb-5" style={{ color: "var(--td-accent-soft)" }}>{s.n}</span>
-              <h3 className="text-white font-bold text-lg leading-snug tracking-tight">{s.title}</h3>
-              <p className="text-zinc-500 text-sm leading-relaxed mt-2">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* ── Features trio ── */}
-      <Section eyebrow="What you get" title="Built for the night before.">
-        <div className="grid md:grid-cols-3 gap-4">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="bg-[#131316] border border-white/8 rounded-[24px] p-7 hover:border-white/20 transition-colors">
-              <span className="w-12 h-12 rounded-2xl td-accent-bg flex items-center justify-center mb-5">
-                <f.icon className="w-5 h-5" />
-              </span>
-              <h3 className="text-white font-bold text-lg tracking-tight">{f.title}</h3>
-              <p className="text-zinc-500 text-sm leading-relaxed mt-2">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
+      {/* ── Pinned showcase — one continuous scroll, panel swaps in place ── */}
+      <PinnedShowcase />
 
       {/* ── Testimonials ── */}
       <Section eyebrow="Student voices" title="Don't take our word for it.">
@@ -277,6 +345,36 @@ export default function LandingPage() {
         </div>
       </Section>
 
+      {/* ── Stacked-scroll cards (Fluently-style pile-up) ── */}
+      <section className="relative z-10 max-w-4xl mx-auto px-5 pb-24">
+        <div className="text-center mb-10">
+          <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-600 mb-2">Built for results</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">With TeamDino<br />you can finally</h2>
+        </div>
+        {STACK.map((c, i) => (
+          <div key={c.title} className="sticky mb-6" style={{ top: `${96 + i * 18}px`, zIndex: i + 1 }}>
+            <div className="relative rounded-[32px] overflow-hidden min-h-[360px] border border-white/10 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.8)]">
+              {/* photo + legibility scrim */}
+              <img src={c.img} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+              <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(9,9,11,0.35) 0%, rgba(9,9,11,0.55) 55%, rgba(9,9,11,0.92) 100%)" }} />
+
+              <div className="relative z-10 p-8 sm:p-12 min-h-[360px] flex flex-col justify-between text-white">
+                <div className="flex items-center justify-between">
+                  <span className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <c.icon className="w-5 h-5" />
+                  </span>
+                  <span className="text-[13px] font-black tracking-widest text-white/50">0{i + 1} / 0{STACK.length}</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight max-w-lg">{c.title}</h3>
+                  <p className="text-white/70 text-base leading-relaxed max-w-md mt-3">{c.desc}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
       {/* ── FAQ ── */}
       <Section eyebrow="Questions" title="Everything you'd ask us anyway.">
         <div className="max-w-2xl mx-auto space-y-2.5">
@@ -284,7 +382,7 @@ export default function LandingPage() {
             const open = faqOpen === i;
             return (
               <div key={f.q} className="bg-[#131316] border border-white/8 rounded-[20px] overflow-hidden">
-                <button onClick={() => setFaqOpen(open ? null : i)} className="w-full flex items-center justify-between gap-4 px-6 py-4.5 text-left" style={{ paddingTop: "1.1rem", paddingBottom: "1.1rem" }}>
+                <button onClick={() => setFaqOpen(open ? null : i)} className="w-full flex items-center justify-between gap-4 px-6 text-left" style={{ paddingTop: "1.1rem", paddingBottom: "1.1rem" }}>
                   <span className="text-white font-semibold text-[15px]">{f.q}</span>
                   <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
                 </button>
@@ -324,7 +422,7 @@ export default function LandingPage() {
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   const r = useReveal(0.12);
   return (
-    <section ref={r.ref} className={`relative z-10 max-w-6xl mx-auto px-5 pb-20 ld-reveal ${r.visible ? "on" : ""}`}>
+    <section ref={r.ref} className={`relative z-10 max-w-6xl mx-auto px-5 py-14 ld-reveal ${r.visible ? "on" : ""}`}>
       <div className="text-center mb-8">
         <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-600 mb-2">{eyebrow}</p>
         <h2 className="text-2xl sm:text-[2rem] font-extrabold tracking-tight text-white">{title}</h2>
