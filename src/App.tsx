@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,25 +7,35 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useFeatureFlags } from "./hooks/useFeatureFlags";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import ResetPassword from "./components/ResetPassword";
-import AboutPage from "./components/AboutPage";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import SecurityGuard from "./components/layout/SecurityGuard";
 import LoginTracker from "./components/layout/LoginTracker";
 import SessionGuard from "./components/layout/SessionGuard";
-import Store from "./pages/Store";
-import Library from "./pages/Library";
-import Cart from "./pages/Cart";
-import Purchases from "./pages/Purchases";
-import SubjectPage from "./pages/SubjectPage";
-import Admin from "./pages/Admin";
-import Contributor from "./pages/Contributor";
-import Calc from "./pages/Calc";
-import Jobs from "./pages/Jobs";
-import JobsContributor from "./pages/JobsContributor";
-import Agent from "./pages/Agent";
+
+// ── Code splitting: every page beyond the entry experience ships as its own
+//    chunk, downloaded only when the user actually navigates there. ──
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ResetPassword = lazy(() => import("./components/ResetPassword"));
+const AboutPage = lazy(() => import("./components/AboutPage"));
+const Store = lazy(() => import("./pages/Store"));
+const Library = lazy(() => import("./pages/Library"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Purchases = lazy(() => import("./pages/Purchases"));
+const SubjectPage = lazy(() => import("./pages/SubjectPage"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Contributor = lazy(() => import("./pages/Contributor"));
+const Calc = lazy(() => import("./pages/Calc"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const JobsContributor = lazy(() => import("./pages/JobsContributor"));
+const Agent = lazy(() => import("./pages/Agent"));
+
+/** Minimal chunk-load fallback — matches the app's dark stage, no flash of white. */
+const RouteFallback = () => (
+  <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-white/15 border-t-white/70 animate-spin" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -120,6 +130,7 @@ const App = () => (
           <SecurityGuard />
           <LoginTracker />
           <SessionGuard />
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Index />} />
@@ -149,6 +160,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </CartProvider>
       </BrowserRouter>
     </TooltipProvider>

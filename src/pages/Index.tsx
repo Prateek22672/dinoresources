@@ -247,15 +247,29 @@
 
 // export default Index;
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-import AuthPage from "@/components/AuthPage";
-import ProfileSetup from "@/components/ProfileSetup";
-import Dashboard from "@/components/Dashboard";
+// Landing stays in the entry bundle — logged-out first paint must be instant.
+// The signed-in app (Dashboard + shell) is its own chunk, fetched behind the splash.
 import LandingPage from "@/components/LandingPage";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
+const AuthPage = lazy(() => import("@/components/AuthPage"));
+const ProfileSetup = lazy(() => import("@/components/ProfileSetup"));
+const Dashboard = lazy(() => import("@/components/Dashboard"));
+
+/** Idle-time prefetch — warm the auth/dashboard chunks while the visitor reads the landing. */
+function usePrefetchAppChunks(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return;
+    const t = setTimeout(() => {
+      import("@/components/AuthPage");
+      import("@/components/Dashboard");
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [enabled]);
+}
 
 const Index = () => {
   const location = useLocation();
@@ -342,22 +356,37 @@ const Index = () => {
     }
   };
 
+  // warm the auth/dashboard chunks while a logged-out visitor reads the landing
+  usePrefetchAppChunks(!isLoading && !session);
+
   if (showSplash) {
     return <SplashScreen />;
   }
 
   if (!session) {
     if (location.pathname === "/auth") {
-      return <AuthPage />;
+      return (
+        <Suspense fallback={<SplashScreen />}>
+          <AuthPage />
+        </Suspense>
+      );
     }
     return <LandingPage />;
   }
 
   if (needsProfileSetup || isEditMode) {
-    return <ProfileSetup onProfileUpdated={refreshProfile} />;
+    return (
+      <Suspense fallback={<SplashScreen />}>
+        <ProfileSetup onProfileUpdated={refreshProfile} />
+      </Suspense>
+    );
   }
 
-  return <Dashboard key={session.user.id} />;
+  return (
+    <Suspense fallback={<SplashScreen />}>
+      <Dashboard key={session.user.id} />
+    </Suspense>
+  );
 };
 
 export default Index;

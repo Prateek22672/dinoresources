@@ -1,11 +1,12 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, lazy, Suspense } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
   Zap, Menu, X, Briefcase,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
-import HelpBot from "@/components/HelpBot";
+// DinoBot ships as its own chunk — loaded the first time someone opens it, kept mounted after.
+const HelpBot = lazy(() => import("@/components/HelpBot"));
 import AccentPicker from "@/components/layout/AccentPicker";
 import NoticesBell from "@/components/layout/NoticesBell";
 import SideNav from "@/components/layout/SideNav";
@@ -31,6 +32,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const { isOn } = useFeatureFlags();
   const [helpOpen, setHelpOpen] = useState(false);   // classic ticket form
   const [botOpen, setBotOpen] = useState(false);     // DinoBot chat (opens first)
+  const [botLoaded, setBotLoaded] = useState(false); // chunk fetched on first open, stays mounted
+  useEffect(() => { if (botOpen) setBotLoaded(true); }, [botOpen]);
   const [menuOpen, setMenuOpen] = useState(false);
   // Side rail collapse (persisted) — icons-only mode frees width on dense pages
   const [navMin, setNavMin] = useState(() => {
@@ -132,7 +135,11 @@ export default function AppShell({ children, hideHeader = false }: { children: R
       </div>
 
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
-      <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} />
+      {(botOpen || botLoaded) && (
+        <Suspense fallback={null}>
+          <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} />
+        </Suspense>
+      )}
     </div>
   );
 }

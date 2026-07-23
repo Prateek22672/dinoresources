@@ -14,4 +14,18 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Long-term-cacheable vendor chunks: framework code changes rarely, so
+    // returning visitors keep it cached even when app code redeploys.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-supabase": ["@supabase/supabase-js"],
+          "vendor-icons": ["lucide-react"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 900,
+  },
 }));
