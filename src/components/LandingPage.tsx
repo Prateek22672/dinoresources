@@ -7,9 +7,36 @@ import Footer from "./Footer";
 import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
-/* Full-bleed hero background (as before). */
+/* Full-bleed hero background — warm library, sharp & on-topic. */
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=2400&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=85&w=2600&auto=format&fit=crop";
+
+/* Hero scroll FX: content parallaxes up + fades, image drifts, cue vanishes. */
+function useHeroParallax() {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLDivElement>(null);
+  const cueRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        if (contentRef.current) {
+          contentRef.current.style.transform = `translateY(${y * 0.28}px)`;
+          contentRef.current.style.opacity = String(Math.max(0, 1 - y / 520));
+        }
+        if (imgRef.current) imgRef.current.style.transform = `translateY(${y * 0.14}px)`;
+        if (cueRef.current) cueRef.current.style.opacity = String(Math.max(0, 1 - y / 160));
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, []);
+  return { contentRef, imgRef, cueRef };
+}
 
 /* ─── Scroll reveal ──────────────────────────────────────────── */
 function useReveal(threshold = 0.12) {
@@ -242,6 +269,9 @@ export default function LandingPage() {
         .ld-in-2 { animation: ld-in .7s cubic-bezier(.22,1,.36,1) both; animation-delay:.12s; }
         .ld-in-3 { animation: ld-in .7s cubic-bezier(.22,1,.36,1) both; animation-delay:.24s; }
         @keyframes ld-marquee { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+        @keyframes ld-kb { from { transform:scale(1.14); } to { transform:scale(1.04); } }
+        @keyframes ld-line { from { transform:translateY(112%); } to { transform:none; } }
+        @keyframes ld-cue { 0%,100% { transform:translateY(0); } 50% { transform:translateY(6px); } }
         .ld-reveal { opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
         .ld-reveal.on { opacity:1; transform:none; }
         @media (prefers-reduced-motion: reduce) { .ld-in,.ld-in-2,.ld-in-3 { animation:none; } .ld-reveal { opacity:1; transform:none; transition:none; } }
@@ -266,38 +296,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ── Hero — full-bleed photo, as before ── */}
-      <section className="relative -mt-[4.5rem] h-[96vh] min-h-[600px] overflow-hidden">
-        <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        {/* legibility scrims */}
-        <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(9,9,11,0.45) 0%, rgba(9,9,11,0.08) 30%, rgba(9,9,11,0.92) 88%, rgba(9,9,11,1) 100%)" }} />
-        <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(9,9,11,0.88) 0%, rgba(9,9,11,0.25) 45%, transparent 74%)" }} />
-
-        <div className="relative z-10 h-full max-w-7xl mx-auto px-5 sm:px-8 flex flex-col justify-end pb-12">
-          <h1 className="ld-in font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
-            Make.<br />Exams.<br />Easy.
-          </h1>
-          <div className="ld-in-2 flex flex-wrap items-center gap-5 mt-8">
-            <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.02] transition-transform">
-              Start studying free <ArrowRight className="w-4 h-4" />
-            </button>
-            <p className="text-zinc-300 font-semibold text-[15px]">Notes · PYQs · Study with AI</p>
-          </div>
-        </div>
-
-        {/* get-started mini card (as before) */}
-        <button onClick={goAuth}
-          className="ld-in-3 absolute bottom-10 right-6 sm:right-10 z-10 hidden md:block w-[300px] rounded-[24px] overflow-hidden border border-white/15 bg-[#131316] text-left hover:scale-[1.02] transition-transform shadow-2xl">
-          <img src={HERO_IMAGE} alt="" className="h-28 w-full object-cover" />
-          <div className="p-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-zinc-500">Get started</p>
-              <p className="text-white font-bold mt-0.5">Your study workspace</p>
-            </div>
-            <span className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0"><ArrowRight className="w-4 h-4" /></span>
-          </div>
-        </button>
-      </section>
+      {/* ── Hero — cinematic photo: Ken Burns + parallax + masked headline ── */}
+      <HeroSection goAuth={goAuth} />
 
       {/* ── Social proof — one giant number (Fluently-style) ── */}
       <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 pt-24 pb-16 text-center ld-reveal ${statsReveal.visible ? "on" : ""}`}>
@@ -424,6 +424,59 @@ export default function LandingPage() {
         <Footer />
       </div>
     </div>
+  );
+}
+
+/* ─── Hero: Ken Burns image, masked line reveal, scroll parallax, cue ─── */
+function HeroSection({ goAuth }: { goAuth: () => void }) {
+  const { contentRef, imgRef, cueRef } = useHeroParallax();
+  return (
+    <section className="relative -mt-[4.5rem] h-[96vh] min-h-[600px] overflow-hidden">
+      {/* image (parallax wrapper > Ken Burns wrapper > img) */}
+      <div ref={imgRef} className="absolute -inset-6 will-change-transform">
+        <div className="w-full h-full" style={{ animation: "ld-kb 8s ease-out both" }}>
+          <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" fetchPriority="high" />
+        </div>
+      </div>
+      {/* legibility scrims */}
+      <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(9,9,11,0.5) 0%, rgba(9,9,11,0.15) 30%, rgba(9,9,11,0.92) 88%, rgba(9,9,11,1) 100%)" }} />
+      <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(9,9,11,0.9) 0%, rgba(9,9,11,0.3) 45%, transparent 74%)" }} />
+
+      <div ref={contentRef} className="relative z-10 h-full max-w-7xl mx-auto px-5 sm:px-8 flex flex-col justify-end pb-14 will-change-transform">
+        <h1 className="font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
+          {["Make.", "Exams.", "Easy."].map((w, i) => (
+            <span key={w} className="block overflow-hidden">
+              <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.15 + i * 0.13}s both` }}>{w}</span>
+            </span>
+          ))}
+        </h1>
+        <div className="ld-in-3 flex flex-wrap items-center gap-5 mt-8">
+          <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform">
+            Start studying free <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-zinc-300 font-semibold text-[15px]">Notes · PYQs · Study with AI</p>
+        </div>
+      </div>
+
+      {/* get-started mini card */}
+      <button onClick={goAuth}
+        className="ld-in-3 absolute bottom-12 right-6 sm:right-10 z-10 hidden md:block w-[300px] rounded-[24px] overflow-hidden border border-white/15 bg-[#131316] text-left hover:scale-[1.02] transition-transform shadow-2xl">
+        <img src={HERO_IMAGE} alt="" className="h-28 w-full object-cover" />
+        <div className="p-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-zinc-500">Get started</p>
+            <p className="text-white font-bold mt-0.5">Your study workspace</p>
+          </div>
+          <span className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shrink-0"><ArrowRight className="w-4 h-4" /></span>
+        </div>
+      </button>
+
+      {/* scroll cue */}
+      <div ref={cueRef} className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-1.5 text-zinc-400">
+        <span className="text-[10px] font-bold tracking-[0.28em] uppercase">Scroll to explore</span>
+        <ChevronDown className="w-4 h-4" style={{ animation: "ld-cue 1.6s ease-in-out infinite" }} />
+      </div>
+    </section>
   );
 }
 
