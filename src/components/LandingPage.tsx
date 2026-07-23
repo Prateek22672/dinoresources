@@ -241,7 +241,8 @@ function PinnedShowcase() {
   ];
 
   return (
-    <section className="relative z-10 max-w-6xl mx-auto px-5">
+    <section className="relative z-10 bg-[#F6F4EF] rounded-[44px] mx-3 sm:mx-5 my-12 text-black">
+      <div className="max-w-6xl mx-auto px-5">
       {/* Desktop: pinned panel + scrolling steps (one continuous scroll) */}
       <div className="hidden lg:grid grid-cols-2 gap-16">
         {/* steps — normal flow, drive the active state */}
@@ -249,9 +250,9 @@ function PinnedShowcase() {
           {SHOW.map((s, i) => (
             <div key={s.eyebrow} ref={(el) => (refs.current[i] = el)} data-idx={i}
               className="min-h-[88vh] flex flex-col justify-center">
-              <p className="text-[12px] font-black tracking-[0.28em] uppercase mb-4" style={{ color: "var(--td-accent-soft)" }}>{s.eyebrow}</p>
+              <p className="text-[12px] font-black tracking-[0.28em] uppercase mb-4" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
               <h2 className={`text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05] transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-40"}`}>{s.title}</h2>
-              <p className="text-zinc-400 text-lg leading-relaxed max-w-md mt-5">{s.desc}</p>
+              <p className="text-zinc-600 text-lg leading-relaxed max-w-md mt-5">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -274,12 +275,13 @@ function PinnedShowcase() {
       <div className="lg:hidden space-y-10 py-6">
         {SHOW.map((s, i) => (
           <div key={s.eyebrow}>
-            <p className="text-[11px] font-black tracking-[0.25em] uppercase mb-2" style={{ color: "var(--td-accent-soft)" }}>{s.eyebrow}</p>
+            <p className="text-[11px] font-black tracking-[0.25em] uppercase mb-2" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
             <h2 className="text-2xl font-extrabold tracking-tight leading-tight">{s.title}</h2>
-            <p className="text-zinc-400 leading-relaxed mt-2 mb-4">{s.desc}</p>
+            <p className="text-zinc-600 leading-relaxed mt-2 mb-4">{s.desc}</p>
             <div className="bg-[#131316] border border-white/10 rounded-[24px] p-5">{mocks[i]}</div>
           </div>
         ))}
+      </div>
       </div>
     </section>
   );
@@ -399,11 +401,12 @@ export default function LandingPage() {
         </div>
       </Section>
 
-      {/* ── Stacked-scroll cards (Fluently-style pile-up) ── */}
-      <section className="relative z-10 max-w-4xl mx-auto px-5 pb-24">
+      {/* ── Stacked-scroll cards (Fluently-style pile-up) — white band ── */}
+      <section className="relative z-10 bg-[#F6F4EF] rounded-[44px] mx-3 sm:mx-5 my-12 py-16 text-black">
+        <div className="max-w-4xl mx-auto px-5">
         <div className="text-center mb-10">
-          <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-600 mb-2">Built for results</p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">With TeamDino<br />you can finally</h2>
+          <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-500 mb-2">Built for results</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black">With TeamDino<br />you can finally</h2>
         </div>
         {STACK.map((c, i) => (
           <div key={c.title} className="sticky mb-6" style={{ top: `${84 + i * 14}px`, zIndex: i + 1 }}>
@@ -449,16 +452,16 @@ export default function LandingPage() {
 
       {/* ── Final CTA ── */}
       <section className="relative z-10 max-w-4xl mx-auto px-5 pb-20">
-        <div className="bg-white text-black rounded-[32px] p-10 sm:p-14 text-center">
+        <div className="text-black rounded-[32px] p-10 sm:p-14 text-center" style={{ background: "#FFB61E" }}>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
             Your last-minute survival kit<br className="hidden sm:block" /> is one click away.
           </h2>
-          <p className="text-black/60 mt-3 max-w-md mx-auto">Free tools forever. Full subjects from ₹11. Exams, handled.</p>
+          <p className="text-black/70 mt-3 max-w-md mx-auto font-medium">Free tools forever. Full subjects from ₹11. Exams, handled.</p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-7">
             <button onClick={goAuth} className="bg-black text-white rounded-full h-12 px-7 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.02] transition-transform">
               Get started free <ArrowRight className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-2 text-sm font-semibold text-black/60">
+            <div className="flex items-center gap-2 text-sm font-semibold text-black/70">
               <Check className="w-4 h-4" /> No card needed
             </div>
           </div>
