@@ -7,6 +7,8 @@ import Footer from "./Footer";
 import { AiIcon, GenAiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
+import agentFuryLogo from "@/assets/icon-192.png";
+import fyxLogo from "@/assets/fyx.png";
 
 /* Cursor-follow: elements drift toward/away from the mouse at their own
  * strengths, smoothly lerped (springy, 60fps, transform-only). */
@@ -419,37 +421,39 @@ export default function LandingPage() {
         </div>
       </Section>
 
-      {/* ── Also from us: Agent Fury + FolioFYX ── */}
+      {/* ── Also from us: Agent Fury + FolioFYX — vibrant solid cards ── */}
       <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
         <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
           <a href="https://agentfury.foliofyx.in/" target="_blank" rel="noopener noreferrer"
-            className="group bg-[#131316] border border-white/8 rounded-[28px] p-8 hover:border-white/25 hover:-translate-y-1 transition-all">
+            className="group rounded-[28px] p-8 text-white hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-25px_rgba(88,71,235,0.55)]"
+            style={{ background: "#5847EB" }}>
             <div className="flex items-start justify-between">
-              <span className="w-12 h-12 rounded-2xl td-accent-bg flex items-center justify-center mb-5">
-                <GenAiIcon className="w-6 h-6" />
+              <span className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-lg">
+                <img src={agentFuryLogo} alt="Agent Fury" className="w-9 h-9 rounded-lg" draggable={false} />
               </span>
-              <ArrowUpRight className="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <h3 className="text-white font-extrabold text-xl tracking-tight">Agent Fury</h3>
-            <p className="text-zinc-500 text-sm leading-relaxed mt-2">
+            <h3 className="font-extrabold text-2xl tracking-tight">Agent Fury</h3>
+            <p className="text-white/70 text-sm leading-relaxed mt-2">
               Create your own AI agents — e.g. an email fetch &amp; summarizer that works while you study.
             </p>
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mt-5" style={{ color: "var(--td-accent-soft)" }}>agentfury.foliofyx.in</p>
+            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/80">agentfury.foliofyx.in</p>
           </a>
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
-            className="group bg-[#131316] border border-white/8 rounded-[28px] p-8 hover:border-white/25 hover:-translate-y-1 transition-all">
+            className="group rounded-[28px] p-8 text-white hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-25px_rgba(219,39,119,0.55)]"
+            style={{ background: "#DB2777" }}>
             <div className="flex items-start justify-between">
-              <span className="w-12 h-12 rounded-2xl bg-[#f472b6]/15 text-[#f472b6] flex items-center justify-center mb-5">
-                <Globe className="w-5 h-5" />
+              <span className="w-14 h-14 rounded-2xl bg-black/25 flex items-center justify-center mb-5 shadow-lg">
+                <img src={fyxLogo} alt="FolioFYX" className="w-9 h-auto brightness-0 invert" draggable={false} />
               </span>
-              <ArrowUpRight className="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <h3 className="text-white font-extrabold text-xl tracking-tight">FolioFYX</h3>
-            <p className="text-zinc-500 text-sm leading-relaxed mt-2">
+            <h3 className="font-extrabold text-2xl tracking-tight">FolioFYX</h3>
+            <p className="text-white/70 text-sm leading-relaxed mt-2">
               Build a standout portfolio site in minutes — because placements don't wait for perfect.
             </p>
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mt-5 text-[#f472b6]">foliofyx.in</p>
+            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/80">foliofyx.in</p>
           </a>
         </div>
       </Section>
