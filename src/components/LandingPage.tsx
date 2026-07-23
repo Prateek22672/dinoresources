@@ -499,23 +499,21 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
         </p>
       </div>
 
-      {/* content */}
+      {/* content — old-style headline + CTA on the new stage */}
       <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 pt-36 sm:pt-40 pb-24 will-change-transform">
-        <h1 className="ld-display text-black font-extrabold leading-[0.98] tracking-tight text-[clamp(3.2rem,9.5vw,7.6rem)] max-w-5xl">
-          {["Unbox exam wins", "worth talking", "about"].map((w, i) => (
+        <h1 className="text-black font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
+          {["Make.", "Exams.", "Easy."].map((w, i) => (
             <span key={w} className="block overflow-hidden">
-              <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.1 + i * 0.12}s both` }}>{w}</span>
+              <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.15 + i * 0.13}s both` }}>{w}</span>
             </span>
           ))}
         </h1>
-        <p className="ld-in-2 text-black/85 font-semibold text-[17px] leading-relaxed max-w-md mt-10">
-          Join the study club that's anything but traditional. Unlock any subject — or your whole
-          year — delivered instantly. Then dive into the notes, PYQs and AI answers.
-        </p>
-        <button onClick={goAuth} className="ld-in-3 mt-7 flex items-stretch w-fit rounded-xl overflow-hidden shadow-[0_18px_40px_-14px_rgba(0,0,0,0.45)] hover:scale-[1.03] active:scale-[0.99] transition-transform">
-          <span className="bg-[#FF1F8F] text-white font-extrabold text-[15px] px-6 py-4 flex items-center">Log-in / Sign-up now</span>
-          <span className="bg-[#E60C7B] text-white px-4 flex items-center"><ArrowRight className="w-4 h-4" /></span>
-        </button>
+        <div className="ld-in-3 flex flex-wrap items-center gap-5 mt-8">
+          <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform shadow-[0_18px_40px_-14px_rgba(0,0,0,0.35)]">
+            Start studying free <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-black/80 font-semibold text-[15px]">Notes · PYQs · Study with AI</p>
+        </div>
       </div>
 
       {/* white dino stamp bottom-right (Aardvark badge spot) */}
