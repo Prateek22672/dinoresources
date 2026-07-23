@@ -13,18 +13,6 @@ export default function Footer() {
       {/* top sheen */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-white/10" />
 
-      {/* Falling-text play band (desktop) — drag the words around */}
-      <div className="hidden md:block h-36 mb-8 text-zinc-300 font-semibold">
-        <FallingText
-          text="Notes PYQs SGPA Attendance Study with AI Subjects Combos Library — TeamDino"
-          highlightWords={["AI", "TeamDino", "SGPA", "Combos"]}
-          trigger="scroll"
-          gravity={0.55}
-          fontSize="1.6rem"
-          mouseConstraintStiffness={0.9}
-        />
-      </div>
-
       {/* Top: brand + actions */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-8 mb-8">
         <div className="max-w-sm">
@@ -69,6 +57,19 @@ export default function Footer() {
             <BookOpen className="w-4 h-4" /> Browse Subjects <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
+      </div>
+
+      {/* Falling-text play band (desktop) — below the content so upward swipes
+          never cross it; drag the words around for fun */}
+      <div className="hidden md:block h-36 mt-2 mb-6 text-zinc-300 font-semibold">
+        <FallingText
+          text="Notes PYQs SGPA Attendance Study with AI Subjects Combos Library — TeamDino"
+          highlightWords={["AI", "TeamDino", "SGPA", "Combos"]}
+          trigger="scroll"
+          gravity={0.55}
+          fontSize="1.6rem"
+          mouseConstraintStiffness={0.9}
+        />
       </div>
 
       {/* Bottom: copyright + signature */}
