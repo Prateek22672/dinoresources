@@ -754,7 +754,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       </div>
 
       {/* content — old-style headline + CTA on the new stage */}
-      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 min-h-[100svh] flex flex-col justify-end pb-[4.5rem] pt-10 sm:min-h-0 sm:block sm:pt-40 sm:pb-24 will-change-transform">
+      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 min-h-[100svh] flex flex-col justify-end pb-[6.5rem] pt-10 sm:min-h-0 sm:block sm:pt-40 sm:pb-24 will-change-transform">
         <h1 className="text-black font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
           {["Make.", "Exams.", "Easy."].map((w, i) => (
             <span key={w} className="block overflow-hidden">
