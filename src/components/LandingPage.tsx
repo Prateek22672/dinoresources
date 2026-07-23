@@ -734,7 +734,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       </div>
 
       {/* big book right — drops below the headline on phones so text stays clean */}
-      <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[3%] top-[60%] w-[175px] sm:right-[7%] sm:top-[20%] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
+      <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[4%] top-[13%] w-[185px] sm:right-[7%] sm:top-[20%] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
         <div ref={(el) => (mouseEls.current[0] = el)} className="will-change-transform">
           <div style={pop("10deg", 0.2)}>
             <div style={{ animation: "ld-float1 5.2s ease-in-out 1.3s infinite" }}>
@@ -745,7 +745,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       </div>
 
       {/* handwritten note — on phones it sits above the big book */}
-      <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[6%] top-[26%] md:top-auto md:right-[3%] md:bottom-[20%] rotate-[-10deg] z-[6] will-change-transform">
+      <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[7%] top-[47%] md:top-auto md:right-[3%] md:bottom-[20%] rotate-[-10deg] z-[6] will-change-transform">
         <div ref={(el) => (mouseEls.current[2] = el)} className="will-change-transform">
           <p className="ld-hand text-[#6D5BD0] text-xl sm:text-2xl md:text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
             made for<br />GITAM students
@@ -754,7 +754,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       </div>
 
       {/* content — old-style headline + CTA on the new stage */}
-      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 min-h-[100svh] flex flex-col justify-center pb-24 pt-10 sm:min-h-0 sm:block sm:pt-40 sm:pb-24 will-change-transform">
+      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 min-h-[100svh] flex flex-col justify-end pb-[4.5rem] pt-10 sm:min-h-0 sm:block sm:pt-40 sm:pb-24 will-change-transform">
         <h1 className="text-black font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
           {["Make.", "Exams.", "Easy."].map((w, i) => (
             <span key={w} className="block overflow-hidden">
