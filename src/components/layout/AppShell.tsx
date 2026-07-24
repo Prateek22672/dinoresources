@@ -144,14 +144,20 @@ export default function AppShell({ children, hideHeader = false }: { children: R
         </div>
       </div>
 
-      {/* Report an issue — floating, every page, all users. Auto-captures the page. */}
-      <button
-        onClick={() => setIssueOpen(true)}
-        className="fixed left-4 bottom-4 z-[90] td-util-bar-solid flex items-center gap-2 h-11 pl-3 pr-4 rounded-full text-[13px] font-semibold shadow-lg hover:scale-[1.03] active:scale-95 transition-transform"
-        aria-label="Report an issue"
-      >
-        <Bug className="w-4 h-4 td-accent-text" /> <span className="hidden sm:inline">Report an issue</span>
-      </button>
+      {/* Report an issue — floating, every page, all users. Auto-captures the page.
+          Bottom-right so it clears the left SideNav rail; hidden while DinoBot
+          is open (which docks bottom-right) so the two never overlap.
+          Sits above the mobile safe-area inset. */}
+      {!botOpen && (
+        <button
+          onClick={() => setIssueOpen(true)}
+          style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
+          className="fixed right-4 z-[90] td-util-bar-solid flex items-center gap-2 h-11 pl-3 pr-4 rounded-full text-[13px] font-semibold shadow-lg hover:scale-[1.03] active:scale-95 transition-transform"
+          aria-label="Report an issue"
+        >
+          <Bug className="w-4 h-4 td-accent-text" /> <span className="hidden sm:inline">Report an issue</span>
+        </button>
+      )}
 
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       {(botOpen || botLoaded) && (

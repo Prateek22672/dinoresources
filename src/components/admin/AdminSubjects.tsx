@@ -63,28 +63,28 @@ export default function AdminSubjects() {
       {/* Years / combo pricing */}
       <section>
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Package className="w-4 h-4 td-accent-text" /> Full-year pack pricing</h3>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {years.map((y, idx) => (
-            <div key={y.id} className="td-surface rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-white font-medium">{y.name}</p>
-                <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer">
+            <div key={y.id} className="td-surface rounded-2xl p-4 overflow-hidden">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="text-white font-medium truncate">{y.name}</p>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer shrink-0">
                   <input type="checkbox" checked={y.active} onChange={(e) => setYears((prev) => prev.map((p, i) => i === idx ? { ...p, active: e.target.checked } : p))} />
                   Active
                 </label>
               </div>
-              {/* price on its own row so nothing is squeezed */}
+              {/* price on its own row; min-w-0 lets the field shrink so Save never spills out */}
               <div className="flex items-center gap-2">
-                <div className="flex-1 td-surface-2 rounded-xl flex items-center px-3 h-10">
+                <div className="flex-1 min-w-0 td-surface-2 rounded-xl flex items-center px-3 h-10">
                   <span className="text-zinc-500 text-sm shrink-0">₹</span>
                   <input
                     type="number"
                     value={y.combo_price_paise / 100}
                     onChange={(e) => setYears((prev) => prev.map((p, i) => i === idx ? { ...p, combo_price_paise: rupeesToPaise(e.target.value) } : p))}
-                    className="flex-1 bg-transparent px-2 text-sm text-white outline-none min-w-0"
+                    className="flex-1 bg-transparent px-2 text-sm text-white outline-none min-w-0 w-full"
                   />
                 </div>
-                <button onClick={() => saveYear(y)} className="td-btn-primary h-10 px-4 flex items-center gap-1.5 text-sm font-semibold shrink-0"><Save className="w-4 h-4" /> Save</button>
+                <button onClick={() => saveYear(y)} className="td-btn-primary h-10 px-3.5 flex items-center gap-1.5 text-sm font-semibold shrink-0"><Save className="w-4 h-4" /> Save</button>
               </div>
             </div>
           ))}
