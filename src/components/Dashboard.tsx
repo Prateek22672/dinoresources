@@ -215,8 +215,8 @@ export default function Dashboard() {
     n <= 3 ? "bg-red-500/15 text-red-300" : n <= 7 ? "bg-amber-500/15 text-amber-300" : "td-accent-bg";
   const pickedExam = pickDay != null ? examOn(cellIso(pickDay)) : undefined;
 
-  // ── Right rail cards (also stacked below content on smaller screens) ──
-  const rightCards = (
+  // ── Right rail: the exam calendar only, so the center column keeps its width ──
+  const railCards = (
     <>
       {/* Exam calendar — tap a date to mark your exam */}
       <div className="td-surface rounded-[24px] p-5">
@@ -311,7 +311,12 @@ export default function Dashboard() {
           <p className="text-zinc-600 text-[11px] mt-3 text-center">Tap a date to mark your exam — we'll count down for you.</p>
         )}
       </div>
+    </>
+  );
 
+  // ── Stat cards — rendered full-width BELOW the quick-access cards ──
+  const statCards = (
+    <>
       {/* Overall information */}
       <div className="td-surface rounded-[24px] p-5">
         <p className="text-white font-semibold text-sm mb-3">Overall information</p>
@@ -489,7 +494,19 @@ export default function Dashboard() {
             )}
           </section>
 
-          {/* ── Quick access carousel ── */}
+        </div>
+
+        {/* ── RIGHT RAIL (xl+) — calendar only ── */}
+        <aside className="hidden xl:flex flex-col gap-4 sticky top-24">
+          {railCards}
+        </aside>
+      </div>
+
+      {/* calendar stacked below on smaller screens */}
+      <div className="xl:hidden mt-6">{railCards}</div>
+
+      {/* ── Quick access carousel — full width, clear of the rail ── */}
+      <div className="mt-8">
           <div className="flex items-baseline justify-between mb-3 px-0.5">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
             <span className="text-[11px] text-zinc-600 hidden sm:block">swipe →</span>
@@ -516,17 +533,11 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* ── RIGHT RAIL (xl+) ── */}
-        <aside className="hidden xl:flex flex-col gap-4 sticky top-24">
-          {rightCards}
-        </aside>
       </div>
 
-      {/* right-rail cards stacked for smaller screens */}
-      <div className="xl:hidden grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        {rightCards}
+      {/* ── Stat boxes — full width, below the quick-access cards ── */}
+      <div className="grid sm:grid-cols-2 gap-4 mt-2">
+        {statCards}
       </div>
 
       <Footer />
