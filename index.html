@@ -15,10 +15,12 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#212121" />
     
-    <!-- Favicon — the TeamDino dino (lives in /public so it survives the build) -->
-    <link rel="icon" href="/favicon.png" type="image/png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
-    <link rel="shortcut icon" href="/favicon.png" />
+    <!-- Favicon — dino mark on brand yellow so it stays visible on light AND dark
+         surfaces (the old transparent white mark rendered blank in Google results).
+         ?v=2 busts the aggressive favicon cache in browsers and Google. -->
+    <link rel="icon" href="/favicon.png?v=2" type="image/png" sizes="512x512" />
+    <link rel="shortcut icon" href="/favicon.png?v=2" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" sizes="180x180" />
 
     <!-- Warm the API connection before the app asks for data (saves a DNS+TLS round-trip) -->
     <link rel="preconnect" href="https://yidbijzsfrwqskjzawqq.supabase.co" crossorigin />
