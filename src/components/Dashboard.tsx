@@ -21,6 +21,8 @@ import {
   Play, Flame, TrendingUp, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { GenAiIcon } from "@/components/BrandIcons";
+import agentFuryLogo from "@/assets/icon-192.png";
+import fyxLogo from "@/assets/fyx.png";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
 
@@ -35,6 +37,10 @@ interface Banner {
   onClick: () => void;
   /** When set, the card renders as one tile split into two independently-tappable halves. */
   split?: { overline: string; title: string; desc: string; icon: any; onClick: () => void }[];
+  /** Brand artwork in the icon chip (white-on-black source — flips with the theme). */
+  img?: string;
+  /** Brand wordmark shown INSTEAD of the title text (solid black source). */
+  logo?: string;
 }
 
 // Deterministic colorful thumbnails for subject cards — SOLID colors only.
@@ -199,10 +205,10 @@ export default function Dashboard() {
       accent: "#7c6cf0", icon: BookOpen, onClick: () => navigate("/library") },
     { key: "store", overline: "Marketplace", title: "Store", desc: "Unlock subjects & year combos.", cta: "Browse Store",
       accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
+    ...(isOn("agent") ? [{ key: "agent", overline: "Assistant", title: "Agent Fury", desc: "Create your agents — e.g. email fetch & summarizer.", cta: "Launch",
+      accent: "#7c6cf0", icon: GenAiIcon, img: agentFuryLogo, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
-    ...(isOn("agent") ? [{ key: "agent", overline: "Assistant", title: "Agent Fury", desc: "Create your agents — e.g. email fetch & summarizer.", cta: "Launch",
-      accent: "#7c6cf0", icon: GenAiIcon, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
     // SGPA + Attendance share one tile, split into two tappable halves
     { key: "calcs", overline: "Performance", title: "Calculators", desc: "SGPA & attendance.", cta: "Open",
       accent: "#e879a6", icon: Calculator, onClick: () => navigate("/sgpa-calc"),
@@ -211,7 +217,7 @@ export default function Dashboard() {
         { overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", icon: CalendarDays, onClick: () => navigate("/attendance-calc") },
       ] },
     { key: "foliofyx", overline: "Create your website", title: "FolioFYX", desc: "Build a standout portfolio.", cta: "Create Now Free",
-      accent: "#f472b6", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
+      accent: "#f472b6", icon: Globe, logo: fyxLogo, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
     { key: "announcements", overline: "Updates", title: "Announcements", desc: "Latest campus updates.", cta: "View Updates",
       accent: "#f5b042", icon: Megaphone, onClick: () => setTool("announcements") },
   ];
@@ -545,17 +551,20 @@ export default function Dashboard() {
                     <button
                       key={s.title}
                       onClick={s.onClick}
-                      className={`relative z-10 flex-1 min-h-0 p-5 flex flex-col justify-between text-left hover:bg-white/[0.06] transition-colors ${si === 0 ? "border-b border-black/10 dark:border-white/10" : ""}`}
+                      /* each half owns exactly 50% of the tile; divider uses currentColor
+                         so it stays visible whichever way the card inverts */
+                      className="td-bw-half relative z-10 h-1/2 px-5 flex items-center gap-3.5 text-left transition-colors"
+                      style={si === 0 ? { borderBottom: "1px solid currentColor" } : undefined}
                     >
-                      <div>
-                        <div className="td-bw-chip w-8 h-8 rounded-xl flex items-center justify-center mb-2.5">
-                          <s.icon className="w-4 h-4" strokeWidth={1.7} />
-                        </div>
-                        <p className="td-bw-soft text-[9px] font-semibold tracking-[0.22em] uppercase mb-1">{s.overline}</p>
-                        <h3 className="text-[17px] font-semibold leading-tight tracking-tight">{s.title}</h3>
-                      </div>
-                      <span className="td-banner-cta inline-flex items-center gap-1.5 text-[12px] font-semibold">
-                        Open <span className="td-bw-chip w-5 h-5 rounded-full flex items-center justify-center"><ArrowRight className="w-2.5 h-2.5" /></span>
+                      <span className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center shrink-0">
+                        <s.icon className="w-4.5 h-4.5" strokeWidth={1.7} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="td-bw-soft block text-[9px] font-semibold tracking-[0.22em] uppercase">{s.overline}</span>
+                        <span className="block text-[17px] font-semibold leading-tight tracking-tight truncate">{s.title}</span>
+                      </span>
+                      <span className="td-banner-cta td-bw-chip w-6 h-6 rounded-full flex items-center justify-center shrink-0">
+                        <ArrowRight className="w-3 h-3" />
                       </span>
                     </button>
                   ))}
@@ -567,11 +576,19 @@ export default function Dashboard() {
                 className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[268px] h-[248px] sm:h-[268px] rounded-[26px] p-5 flex flex-col justify-between text-left"
               >
                 <div className="relative z-10">
-                  <div className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center mb-4">
-                    <b.icon className="w-4.5 h-4.5" strokeWidth={1.7} />
-                  </div>
+                  {b.img ? (
+                    <img src={b.img} alt="" className="td-bw-mark w-10 h-10 rounded-2xl mb-4 object-contain" draggable={false} />
+                  ) : (
+                    <div className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center mb-4">
+                      <b.icon className="w-4.5 h-4.5" strokeWidth={1.7} />
+                    </div>
+                  )}
                   <p className="td-bw-soft text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5">{b.overline}</p>
-                  <h3 className="text-[20px] font-semibold leading-tight tracking-tight">{b.title}</h3>
+                  {b.logo ? (
+                    <img src={b.logo} alt={b.title} className="td-bw-word h-6 w-auto my-1" draggable={false} />
+                  ) : (
+                    <h3 className="text-[20px] font-semibold leading-tight tracking-tight">{b.title}</h3>
+                  )}
                   <p className="td-bw-soft text-[13px] mt-1.5 leading-relaxed">{b.desc}</p>
                 </div>
                 <div className="relative z-10 td-banner-cta inline-flex items-center gap-2 text-[13px] font-semibold">

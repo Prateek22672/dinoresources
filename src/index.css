@@ -379,6 +379,45 @@ iframe[src*="razorpay"] {
   :root:not(.dark) .td-banner-bw .td-bw-pill:hover { background: rgba(255,255,255,0.14); }
   :root:not(.dark) .td-banner-bw:hover { box-shadow: 0 28px 52px -26px rgba(0,0,0,0.45) !important; }
 
+  /* ── Side navigation rail — themed, never hardcoded dark ──────────────
+     The global light-mode inversion (.td-app .text-white → near-black) only
+     works when the panel underneath it is light, so the rail must follow the
+     theme rather than pinning itself to #131316. */
+  .td-nav-panel { background: #131316; border: 1px solid rgba(255,255,255,0.08); }
+  .td-nav-chip { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.10); }
+  .td-nav-divider { border-top: 1px solid rgba(255,255,255,0.08); }
+  .td-nav-item:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
+  .td-nav-item-on { background: #ffffff; color: #0d0d0d; }
+
+  :root:not(.dark) .td-nav-panel {
+    background: #ffffff;
+    border-color: rgb(var(--td-accent-rgb) / 0.13);
+    box-shadow: 0 2px 6px rgba(23,10,60,0.04), 0 12px 32px -16px rgb(var(--td-accent-rgb) / 0.30);
+  }
+  :root:not(.dark) .td-nav-chip { background: rgb(var(--td-accent-rgb) / 0.10); border-color: rgb(var(--td-accent-rgb) / 0.16); }
+  :root:not(.dark) .td-nav-logo { filter: invert(1); }
+  :root:not(.dark) .td-nav-divider { border-top-color: rgb(var(--td-accent-rgb) / 0.14); }
+  :root:not(.dark) .td-nav-item:hover { background: rgb(var(--td-accent-rgb) / 0.08); color: #0d0d0d !important; }
+  :root:not(.dark) .td-nav-item-on { background: #0d0d0d; color: #ffffff !important; }
+  :root:not(.dark) .td-nav-item-on:hover { background: #0d0d0d; color: #ffffff !important; }
+
+  /* Split tile: two equal halves, divider + hover derived from the card's own
+     text colour so both read correctly whichever way the card inverts. */
+  .td-banner-bw .td-bw-half { border-color: currentColor !important; }
+  .td-banner-bw .td-bw-half { --tw-border-opacity: 1; }
+  .td-banner-bw .td-bw-half[style] { border-bottom-color: rgba(0,0,0,0.10) !important; }
+  :root:not(.dark) .td-banner-bw .td-bw-half[style] { border-bottom-color: rgba(255,255,255,0.14) !important; }
+  .td-banner-bw .td-bw-half:hover { background: rgba(0,0,0,0.05); }
+  :root:not(.dark) .td-banner-bw .td-bw-half:hover { background: rgba(255,255,255,0.07); }
+
+  /* Brand logos on a B&W card. The card flips between themes, so the artwork
+     has to flip with it or it disappears into the background.
+     .td-bw-mark → artwork that is already white-on-black (e.g. the AF icon)
+     .td-bw-word → a solid black wordmark (e.g. fyx.png) that must read white   */
+  :root:not(.dark) .td-banner-bw .td-bw-mark { filter: invert(1); }
+  .td-banner-bw .td-bw-word { filter: none; }
+  :root:not(.dark) .td-banner-bw .td-bw-word { filter: brightness(0) invert(1); }
+
   /* Anniversary banner sheen sweep */
   .td-anniv-shine {
     background: rgba(255,255,255,0.10);

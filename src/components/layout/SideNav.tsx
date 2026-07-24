@@ -38,21 +38,21 @@ export default function SideNav({
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
   const itemCls = (active: boolean) =>
-    `w-full flex items-center ${collapsed ? "justify-center px-0" : "px-3.5"} gap-2.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors text-left ${
-      active ? "bg-white text-black" : "text-zinc-400 hover:text-white hover:bg-white/5"
+    `td-nav-item w-full flex items-center ${collapsed ? "justify-center px-0" : "px-3.5"} gap-2.5 py-2.5 rounded-xl text-[13px] font-medium transition-colors text-left ${
+      active ? "td-nav-item-on" : "text-zinc-400"
     }`;
 
   return (
-    <aside className={`hidden xl:flex flex-col bg-[#131316] border border-white/8 rounded-[28px] ${collapsed ? "p-2.5" : "p-3.5"} xl:-mt-20 sticky top-4 h-[calc(100dvh-2rem)] transition-all`}>
+    <aside className={`td-nav-panel hidden xl:flex flex-col rounded-[28px] ${collapsed ? "p-2.5" : "p-3.5"} xl:-mt-20 sticky top-4 h-[calc(100dvh-2rem)] transition-all`}>
       {/* Brand + collapse toggle */}
       <div className={`flex items-center ${collapsed ? "flex-col gap-2 pb-3" : "gap-2.5 px-2.5 pt-1.5 pb-4"}`}>
-        <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
-          <img src={dinoLogo} alt="" className="w-5 h-5" />
+        <div className="td-nav-chip w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+          <img src={dinoLogo} alt="" className="td-nav-logo w-5 h-5" />
         </div>
         {!collapsed && <span className="text-white font-bold tracking-tight flex-1">TeamDino</span>}
         <button
           onClick={onToggle}
-          className="w-7 h-7 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 flex items-center justify-center shrink-0"
+          className="td-nav-item w-7 h-7 rounded-lg text-zinc-500 flex items-center justify-center shrink-0"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand" : "Collapse"}
         >
@@ -69,7 +69,7 @@ export default function SideNav({
         ))}
       </nav>
 
-      <div className="pt-3 border-t border-white/8 space-y-1">
+      <div className="td-nav-divider pt-3 space-y-1">
         {bottom.map((b) => (
           <button key={b.label} onClick={b.onClick} className={itemCls(false)} title={collapsed ? b.label : undefined}>
             <b.icon className="w-4 h-4 shrink-0" /> {!collapsed && b.label}
