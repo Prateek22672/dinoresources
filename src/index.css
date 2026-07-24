@@ -125,6 +125,16 @@ All colors MUST be HSL.
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
   }
+
+  /* Display face — Bricolage Grotesque gives headings personality while Inter
+     keeps body text ultra-readable. Scoped to the app interior (.td-app) so the
+     landing page's own hero type stays exactly as designed. */
+  :root { --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, system-ui, sans-serif; }
+  .td-app :is(h1, h2, h3),
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
 }
 
 @layer utilities {
