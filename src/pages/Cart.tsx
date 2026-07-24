@@ -123,7 +123,7 @@ export default function Cart() {
   const removeCoupon = () => { setApplied(null); setCouponInput(""); setCouponMsg(null); };
 
   const checkoutLabel: Record<string, string> = {
-    idle: `Checkout · ${formatPaise(finalTotal)}`,
+    idle: `Unlock now · ${formatPaise(finalTotal)}`,
     creating_order: "Preparing…",
     checkout_open: "Complete payment…",
     verifying: "Verifying…",
@@ -143,9 +143,9 @@ export default function Cart() {
         <div className="py-24 text-center td-surface rounded-[32px] td-in">
           <ShoppingCart className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
           <h3 className="text-white font-semibold text-lg">Your cart is empty</h3>
-          <p className="text-zinc-500 text-sm mt-1 mb-6">Add subjects or a year combo from the store.</p>
+          <p className="text-zinc-500 text-sm mt-1 mb-6">Add subjects or a full-year pack to get started.</p>
           <button onClick={() => navigate("/store")} className="td-btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
-            Browse Store <ArrowRight className="w-4 h-4" />
+            Explore subjects <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       ) : (
@@ -159,7 +159,7 @@ export default function Cart() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-white font-medium leading-snug line-clamp-2 break-words">{item.label}</p>
-                  <p className="text-zinc-500 text-xs capitalize mt-0.5">{item.item_type === "combo" ? "Year combo" : "Single subject"}</p>
+                  <p className="text-zinc-500 text-xs capitalize mt-0.5">{item.item_type === "combo" ? "Whole year" : "Single subject"}</p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <span className="text-white font-bold text-sm sm:text-base whitespace-nowrap">{formatPaise(item.price_paise)}</span>

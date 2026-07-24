@@ -20,9 +20,9 @@ import dinoLogo from "@/assets/dinosaurWhite.png";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/store", label: "Store", icon: Store },
+  { to: "/store", label: "Subjects", icon: Store },
   { to: "/library", label: "My Library", icon: Library },
-  { to: "/purchases", label: "Purchases", icon: Receipt },
+  { to: "/purchases", label: "My Access", icon: Receipt },
 ];
 
 export default function AppShell({ children, hideHeader = false }: { children: ReactNode; hideHeader?: boolean }) {

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Bell, Send, Trash2, Users, User, Info, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Bell, Send, Trash2, Users, User, Info, AlertTriangle, ShieldAlert, Check } from "lucide-react";
 
 interface NoticeRow {
   id: string; user_id: string | null; title: string; body: string | null;
@@ -24,6 +24,10 @@ export default function AdminNotices() {
   // draft
   const [audience, setAudience] = useState<"all" | "user">("all");
   const [email, setEmail] = useState("");
+  // live user lookup so the admin can confirm the email exists before sending
+  const [emailMatches, setEmailMatches] = useState<{ id: string; email: string; full_name?: string }[]>([]);
+  const [emailFocus, setEmailFocus] = useState(false);
+  const [emailChecked, setEmailChecked] = useState<null | boolean>(null);
   const [kind, setKind] = useState<"info" | "warning" | "critical">("info");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -44,6 +48,20 @@ export default function AdminNotices() {
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  // debounced email lookup — shows matching users so admin confirms before sending
+  useEffect(() => {
+    const q = email.trim();
+    if (audience !== "user" || q.length < 2) { setEmailMatches([]); setEmailChecked(null); return; }
+    const t = setTimeout(async () => {
+      const { data } = await tbl("profiles").select("id, email, full_name").ilike("email", `%${q}%`).limit(6);
+      const list = (data ?? []) as { id: string; email: string; full_name?: string }[];
+      setEmailMatches(list);
+      // exact match check for the green tick / red cross
+      setEmailChecked(list.some((u) => (u.email ?? "").toLowerCase() === q.toLowerCase()));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [email, audience]);
 
   const send = async () => {
     if (!title.trim()) { toast.error("Title required"); return; }
@@ -104,8 +122,39 @@ export default function AdminNotices() {
             </button>
           </div>
           {audience === "user" && (
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@email.com"
-              className="flex-1 min-w-[200px] td-surface-2 rounded-full px-4 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+            <div className="relative flex-1 min-w-[220px]">
+              <div className="td-surface-2 rounded-full flex items-center px-4 h-10">
+                <input value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setEmailFocus(true)}
+                  onBlur={() => setTimeout(() => setEmailFocus(false), 160)}
+                  placeholder="Start typing an email…"
+                  className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-600 min-w-0" />
+                {email.trim().length >= 2 && (
+                  emailChecked === true
+                    ? <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    : emailChecked === false
+                      ? <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                      : null
+                )}
+              </div>
+              {emailFocus && email.trim().length >= 2 && (
+                <div className="absolute top-[calc(100%+6px)] left-0 right-0 td-surface rounded-2xl overflow-hidden z-30 shadow-2xl max-h-60 overflow-y-auto">
+                  {emailMatches.length === 0 ? (
+                    <p className="px-4 py-3 text-red-300 text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 shrink-0" /> No user with an email like that.</p>
+                  ) : emailMatches.map((u) => (
+                    <button key={u.id} onMouseDown={(e) => e.preventDefault()} onClick={() => { setEmail(u.email); setEmailFocus(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 text-left border-b border-white/5 last:border-0">
+                      <span className="w-8 h-8 rounded-full td-surface-2 flex items-center justify-center shrink-0"><User className="w-4 h-4 text-zinc-400" /></span>
+                      <span className="min-w-0">
+                        <span className="block text-white text-sm font-medium truncate">{u.email}</span>
+                        {u.full_name && <span className="block text-zinc-500 text-xs truncate">{u.full_name}</span>}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           <select value={kind} onChange={(e) => setKind(e.target.value as any)}
             className="td-surface-2 rounded-full px-3 h-10 text-sm text-white outline-none">

@@ -22,9 +22,9 @@ export default function SideNav({
 
   const items = [
     { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-    { label: "Store", icon: Store, to: "/store" },
+    { label: "Subjects", icon: Store, to: "/store" },
     { label: "My Library", icon: Library, to: "/library" },
-    { label: "Purchases", icon: Receipt, to: "/purchases" },
+    { label: "My Access", icon: Receipt, to: "/purchases" },
     ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
     ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),
     ...((isContributor || isAdmin) ? [{ label: "Issues", icon: Bug, to: "/issues" }] : []),

@@ -15,7 +15,7 @@ import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminFeatures from "@/components/admin/AdminFeatures";
 import AdminCharges from "@/components/admin/AdminCharges";
 import AdminNotices from "@/components/admin/AdminNotices";
-import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell } from "lucide-react";
+import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Search, X } from "lucide-react";
 
 type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database";
 
@@ -37,12 +37,39 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "database", label: "Database", icon: Database },
 ];
 
+// keywords help search find a section even by what it does, not just its name
+const TAB_KEYWORDS: Record<string, string> = {
+  analytics: "stats revenue signups users overview",
+  users: "grant revoke access role admin contributor",
+  subjects: "pricing price combo full year add subject",
+  coupons: "discount promo code spin wheel",
+  charges: "gst tax donation cart fees",
+  notices: "alert message announcement send user",
+  features: "flags cards toggle jobs agent enable disable",
+  tickets: "support help dinobot brain complaints",
+  team: "members contributors roles",
+  payments: "razorpay orders transactions refunds money",
+  audit: "log history actions",
+  security: "screenshot devices level protection",
+  access: "access audit ownership",
+  sharing: "account sharing multiple devices",
+  database: "storage cleanup delete space size",
+};
+
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("analytics");
   const stripRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
   const [canL, setCanL] = useState(false);
   const [canR, setCanR] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchFocus, setSearchFocus] = useState(false);
+
+  const q = search.trim().toLowerCase();
+  const matches = q
+    ? tabs.filter((t) => t.label.toLowerCase().includes(q) || (TAB_KEYWORDS[t.id] ?? "").includes(q))
+    : [];
+  const jumpTo = (id: Tab) => { setTab(id); setSearch(""); setSearchFocus(false); };
 
   const updateArrows = () => {
     const el = stripRef.current;
@@ -80,6 +107,41 @@ export default function Admin() {
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">Admin Console</h1>
           <p className="text-zinc-500 text-sm hidden sm:block">Everything about users, content, money and security.</p>
         </div>
+      </div>
+
+      {/* Search-to-jump — find any of the 15 admin sections fast */}
+      <div className="relative mb-4 max-w-md">
+        <div className="td-surface rounded-2xl flex items-center px-3 h-11">
+          <Search className="w-4 h-4 text-zinc-500 shrink-0" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setSearchFocus(true)}
+            onBlur={() => setTimeout(() => setSearchFocus(false), 150)}
+            onKeyDown={(e) => { if (e.key === "Enter" && matches[0]) jumpTo(matches[0].id); if (e.key === "Escape") setSearch(""); }}
+            placeholder="Search admin sections… (e.g. refunds, storage, coupons)"
+            className="flex-1 bg-transparent border-none outline-none text-sm px-3 text-white placeholder:text-zinc-500"
+          />
+          {search && (
+            <button onMouseDown={(e) => e.preventDefault()} onClick={() => setSearch("")} className="w-7 h-7 rounded-full td-surface-2 flex items-center justify-center text-zinc-400">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+        {searchFocus && q && (
+          <div className="absolute top-[calc(100%+8px)] left-0 right-0 td-surface rounded-2xl overflow-hidden z-30 shadow-2xl max-h-72 overflow-y-auto">
+            {matches.length === 0 ? (
+              <p className="px-4 py-3 text-zinc-500 text-sm">No section matches “{search}”.</p>
+            ) : matches.map((t) => (
+              <button key={t.id} onMouseDown={(e) => e.preventDefault()} onClick={() => jumpTo(t.id)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left border-b border-white/5 last:border-0">
+                <span className="w-8 h-8 rounded-lg td-surface-2 flex items-center justify-center shrink-0"><t.icon className="w-4 h-4 text-zinc-300" /></span>
+                <span className="text-white text-sm font-medium">{t.label}</span>
+                {tab === t.id && <span className="ml-auto text-[11px] td-accent-text font-semibold">current</span>}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Scrollable tab strip with left/right controls + edge fades */}

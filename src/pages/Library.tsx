@@ -62,7 +62,7 @@ export default function Library() {
         }
         stats={[
           { label: "Subjects owned", value: subjects.length, icon: BookOpen },
-          { label: "Year combos", value: comboYears.length, icon: Package },
+          { label: "Full-year packs", value: comboYears.length, icon: Package },
         ]}
       />
 
@@ -84,7 +84,7 @@ export default function Library() {
         <div className="py-24 text-center td-surface rounded-[32px] td-in">
           <BookOpen className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
           <h3 className="text-white font-semibold text-lg">Your library is empty</h3>
-          <p className="text-zinc-500 text-sm mt-1 mb-6">Purchase a subject or a year combo to get started.</p>
+          <p className="text-zinc-500 text-sm mt-1 mb-6">Unlock a subject or your whole year to get started.</p>
           <Link to="/store" className="td-btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
             Go to Store <ArrowRight className="w-4 h-4" />
           </Link>

@@ -49,10 +49,10 @@ export default function Purchases() {
   return (
     <AppShell>
       <PageHero
-        eyebrow="Billing"
+        eyebrow="Your access"
         eyebrowIcon={Receipt}
-        title="Purchase History"
-        subtitle="Every order, payment and unlock — in one clear record."
+        title="Your unlocks"
+        subtitle="Everything you've unlocked, in one place."
         stats={[
           { label: "Total spent", value: formatPaise(totalSpent), icon: IndianRupee },
           { label: "Orders", value: paidOrders.length, icon: Package },

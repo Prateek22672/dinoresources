@@ -122,14 +122,14 @@ export default function SubjectPage() {
                 <div className="flex items-center justify-center gap-3 mt-6">
                   {isInCart("subject", subject.id) ? (
                     <Link to="/cart" className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
-                      <Check className="w-4 h-4" /> In cart — go to checkout
+                      <Check className="w-4 h-4" /> In cart — review & unlock
                     </Link>
                   ) : (
                     <button
                       onClick={() => addSubject(subject.id, subject.name)}
                       className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5"
                     >
-                      <Plus className="w-4 h-4" /> Add to cart · {formatPaise(subject.price_paise)}
+                      <Plus className="w-4 h-4" /> Add · {formatPaise(subject.price_paise)}
                     </button>
                   )}
                   <Link to="/store" className="td-btn-ghost px-5 py-3 text-sm">View combos</Link>

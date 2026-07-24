@@ -62,24 +62,29 @@ export default function AdminSubjects() {
     <div className="space-y-8">
       {/* Years / combo pricing */}
       <section>
-        <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Package className="w-4 h-4 td-accent-text" /> Year combo pricing</h3>
+        <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Package className="w-4 h-4 td-accent-text" /> Full-year pack pricing</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {years.map((y, idx) => (
             <div key={y.id} className="td-surface rounded-2xl p-4">
-              <p className="text-white font-medium mb-3">{y.name}</p>
-              <div className="flex items-center gap-2">
-                <span className="text-zinc-500 text-sm">₹</span>
-                <input
-                  type="number"
-                  value={y.combo_price_paise / 100}
-                  onChange={(e) => setYears((prev) => prev.map((p, i) => i === idx ? { ...p, combo_price_paise: rupeesToPaise(e.target.value) } : p))}
-                  className="flex-1 td-surface-2 rounded-lg px-3 h-9 text-sm text-white outline-none"
-                />
-                <label className="flex items-center gap-1.5 text-xs text-zinc-400">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-white font-medium">{y.name}</p>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer">
                   <input type="checkbox" checked={y.active} onChange={(e) => setYears((prev) => prev.map((p, i) => i === idx ? { ...p, active: e.target.checked } : p))} />
                   Active
                 </label>
-                <button onClick={() => saveYear(y)} className="td-btn-primary w-9 h-9 flex items-center justify-center"><Save className="w-4 h-4" /></button>
+              </div>
+              {/* price on its own row so nothing is squeezed */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 td-surface-2 rounded-xl flex items-center px-3 h-10">
+                  <span className="text-zinc-500 text-sm shrink-0">₹</span>
+                  <input
+                    type="number"
+                    value={y.combo_price_paise / 100}
+                    onChange={(e) => setYears((prev) => prev.map((p, i) => i === idx ? { ...p, combo_price_paise: rupeesToPaise(e.target.value) } : p))}
+                    className="flex-1 bg-transparent px-2 text-sm text-white outline-none min-w-0"
+                  />
+                </div>
+                <button onClick={() => saveYear(y)} className="td-btn-primary h-10 px-4 flex items-center gap-1.5 text-sm font-semibold shrink-0"><Save className="w-4 h-4" /> Save</button>
               </div>
             </div>
           ))}

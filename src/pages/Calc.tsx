@@ -79,7 +79,7 @@ export default function Calc({ initial = "sgpa" }: { initial?: Tab }) {
             <div className="td-banner-bw rounded-2xl p-4 text-center">
               <p className="font-semibold text-sm">Loved the free tools?</p>
               <p className="td-bw-soft text-xs mt-1 mb-3">Unlock full subjects from ₹11.</p>
-              <button onClick={() => navigate("/store")} className="td-bw-chip w-full py-2 rounded-full text-sm font-semibold">Browse Store</button>
+              <button onClick={() => navigate("/store")} className="td-bw-chip w-full py-2 rounded-full text-sm font-semibold">Explore subjects</button>
             </div>
           </aside>
         </div>

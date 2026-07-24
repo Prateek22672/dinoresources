@@ -108,13 +108,13 @@ export default function Store() {
   return (
     <AppShell>
       <PageHero
-        eyebrow="Store"
+        eyebrow="Subjects"
         eyebrowIcon={Sparkles}
         title="Unlock exactly what you need."
-        subtitle="Buy a single subject, or grab the full-year combo and save. One payment, permanent access — notes, PYQs and Study-With-AI included."
+        subtitle="Unlock one subject, or open your whole year at once. One payment, permanent access — notes, PYQs and Study-With-AI included."
         stats={[
           { label: "Subjects", value: totalSubjectCount, icon: BookOpen },
-          { label: "Year combos", value: comboCount, icon: Package },
+          { label: "Full-year packs", value: comboCount, icon: Package },
         ]}
       />
 
@@ -204,7 +204,7 @@ export default function Store() {
                         <span className="td-bw-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase mb-2.5">
                           <Zap className="w-3 h-3" /> Best value{savingsPct > 0 ? ` · Save ${savingsPct}%` : ""}
                         </span>
-                        <h3 className="text-lg sm:text-xl font-bold leading-tight">{year.name} — Complete Access</h3>
+                        <h3 className="text-lg sm:text-xl font-bold leading-tight">{year.name} — Whole Year</h3>
                         <p className="td-bw-soft text-sm mt-1">
                           All {subjects.length} subjects · notes, PYQs &amp; Study-With-AI, one payment.
                         </p>
@@ -219,7 +219,7 @@ export default function Store() {
                           onClick={() => addCombo(year.id, year.name)}
                           className="td-bw-chip px-5 py-3 rounded-full text-sm font-semibold flex items-center gap-1.5 disabled:opacity-60 hover:scale-[1.02] transition-transform"
                         >
-                          {comboInCart ? <><Check className="w-4 h-4" /> In cart</> : <><Plus className="w-4 h-4" /> Buy combo</>}
+                          {comboInCart ? <><Check className="w-4 h-4" /> In cart</> : <><Plus className="w-4 h-4" /> Get full year</>}
                         </button>
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export default function Store() {
                               onClick={() => addSubject(s.id, s.name)}
                               className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
                             >
-                              {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add to cart</>}
+                              {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add</>}
                             </button>
                           )}
                         </div>

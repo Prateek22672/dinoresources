@@ -133,9 +133,9 @@ const QUOTES = [
 ];
 
 const FAQS = [
-  { q: "Is TeamDino free?", a: "The calculators (SGPA, CGPA predictor, attendance) are 100% free with no login. Subject packs — notes, PYQs, Study-With-AI — start at ₹11, with full-year combos that cost less than a plate of biryani." },
+  { q: "Is TeamDino free?", a: "The calculators (SGPA, CGPA predictor, attendance) are 100% free with no login. Subject packs — notes, PYQs, Study-With-AI — start at ₹11, with full-year packs that cost less than a plate of biryani." },
   { q: "What's inside a subject pack?", a: "Syllabus, 5 units of curated notes, previous year questions, editorial videos, and Study-With-AI answers organised topic by topic. Access unlocks instantly after payment." },
-  { q: "What's a year combo?", a: "Every subject in your year for one price. If you'll need more than two subjects, the combo always wins." },
+  { q: "What's a full-year pack?", a: "Every subject in your year for one price. If you'll need more than two subjects, the full-year pack always wins." },
   { q: "I paid but can't access — what now?", a: "Tap Instant Help inside the app — DinoBot files a support ticket for you and the team resolves it within 24 hours." },
   { q: "Which college is this for?", a: "Built by and for GITAM students — the grade chart, units and PYQs match GITAM's actual pattern." },
 ];
