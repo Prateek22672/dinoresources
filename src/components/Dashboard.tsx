@@ -10,7 +10,6 @@ import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@
 
 import AppShell from "@/components/layout/AppShell";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
-import AnniversaryBanner from "./AnniversaryBanner";
 import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
 import { AnnouncementsSection } from "./AnnouncementsSection";
@@ -362,7 +361,6 @@ export default function Dashboard() {
   return (
     <AppShell>
       {/* ── 1st anniversary ── */}
-      <AnniversaryBanner className="mb-6" />
 
       {/* SideNav rail comes from AppShell (global on xl+); here: center + right rail */}
       <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_296px] xl:gap-6 items-start">
