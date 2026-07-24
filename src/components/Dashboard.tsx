@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -18,7 +18,7 @@ import Footer from "./Footer";
 import {
   BookOpen, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
   CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
-  Play, Flame, TrendingUp,
+  Play, Flame, TrendingUp, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { GenAiIcon } from "@/components/BrandIcons";
 
@@ -33,6 +33,8 @@ interface Banner {
   accent: string; // subtle accent hue (icon + faint glow); card body stays neutral
   icon: any;
   onClick: () => void;
+  /** When set, the card renders as one tile split into two independently-tappable halves. */
+  split?: { overline: string; title: string; desc: string; icon: any; onClick: () => void }[];
 }
 
 // Deterministic colorful thumbnails for subject cards — SOLID colors only.
@@ -60,6 +62,14 @@ export default function Dashboard() {
   const [recent, setRecent] = useState<RecentSubject | null>(null);
   const [streak, setStreak] = useState(0);
   const [activity, setActivity] = useState<string[]>([]);
+
+  // quick-access carousel — arrow buttons step by roughly one card
+  const quickRef = useRef<HTMLDivElement>(null);
+  const scrollQuick = (dir: 1 | -1) => {
+    const el = quickRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * (el.clientWidth * 0.8), behavior: "smooth" });
+  };
 
   // exam countdown (user-set dates)
   interface ExamRow { id: string; title: string; exam_date: string; }
@@ -193,14 +203,17 @@ export default function Dashboard() {
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
     ...(isOn("agent") ? [{ key: "agent", overline: "Assistant", title: "Agent Fury", desc: "Create your agents — e.g. email fetch & summarizer.", cta: "Launch",
       accent: "#7c6cf0", icon: GenAiIcon, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
-    { key: "sgpa", overline: "Performance", title: "SGPA Calc", desc: "Estimate your semester grades.", cta: "Open Calculator",
-      accent: "#e879a6", icon: Calculator, onClick: () => navigate("/sgpa-calc") },
-    { key: "attendance", overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", cta: "Check Attendance",
-      accent: "#34d399", icon: CalendarDays, onClick: () => navigate("/attendance-calc") },
-    { key: "announcements", overline: "Updates", title: "Announcements", desc: "Latest campus updates.", cta: "View Updates",
-      accent: "#f5b042", icon: Megaphone, onClick: () => setTool("announcements") },
+    // SGPA + Attendance share one tile, split into two tappable halves
+    { key: "calcs", overline: "Performance", title: "Calculators", desc: "SGPA & attendance.", cta: "Open",
+      accent: "#e879a6", icon: Calculator, onClick: () => navigate("/sgpa-calc"),
+      split: [
+        { overline: "Performance", title: "SGPA Calc", desc: "Estimate your semester grades.", icon: Calculator, onClick: () => navigate("/sgpa-calc") },
+        { overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", icon: CalendarDays, onClick: () => navigate("/attendance-calc") },
+      ] },
     { key: "foliofyx", overline: "Create your website", title: "FolioFYX", desc: "Build a standout portfolio.", cta: "Create Now Free",
       accent: "#f472b6", icon: Globe, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
+    { key: "announcements", overline: "Updates", title: "Announcements", desc: "Latest campus updates.", cta: "View Updates",
+      accent: "#f5b042", icon: Megaphone, onClick: () => setTool("announcements") },
   ];
 
   const comboYear = years.find((y) => !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id));
@@ -507,16 +520,51 @@ export default function Dashboard() {
 
       {/* ── Quick access carousel — full width, clear of the rail ── */}
       <div className="mt-8">
-          <div className="flex items-baseline justify-between mb-3 px-0.5">
+          <div className="flex items-center justify-between mb-3 px-0.5">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
-            <span className="text-[11px] text-zinc-600 hidden sm:block">swipe →</span>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => scrollQuick(-1)} aria-label="Scroll left"
+                className="w-8 h-8 rounded-full td-surface-2 hover:bg-white/10 flex items-center justify-center text-zinc-300 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button onClick={() => scrollQuick(1)} aria-label="Scroll right"
+                className="w-8 h-8 rounded-full td-surface-2 hover:bg-white/10 flex items-center justify-center text-zinc-300 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div className="flex gap-4 overflow-x-auto pt-3 pb-5 pl-2 -mr-4 pr-4 mb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
+          <div ref={quickRef} className="flex gap-4 overflow-x-auto pt-3 pb-5 pl-2 -mr-4 pr-4 mb-2 snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden">
             {banners.map((b) => (
+              b.split ? (
+                /* one tile, two independently-tappable halves */
+                <div
+                  key={b.key}
+                  className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[268px] h-[248px] sm:h-[268px] rounded-[26px] overflow-hidden flex flex-col text-left"
+                >
+                  {b.split.map((s, si) => (
+                    <button
+                      key={s.title}
+                      onClick={s.onClick}
+                      className={`relative z-10 flex-1 min-h-0 p-5 flex flex-col justify-between text-left hover:bg-white/[0.06] transition-colors ${si === 0 ? "border-b border-black/10 dark:border-white/10" : ""}`}
+                    >
+                      <div>
+                        <div className="td-bw-chip w-8 h-8 rounded-xl flex items-center justify-center mb-2.5">
+                          <s.icon className="w-4 h-4" strokeWidth={1.7} />
+                        </div>
+                        <p className="td-bw-soft text-[9px] font-semibold tracking-[0.22em] uppercase mb-1">{s.overline}</p>
+                        <h3 className="text-[17px] font-semibold leading-tight tracking-tight">{s.title}</h3>
+                      </div>
+                      <span className="td-banner-cta inline-flex items-center gap-1.5 text-[12px] font-semibold">
+                        Open <span className="td-bw-chip w-5 h-5 rounded-full flex items-center justify-center"><ArrowRight className="w-2.5 h-2.5" /></span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
               <button
                 key={b.key}
                 onClick={b.onClick}
-                className="td-banner td-banner-bw snap-start shrink-0 w-[230px] sm:w-[250px] h-[280px] sm:h-[300px] rounded-[26px] p-5 flex flex-col justify-between text-left"
+                className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[268px] h-[248px] sm:h-[268px] rounded-[26px] p-5 flex flex-col justify-between text-left"
               >
                 <div className="relative z-10">
                   <div className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center mb-4">
@@ -531,6 +579,7 @@ export default function Dashboard() {
                 </div>
                 <b.icon className="td-banner-icon absolute -bottom-6 -right-5 w-32 h-32" style={{ opacity: 0.05 }} strokeWidth={1} />
               </button>
+              )
             ))}
           </div>
       </div>
