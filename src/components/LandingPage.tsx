@@ -546,39 +546,6 @@ export default function LandingPage() {
         </div>
       </Section>
 
-      {/* ── Also from us: Agent Fury + FolioFYX — vibrant solid cards ── */}
-      <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
-        <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-          <a href="https://agentfury.foliofyx.in/" target="_blank" rel="noopener noreferrer"
-            className="group rounded-[28px] p-8 bg-white text-black hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)]">
-            <div className="flex items-start justify-between">
-              <span className="w-14 h-14 rounded-2xl bg-black/[0.05] border border-black/10 flex items-center justify-center mb-5">
-                <img src={agentFuryLogo} alt="Agent Fury" className="w-9 h-9 rounded-lg" draggable={false} />
-              </span>
-              <ArrowUpRight className="w-5 h-5 text-black/35 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-            </div>
-            <h3 className="font-extrabold text-2xl tracking-tight">Agent Fury</h3>
-            <p className="text-black/60 text-sm leading-relaxed mt-2">
-              Create your own AI agents — e.g. an email fetch &amp; summarizer that works while you study.
-            </p>
-            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-black/70">agentfury.foliofyx.in</p>
-          </a>
-
-          <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
-            className="group rounded-[28px] p-8 bg-white/[0.04] backdrop-blur-xl border-2 border-white/25 text-white hover:-translate-y-1.5 hover:border-white/50 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)]">
-            <div className="flex items-start justify-between mb-5">
-              <span className="h-14" aria-hidden />
-              <ArrowUpRight className="w-5 h-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-            </div>
-            <img src={fyxLogo} alt="FolioFYX" className="h-9 w-auto brightness-0 invert" draggable={false} />
-            <p className="text-white/60 text-sm leading-relaxed mt-3">
-              Build a standout portfolio site in minutes — because placements don't wait for perfect.
-            </p>
-            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-6 text-white/70">foliofyx.in</p>
-          </a>
-        </div>
-      </Section>
-
       {/* ── Stacked-scroll cards (Fluently-style pile-up) — white band ── */}
       <section className="relative z-10 bg-[#F6F4EF] rounded-[44px] mx-3 sm:mx-5 my-12 py-16 text-black">
         <div className="max-w-4xl mx-auto px-5">
@@ -611,6 +578,39 @@ export default function LandingPage() {
         ))}
         </div>
       </section>
+
+      {/* ── Also from us: Agent Fury + FolioFYX — full-width B&W boxes ── */}
+      <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
+        <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto">
+          <a href="https://agentfury.foliofyx.in/" target="_blank" rel="noopener noreferrer"
+            className="group rounded-[28px] p-8 sm:p-10 bg-white text-black hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)] flex flex-col">
+            <div className="flex items-start justify-between">
+              <span className="w-14 h-14 rounded-2xl bg-black/[0.05] border border-black/10 flex items-center justify-center mb-5">
+                <img src={agentFuryLogo} alt="Agent Fury" className="w-9 h-9 rounded-lg" draggable={false} />
+              </span>
+              <ArrowUpRight className="w-5 h-5 text-black/35 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+            </div>
+            <h3 className="font-extrabold text-2xl sm:text-[1.75rem] tracking-tight">Agent Fury</h3>
+            <p className="text-black/60 text-[15px] leading-relaxed mt-2.5 flex-1">
+              Create your own AI agents — e.g. an email fetch &amp; summarizer that works while you study.
+            </p>
+            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-8 text-black/70">agentfury.foliofyx.in</p>
+          </a>
+
+          <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
+            className="group rounded-[28px] p-8 sm:p-10 bg-white/[0.04] backdrop-blur-xl border-2 border-white/25 text-white hover:-translate-y-1.5 hover:border-white/50 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col">
+            <div className="flex items-start justify-between mb-5">
+              <span className="h-14" aria-hidden />
+              <ArrowUpRight className="w-5 h-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+            </div>
+            <img src={fyxLogo} alt="FolioFYX" className="h-9 w-auto brightness-0 invert" draggable={false} />
+            <p className="text-white/60 text-[15px] leading-relaxed mt-3.5 flex-1">
+              Build a standout portfolio site in minutes — because placements don't wait for perfect.
+            </p>
+            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-8 text-white/70">foliofyx.in</p>
+          </a>
+        </div>
+      </Section>
 
       {/* ── FAQ ── */}
       <Section eyebrow="Questions" title="Everything you'd ask us anyway.">
