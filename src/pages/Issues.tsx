@@ -106,6 +106,7 @@ export default function Issues() {
       <PageHero
         eyebrow="Team"
         eyebrowIcon={Bug}
+        book={false}
         title="Issues & bugs"
         subtitle="Anyone can report; the team triages here. Mark Done when fixed, and clear resolved ones to keep the database light."
       />

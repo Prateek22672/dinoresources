@@ -51,6 +51,7 @@ export default function Purchases() {
       <PageHero
         eyebrow="Your access"
         eyebrowIcon={Receipt}
+        book={{ cover: "#D9A441", spine: "#B4832E", title: "PYQ" }}
         title="Your unlocks"
         subtitle="Everything you've unlocked, in one place."
         stats={[

@@ -110,6 +110,7 @@ export default function Store() {
       <PageHero
         eyebrow="Subjects"
         eyebrowIcon={Sparkles}
+        book={{ cover: "#0F9D9A", spine: "#0B7A78", title: "COA" }}
         title="Unlock exactly what you need."
         subtitle="Unlock one subject, or open your whole year at once. One payment, permanent access — notes, PYQs and Study-With-AI included."
         stats={[

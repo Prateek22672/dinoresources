@@ -189,6 +189,7 @@ export default function Contributor() {
       <PageHero
         eyebrow="Contributor"
         eyebrowIcon={PenSquare}
+        book={{ cover: "#7c6cf0", spine: "#5b4fc4", title: "FLAT" }}
         title="Contributor Studio"
         subtitle="Add Study-With-AI Q&A, upload materials and drop editorial videos — unit by unit."
         actions={

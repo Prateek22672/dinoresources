@@ -2,6 +2,7 @@ import { Heart, Users, ArrowUp, ArrowRight, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import FallingText from "@/components/reactbits/FallingText";
+import FloatingBook from "@/components/brand/FloatingBook";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import fyxLogo from "@/assets/fyx.png";
 
@@ -12,6 +13,14 @@ export default function Footer() {
     <footer className="mt-12 td-surface rounded-[32px] p-7 sm:p-10 relative overflow-hidden">
       {/* top sheen */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-white/10" />
+
+      {/* decorative accent blob + floating books, peeking from the top-right */}
+      <div aria-hidden className="absolute -top-24 -right-16 w-80 h-72 opacity-[0.35] pointer-events-none"
+        style={{ background: "rgb(var(--td-accent-rgb) / 0.2)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(10px)" }} />
+      <FloatingBook cover="#0F9D9A" spine="#0B7A78" title="COA" rot={14} float={2}
+        className="absolute -top-14 right-24 w-[120px] z-0 hidden lg:block pointer-events-none opacity-90" />
+      <FloatingBook cover="#1E2B7A" spine="#E0559B" title="DBMS" rot={-8} float={1}
+        className="absolute -top-8 -right-6 w-[140px] z-0 hidden lg:block pointer-events-none" />
 
       {/* Top: brand + actions */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-8 mb-8">
@@ -63,8 +72,8 @@ export default function Footer() {
           never cross it; drag the words around for fun */}
       <div className="hidden md:block h-36 mt-2 mb-6 text-zinc-300 font-semibold">
         <FallingText
-          text="Notes PYQs SGPA Attendance Study with AI Subjects Combos Library — TeamDino"
-          highlightWords={["AI", "TeamDino", "SGPA", "Combos"]}
+          text="Notes PYQs SGPA Attendance Study with AI Subjects Full-Year Library — TeamDino"
+          highlightWords={["AI", "TeamDino", "SGPA", "Full-Year"]}
           trigger="scroll"
           gravity={0.55}
           fontSize="1.6rem"
