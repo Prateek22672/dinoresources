@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TeamDino — Features by Role</title>
+<style>
+  :root {
+    --ink:#18161f; --muted:#615c6e; --line:#e8e5ef; --paper:#ffffff;
+    --accent:#7c6cf0; --accent-soft:#efecfb; --yellow:#FFB61E;
+    --stu:#5b8def; --con:#d9a441; --adm:#7c6cf0; --new:#12a150;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    color:var(--ink); background:#f3f1f8; line-height:1.55; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .sheet { max-width:920px; margin:0 auto; padding:40px 44px 64px; background:var(--paper); }
+
+  /* Cover */
+  .cover { background:var(--yellow); border-radius:24px; padding:40px; position:relative; overflow:hidden; margin-bottom:34px; }
+  .cover .blob { position:absolute; border-radius:50% 46% 58% 42%/54% 44% 56% 46%; background:#FCD34D; opacity:.6; }
+  .cover h1 { font-size:44px; font-weight:900; letter-spacing:-1.5px; margin:0 0 6px; color:#0a0a0a; position:relative; }
+  .cover .tag { display:inline-block; background:#0a0a0a; color:#fff; font-weight:800; font-size:12px; letter-spacing:1.5px; padding:6px 14px; border-radius:999px; margin-bottom:18px; position:relative; }
+  .cover p { font-size:16px; color:rgba(0,0,0,.72); max-width:560px; margin:8px 0 0; font-weight:600; position:relative; }
+  .cover .meta { margin-top:22px; font-size:13px; font-weight:700; color:rgba(0,0,0,.6); position:relative; }
+
+  h2 { font-size:22px; font-weight:800; letter-spacing:-.4px; margin:34px 0 4px; display:flex; align-items:center; gap:10px; }
+  h2 .bar { width:6px; height:22px; border-radius:4px; background:var(--accent); display:inline-block; }
+  .lead { color:var(--muted); margin:0 0 18px; font-size:14.5px; }
+
+  /* Legend */
+  .legend { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 22px; }
+  .chip { font-size:11px; font-weight:800; padding:4px 11px; border-radius:999px; letter-spacing:.3px; }
+  .chip.stu { background:#e7eefb; color:#2f62c4; }
+  .chip.con { background:#faf1dd; color:#9a6c15; }
+  .chip.adm { background:var(--accent-soft); color:#5b4fc4; }
+  .chip.new { background:#dcf5e6; color:var(--new); }
+
+  /* Matrix */
+  table { width:100%; border-collapse:collapse; font-size:13px; margin:6px 0 10px; }
+  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); }
+  thead th { background:#f6f4fb; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+  td.c { text-align:center; font-weight:800; }
+  .yes { color:var(--new); }
+  .no { color:#c9c6d2; }
+  tbody tr:nth-child(even) td { background:#fbfaff; }
+  .catrow td { background:var(--accent-soft) !important; font-weight:800; color:#5b4fc4; font-size:11px; text-transform:uppercase; letter-spacing:.6px; }
+
+  /* Feature cards */
+  .cat { margin-top:30px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .card { border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:#fff; break-inside:avoid; }
+  .card .top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .card h3 { font-size:15px; font-weight:800; margin:0; letter-spacing:-.2px; }
+  .card .desc { font-size:13px; color:#403b4d; margin:6px 0 0; }
+  .card .how { font-size:12.5px; color:var(--muted); margin:10px 0 0; padding-top:9px; border-top:1px dashed var(--line); }
+  .card .how b { color:var(--accent); }
+  .card .roles { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+
+  .foot { margin-top:40px; padding-top:16px; border-top:2px solid var(--line); font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
+
+  @page { size:A4; margin:14mm; }
+  @media print {
+    body { background:#fff; }
+    .sheet { max-width:none; padding:0; }
+    .cat, .card, table { break-inside:avoid; }
+    h2 { break-after:avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- Cover -->
+  <div class="cover">
+    <div class="blob" style="width:260px;height:220px;top:-70px;left:-40px;"></div>
+    <div class="blob" style="width:200px;height:180px;bottom:-80px;right:60px;"></div>
+    <span class="tag">#TheNewTeamDino</span>
+    <h1>TeamDino — Features by Role</h1>
+    <p>Everything the platform now does, and who it's for. Share this with the team so everyone knows what we offer — for students, contributors and admins.</p>
+    <div class="meta">Internal reference · updated 24 Jul 2026</div>
+  </div>
+
+  <p class="lead">TeamDino is an <b>additional tool in a student's exam prep — but a must-have one</b>: the single place that tells them how ready they are, explains what they missed, and keeps them organised. Below: a quick who-gets-what matrix, then every feature with a one-line "how to use".</p>
+
+  <div class="legend">
+    <span class="chip stu">Students</span>
+    <span class="chip con">Contributors</span>
+    <span class="chip adm">Admins</span>
+    <span class="chip new">NEW / updated</span>
+  </div>
+
+  <!-- Matrix -->
+  <h2><span class="bar"></span>Who gets what</h2>
+  <p class="lead">Contributors also have everything students do; admins have everything.</p>
+  <table>
+    <thead><tr><th>Feature</th><th style="text-align:center">Students</th><th style="text-align:center">Contributors</th><th style="text-align:center">Admins</th></tr></thead>
+    <tbody>
+      <tr class="catrow"><td colspan="4">Study &amp; learn</td></tr>
+      <tr><td>Study-With-AI in every unit</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Editorial videos by topic</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>PYQs &amp; curated materials</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+
+      <tr class="catrow"><td colspan="4">Track progress</td></tr>
+      <tr><td>Exam readiness score</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Exam countdown calendar</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>SGPA / CGPA / attendance tools</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Streak &amp; productivity</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+
+      <tr class="catrow"><td colspan="4">Get help</td></tr>
+      <tr><td>DinoBot AI assistant</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Report an issue</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Support tickets</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+
+      <tr class="catrow"><td colspan="4">Commerce &amp; personalise</td></tr>
+      <tr><td>Unlock subjects / full-year packs</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Smart checkout, coupons, Spin &amp; Win</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Accent themes &amp; light/dark</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+
+      <tr class="catrow"><td colspan="4">Create content</td></tr>
+      <tr><td>Contributor Studio (Q&amp;A, materials, videos)</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Topic organisation</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Issues board (triage)</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+
+      <tr class="catrow"><td colspan="4">Run the platform</td></tr>
+      <tr><td>Admin Console (15 sections + search)</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+      <tr><td>Grant / revoke access</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+      <tr><td>Pricing, charges &amp; coupons</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+      <tr><td>Notices &amp; What's-New popup</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+      <tr><td>Storage report &amp; cleanup</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+      <tr><td>Security &amp; feature flags</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Detailed sections generated below -->
+  <div id="detail"></div>
+
+  <div class="foot">
+    <span>TeamDino · Features by Role</span>
+    <span>#TheNewTeamDino · Confidential — internal use</span>
+  </div>
+</div>
+
+<script>
+// Feature catalog (kept in sync with src/data/features.ts)
+const FEATURES = [{"category":"Study & Learn","roles":["student"],"isNew":true,"name":"Study-With-AI in every unit","desc":"Unit-wise Q&A explained clearly — mapped to your exact syllabus, not generic chatbot rambling.","how":"Open any subject → pick a unit → Study With AI tab. Tap a question to expand the answer."},{"category":"Study & Learn","roles":["student"],"isNew":true,"name":"Editorial videos by topic","desc":"Curated explainer videos, grouped topic-by-topic, playing in a compact in-site mini-player.","how":"Subject → unit → Editorial tab. Tap any video card to play it right there."},{"category":"Study & Learn","roles":["student"],"name":"Topic picker inside units","desc":"Filter a unit down to a single topic so you study exactly what you need.","how":"Inside a unit, tap a topic chip to focus; tap 'All topics' to see everything."},{"category":"Study & Learn","roles":["student"],"name":"PYQs & materials","desc":"Previous-year questions and curated materials for every subject and unit.","how":"Subject → PYQs, or the Resources tab in any unit."},{"category":"Study & Learn","roles":["student"],"isNew":true,"name":"Beautiful, readable answers","desc":"Notes render with smart callouts (Tip / Note / Example), clean tables and copy-able code — even from plain text.","how":"It's automatic — every Study-With-AI answer is formatted for easy reading."},{"category":"Track your progress","roles":["student"],"isNew":true,"name":"Exam readiness score","desc":"A live score of how ready you are per subject, based on what you've actually studied. The one tool that tells you where you stand.","how":"Dashboard → 'Your exam readiness'. It rises as you open units, Q&A and PYQs."},{"category":"Track your progress","roles":["student"],"isNew":true,"name":"Exam countdown calendar","desc":"Mark your exam dates and get a live 'N days to go' countdown, colour-coded as it nears.","how":"Dashboard → calendar on the right → tap a date to mark an exam."},{"category":"Track your progress","roles":["student"],"name":"SGPA & CGPA calculators","desc":"Estimate your semester result and predict your CGPA with the GITAM grade chart.","how":"Dashboard → Calculators tile, or the SGPA/Attendance quick links. Free, no login needed."},{"category":"Track your progress","roles":["student"],"name":"Attendance planner","desc":"See exactly how many classes you can skip and still hold 75%.","how":"Open the Attendance calculator from the Calculators tile."},{"category":"Track your progress","roles":["student"],"name":"Streak & productivity","desc":"A daily login streak and a 7-day activity chart to keep you consistent.","how":"Dashboard → Overall information & Productivity cards."},{"category":"Get help","roles":["student","contributor","admin"],"isNew":true,"name":"DinoBot — AI help assistant","desc":"An assistant that answers questions AND does things for you: change your theme, navigate, add to cart, and raise a ticket after interviewing you — no random pop-ups.","how":"Header → ⚡ Instant Help. Ask it anything, or tap a suggested action."},{"category":"Get help","roles":["student","contributor","admin"],"isNew":true,"name":"Report an issue","desc":"Log a bug or suggestion in seconds; it reaches the team and you can track its status.","how":"Left rail → 'Report an issue' (or inside DinoBot). Pick a category, describe it, send."},{"category":"Get help","roles":["student","contributor","admin"],"name":"Support tickets","desc":"Raise a formal ticket for payment or access problems and follow it to resolution.","how":"DinoBot → 'Raise a ticket', or the Instant Help flow."},{"category":"Get help","roles":["student","contributor","admin"],"isNew":true,"name":"Notices & What's-New","desc":"Important alerts appear in your header bell; a welcome popup surfaces the latest updates.","how":"Watch the 🔔 bell and the bottom-right What's-New popup."},{"category":"Unlock & access","roles":["student"],"isNew":true,"name":"Subjects & full-year packs","desc":"Unlock a single subject, or open your whole year at once — one payment, permanent access.","how":"Rail → Subjects. Add to cart, then unlock. Owned subjects live in My Library."},{"category":"Unlock & access","roles":["student"],"isNew":true,"name":"Smart checkout","desc":"A clear breakdown of charges (GST, optional donation) and coupons, with a celebratory unlock.","how":"Cart → review the breakdown → Unlock now. Apply a coupon for a discount."},{"category":"Unlock & access","roles":["student"],"isNew":true,"name":"Spin & Win","desc":"A chance to win a discount on your purchase via a fair, admin-tuned prize wheel.","how":"In the Cart, tap Spin & Win when it's offered."},{"category":"Unlock & access","roles":["student"],"name":"My Access history","desc":"Every unlock in one clear record.","how":"Rail → My Access."},{"category":"Make it yours","roles":["student","contributor","admin"],"isNew":true,"name":"Accent themes","desc":"Recolour the whole app — violet, teal, sapphire, gold or rose — in light or dark mode.","how":"Header → palette icon → pick your accent. Toggle light/dark too."},{"category":"Make it yours","roles":["student","contributor","admin"],"isNew":true,"name":"Collapsible side rail","desc":"Shrink the navigation to icons for more room on dense pages.","how":"Tap the « chevron at the top of the left rail."},{"category":"For contributors","roles":["contributor","admin"],"isNew":true,"name":"Contributor Studio","desc":"Add Study-With-AI Q&A, upload materials and drop editorial videos — unit by unit, topic by topic.","how":"Rail → Contribute. Pick a subject & unit, then add content."},{"category":"For contributors","roles":["contributor","admin"],"isNew":true,"name":"Topic organisation","desc":"Create topics within a unit and file Q&A, materials and videos under them.","how":"Contribute → manage the topics strip, then assign each item a topic."},{"category":"For contributors","roles":["contributor","admin"],"isNew":true,"name":"Issues board","desc":"Triage reported bugs — accept, set status, mark Done — alongside the team.","how":"Rail → Issues (visible to contributors & admins)."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Admin Console with search","desc":"15 sections — users, pricing, coupons, charges, notices, payments, security and more — with a search-to-jump box.","how":"Rail → Admin. Use the search bar to jump to any section instantly."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Grant / revoke access","desc":"Give or remove subject/year access for any user, fully audited.","how":"Admin → Users & Access → search a user → grant or revoke."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Configurable pricing & charges","desc":"Set subject and full-year prices, GST, optional donations and coupons — no code needed.","how":"Admin → Subjects & Pricing, Charges & GST, Coupons."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Notices & What's-New control","desc":"Message one student or everyone, and publish a welcome / What's-New popup that shows to all.","how":"Admin → Notices → compose a notice or edit the What's-New popup, then Publish."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"DinoBot brain editor","desc":"Tune the assistant's instructions and knowledge from the console.","how":"Admin → Support Tickets → HelpBot brain."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Storage report & cleanup","desc":"See exactly how much space each operational table uses and clear resolved issues in one click.","how":"Issues page → Storage panel; Admin → Database for deeper cleanup."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Security controls","desc":"Set the security level, purchase-validity window and strict single-device login.","how":"Admin → Security."},{"category":"For admins","roles":["admin"],"isNew":true,"name":"Feature flags","desc":"Turn features (Jobs, Agent, Spin, Study-With-AI…) on or off across the whole site.","how":"Admin → Cards & Features."}];
+const CATS = ["Study & Learn","Track your progress","Get help","Unlock & access","Make it yours","For contributors","For admins"];
+const roleChip = { student:["stu","Students"], contributor:["con","Contributors"], admin:["adm","Admins"] };
+const detail = document.getElementById("detail");
+CATS.forEach(cat => {
+  const items = FEATURES.filter(f => f.category === cat);
+  if (!items.length) return;
+  const sec = document.createElement("div");
+  sec.className = "cat";
+  sec.innerHTML = '<h2><span class="bar"></span>'+cat+'</h2><div class="grid">'+
+    items.map(f => (
+      '<div class="card"><div class="top"><h3>'+f.name+'</h3>'+
+      (f.isNew?'<span class="chip new">NEW</span>':'')+'</div>'+
+      '<p class="desc">'+f.desc+'</p>'+
+      '<p class="how"><b>How:</b> '+f.how+'</p>'+
+      '<div class="roles">'+f.roles.map(r=>'<span class="chip '+roleChip[r][0]+'">'+roleChip[r][1]+'</span>').join('')+'</div></div>'
+    )).join('')+'</div>';
+  detail.appendChild(sec);
+});
+</script>
+</body>
+</html>
