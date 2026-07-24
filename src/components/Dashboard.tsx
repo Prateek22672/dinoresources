@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { formatPaise } from "@/lib/money";
 import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@/lib/recent";
+import { getReadiness, readinessColor } from "@/lib/readiness";
 
 import AppShell from "@/components/layout/AppShell";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
@@ -68,6 +69,14 @@ export default function Dashboard() {
   const [recent, setRecent] = useState<RecentSubject | null>(null);
   const [streak, setStreak] = useState(0);
   const [activity, setActivity] = useState<string[]>([]);
+
+  // readiness refresh tick — recompute rings when engagement changes
+  const [readyTick, setReadyTick] = useState(0);
+  useEffect(() => {
+    const h = () => setReadyTick((t) => t + 1);
+    window.addEventListener("td:readiness-changed", h);
+    return () => window.removeEventListener("td:readiness-changed", h);
+  }, []);
 
   // quick-access carousel — arrow buttons step by roughly one card
   const quickRef = useRef<HTMLDivElement>(null);
@@ -479,6 +488,50 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ── Exam readiness — the "how ready am I?" USP ── */}
+          {owned.length > 0 && (() => {
+            const rs = owned.map((s) => ({ s, r: getReadiness(s.id) }));
+            const avg = Math.round(rs.reduce((n, x) => n + x.r.pct, 0) / rs.length);
+            const started = rs.filter((x) => x.r.pct > 0).length;
+            const nx = nextExam;
+            const nxDays = nx ? daysTo(nx.exam_date) : null;
+            void readyTick; // recompute on engagement
+            return (
+              <section className="mb-8">
+                <div className="td-surface rounded-[24px] p-5 relative overflow-hidden">
+                  <div aria-hidden className="absolute -top-14 -right-10 w-44 h-40 opacity-40 pointer-events-none"
+                    style={{ background: "rgb(var(--td-accent-rgb) / 0.18)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(8px)" }} />
+                  <div className="relative z-10 flex items-center gap-5">
+                    {/* overall ring */}
+                    <div className="relative w-24 h-24 shrink-0">
+                      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+                        <circle cx="50" cy="50" r="42" fill="none" stroke={readinessColor(avg)} strokeWidth="9" strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 42} strokeDashoffset={2 * Math.PI * 42 * (1 - avg / 100)}
+                          style={{ transition: "stroke-dashoffset .6s ease" }} />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-extrabold text-white leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>{avg}%</span>
+                        <span className="text-[9px] font-bold tracking-[0.15em] text-zinc-500 uppercase mt-0.5">ready</span>
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-bold">Your exam readiness</p>
+                      <p className="text-zinc-500 text-xs mt-0.5">{started} of {owned.length} subject{owned.length === 1 ? "" : "s"} in progress</p>
+                      {nx && nxDays != null && (
+                        <p className="text-zinc-300 text-[13px] mt-2.5">
+                          <span className="td-accent-text font-semibold">{nx.title}</span> in <strong className="text-white">{nxDays === 0 ? "today" : nxDays === 1 ? "1 day" : `${nxDays} days`}</strong>
+                          {nxDays >= 0 && nxDays <= 7 && avg < 80 && <span className="text-amber-400"> · time to push 💪</span>}
+                        </p>
+                      )}
+                      <p className="text-zinc-600 text-[11px] mt-2">Open units, Q&amp;A and PYQs to raise your score — we're the tool that tells you exactly where you stand.</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+
           {/* ── My subjects (reference: "My Courses" rows) ── */}
           <section className="mb-8">
             <div className="flex items-baseline justify-between mb-3">
@@ -496,7 +549,10 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="td-surface rounded-[24px] overflow-hidden">
-                {owned.slice(0, 6).map((s) => (
+                {owned.slice(0, 6).map((s) => {
+                  const r = getReadiness(s.id);
+                  void readyTick;
+                  return (
                   <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors group">
                     <span className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-white/60 font-black" style={{ background: grad(s.name) }}>
@@ -504,11 +560,21 @@ export default function Dashboard() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-white text-sm font-semibold truncate">{s.name}</span>
-                      <span className="block text-zinc-600 text-[11px]">{yearName(s.year_id) ?? "Subject"} · 5 units</span>
+                      <span className="block text-zinc-600 text-[11px]">{yearName(s.year_id) ?? "Subject"} · {r.pct > 0 ? `${r.pct}% ready` : "Not started"}</span>
+                    </span>
+                    {/* mini readiness ring */}
+                    <span className="relative w-9 h-9 shrink-0" title={`${r.pct}% ready`}>
+                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="3.5" />
+                        <circle cx="18" cy="18" r="15" fill="none" stroke={readinessColor(r.pct)} strokeWidth="3.5" strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - r.pct / 100)} />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-300" style={{ fontVariantNumeric: "tabular-nums" }}>{r.pct}</span>
                     </span>
                     <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors shrink-0" />
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>

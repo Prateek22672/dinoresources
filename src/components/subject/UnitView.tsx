@@ -6,6 +6,7 @@ import {
   Sparkles, FileText, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
+import { markStudied, ReadinessSection } from "@/lib/readiness";
 
 interface ResourceRow {
   id: string; title: string; type: "pdf" | "youtube" | "link"; url: string;
@@ -43,6 +44,10 @@ function ytId(url: string): string | null {
 export default function UnitView({ subjectId, subjectName, section }: UnitViewProps) {
   const isUnit = typeof section === "number";
   const [tab, setTab] = useState<UnitTab>("ai");
+
+  // readiness section key for this view
+  const readinessKey: ReadinessSection =
+    section === "syllabus" ? "syllabus" : section === "pyq" ? "pyq" : `unit-${section}`;
 
   const [qa, setQa] = useState<SubjectQARow[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
@@ -109,7 +114,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
         <div className="flex items-center gap-3 p-4">
           <div className="w-10 h-10 rounded-xl td-surface-2 flex items-center justify-center shrink-0"><Icon className="w-4.5 h-4.5 text-zinc-300" /></div>
           <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{r.title}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
-          {embed && <button onClick={() => setOpenMaterial(open ? null : r.id)} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
+          {embed && <button onClick={() => { setOpenMaterial(open ? null : r.id); markStudied(subjectId, readinessKey); }} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
           <a href={r.url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
         </div>
         {open && embed && <div className="border-t border-white/5 bg-black/40"><iframe src={embed} title={r.title} className="w-full h-[70vh]" allow="autoplay" allowFullScreen /></div>}
@@ -231,7 +236,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
                     const open = openId === item.id;
                     return (
                       <div key={item.id} className={`td-surface rounded-2xl overflow-hidden transition-shadow ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
-                        <button onClick={() => setOpenId(open ? null : item.id)} className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left">
+                        <button onClick={() => { setOpenId(open ? null : item.id); markStudied(subjectId, readinessKey); }} className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left">
                           <span
                             className="shrink-0 w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center"
                             style={open
@@ -304,7 +309,7 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
                             const vid = ytId(e.youtube_url);
                             const active = edPlaying === e.id;
                             return (
-                              <button key={e.id} onClick={() => setEdPlaying(active ? null : e.id)}
+                              <button key={e.id} onClick={() => { setEdPlaying(active ? null : e.id); markStudied(subjectId, readinessKey); }}
                                 className={`td-surface td-card-click rounded-2xl overflow-hidden text-left group ${active ? "ring-2 ring-[var(--td-accent)]" : ""}`}>
                                 <div className="relative aspect-video bg-black">
                                   {vid
