@@ -17,8 +17,8 @@ export default function Footer() {
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-8 mb-8">
         <div className="max-w-sm">
           <Link to="/" onClick={scrollToTop} className="flex items-center gap-3 mb-3 w-fit group">
-            <div className="w-11 h-11 flex items-center justify-center rounded-2xl bg-zinc-900 border border-white/10 shadow-sm group-hover:scale-105 transition-transform">
-              <img src={dinoLogo} alt="Team Dino" className="w-6 h-6 opacity-90" />
+            <div className="td-nav-chip w-11 h-11 flex items-center justify-center rounded-2xl shadow-sm group-hover:scale-105 transition-transform">
+              <img src={dinoLogo} alt="Team Dino" className="td-nav-logo w-6 h-6 opacity-90" />
             </div>
             <span className="text-xl font-bold text-white tracking-tight">Team Dino</span>
           </Link>

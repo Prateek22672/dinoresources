@@ -64,8 +64,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   ];
 
   const linkClass = (to: string, base = "") =>
-    `${base} flex items-center gap-1.5 font-medium transition-colors ${
-      isActive(to) ? "bg-white text-black" : "text-zinc-400 hover:text-white hover:bg-white/5"
+    `${base} td-nav-item flex items-center gap-1.5 font-medium transition-colors ${
+      isActive(to) ? "td-nav-item-on" : "text-zinc-400"
     }`;
 
   return (
@@ -76,8 +76,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
         <div className="container mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
           {/* Brand hidden on xl+ — the SideNav rail owns the identity there (revert: drop xl:hidden) */}
           <Link to="/dashboard" className="flex xl:hidden items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center">
-              <img src={dinoLogo} alt="TeamDino" className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-2xl td-nav-chip flex items-center justify-center">
+              <img src={dinoLogo} alt="TeamDino" className="td-nav-logo w-5 h-5" />
             </div>
             <span className="font-bold tracking-tight hidden sm:block">TeamDino</span>
           </Link>

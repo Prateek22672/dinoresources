@@ -65,7 +65,7 @@ export function AnnouncementsSection({ isAdmin }: AnnouncementsSectionProps) {
           {announcements.map((announcement) => (
             <div
               key={announcement.id}
-              className="group relative bg-[#121214] border border-white/5 rounded-[24px] p-6 transition-all duration-300 hover:bg-[#18181b] hover:border-white/10 hover:shadow-lg"
+              className="group relative td-surface rounded-[24px] p-6 transition-all duration-300 hover:shadow-lg"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                 <h3 className="font-semibold text-lg text-zinc-100 leading-snug break-words">

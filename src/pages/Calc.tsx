@@ -29,7 +29,7 @@ export default function Calc({ initial = "sgpa" }: { initial?: Tab }) {
       <header className="sticky top-0 z-40 td-glass">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center"><img src={dinoLogo} alt="TeamDino" className="w-5 h-5" /></div>
+            <div className="w-9 h-9 rounded-2xl td-nav-chip flex items-center justify-center"><img src={dinoLogo} alt="TeamDino" className="td-nav-logo w-5 h-5" /></div>
             <span className="font-bold tracking-tight text-white">TeamDino</span>
           </Link>
           <Link to="/" className="td-btn-ghost px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Home</Link>

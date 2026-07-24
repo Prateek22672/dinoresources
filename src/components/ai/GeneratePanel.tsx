@@ -107,7 +107,7 @@ export function GeneratePanel({
                 <button
                   key={topic.id}
                   onClick={() => startGenerate(topic)}
-                  className="rounded-2xl border border-white/5 bg-[#111113] hover:border-white/20 hover:bg-[#18181b] p-4 text-left flex flex-col justify-between transition-all min-h-[100px]"
+                  className="td-surface td-card-click rounded-2xl p-4 text-left flex flex-col justify-between transition-all min-h-[100px]"
                 >
                   <BookOpen className="w-4 h-4 text-zinc-500 mb-2.5" />
                   <div>
