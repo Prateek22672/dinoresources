@@ -228,6 +228,38 @@ export async function notExpiredFilter(): Promise<string | null> {
   return ok ? `expires_at.is.null,expires_at.gt.${new Date().toISOString()}` : null;
 }
 
+// ─── Issue tracker ──────────────────────────────────────────────────────────
+export type IssueCategory = "bug" | "payment" | "content" | "access" | "suggestion";
+export type IssueStatus = "new" | "confirmed" | "in_progress" | "done" | "dismissed" | "duplicate";
+export type IssueSeverity = "low" | "normal" | "high" | "critical";
+
+export interface IssueRow {
+  id: string;
+  title: string;
+  description: string;
+  category: IssueCategory;
+  status: IssueStatus;
+  severity: IssueSeverity;
+  page_url: string | null;
+  device: string | null;
+  reporter_id: string | null;
+  reporter_name: string | null;
+  assignee_id: string | null;
+  upvotes: number;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
+export interface IssueCommentRow {
+  id: string;
+  issue_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  body: string;
+  created_at: string;
+}
+
 /** Invoke a revamp edge function (forwards the user's JWT automatically). */
 export async function invokeFn<T = unknown>(
   name: string,

@@ -2,11 +2,12 @@ import { ReactNode, useState, useEffect, lazy, Suspense } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
-  Zap, Menu, X, Briefcase,
+  Zap, Menu, X, Briefcase, Bug,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
-// DinoBot ships as its own chunk — loaded the first time someone opens it, kept mounted after.
+// DinoBot + the issue reporter ship as their own chunks — loaded on first use.
 const HelpBot = lazy(() => import("@/components/HelpBot"));
+const IssueReporter = lazy(() => import("@/components/issues/IssueReporter"));
 import AccentPicker from "@/components/layout/AccentPicker";
 import NoticesBell from "@/components/layout/NoticesBell";
 import SideNav from "@/components/layout/SideNav";
@@ -35,6 +36,13 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const [botLoaded, setBotLoaded] = useState(false); // chunk fetched on first open, stays mounted
   useEffect(() => { if (botOpen) setBotLoaded(true); }, [botOpen]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [issueOpen, setIssueOpen] = useState(false); // "Report an issue" — open to all users
+  // DinoBot (or anything) can open the reporter by dispatching this event
+  useEffect(() => {
+    const open = () => setIssueOpen(true);
+    window.addEventListener("td:open-issue-reporter", open);
+    return () => window.removeEventListener("td:open-issue-reporter", open);
+  }, []);
   // Side rail collapse (persisted) — icons-only mode frees width on dense pages
   const [navMin, setNavMin] = useState(() => {
     try { return localStorage.getItem("td:nav") === "min"; } catch { return false; }
@@ -91,8 +99,10 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             ))}
           </nav>
 
-          {/* Utilities — ordered least-used (left) → most-used (right) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto xl:pointer-events-auto">
+          {/* Utilities — ordered least-used (left) → most-used (right).
+              td-util-bar gives a blurred backdrop so these never visually collide
+              with content scrolling beneath the transparent xl header. */}
+          <div className="td-util-bar flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto xl:pointer-events-auto">
             <button onClick={signOut} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Sign out" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
@@ -134,10 +144,24 @@ export default function AppShell({ children, hideHeader = false }: { children: R
         </div>
       </div>
 
+      {/* Report an issue — floating, every page, all users. Auto-captures the page. */}
+      <button
+        onClick={() => setIssueOpen(true)}
+        className="fixed left-4 bottom-4 z-[90] td-util-bar-solid flex items-center gap-2 h-11 pl-3 pr-4 rounded-full text-[13px] font-semibold shadow-lg hover:scale-[1.03] active:scale-95 transition-transform"
+        aria-label="Report an issue"
+      >
+        <Bug className="w-4 h-4 td-accent-text" /> <span className="hidden sm:inline">Report an issue</span>
+      </button>
+
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       {(botOpen || botLoaded) && (
         <Suspense fallback={null}>
           <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} />
+        </Suspense>
+      )}
+      {issueOpen && (
+        <Suspense fallback={null}>
+          <IssueReporter open={issueOpen} onClose={() => setIssueOpen(false)} />
         </Suspense>
       )}
     </div>

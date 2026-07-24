@@ -3,7 +3,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import {
-  LayoutDashboard, Store, Library, Receipt, Briefcase, PenSquare, Shield, Settings, Info,
+  LayoutDashboard, Store, Library, Receipt, Briefcase, PenSquare, Shield, Settings, Info, Bug,
   ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 
@@ -27,6 +27,7 @@ export default function SideNav({
     { label: "Purchases", icon: Receipt, to: "/purchases" },
     ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
     ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),
+    ...((isContributor || isAdmin) ? [{ label: "Issues", icon: Bug, to: "/issues" }] : []),
     ...(isAdmin ? [{ label: "Admin", icon: Shield, to: "/admin" }] : []),
   ];
 

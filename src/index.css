@@ -392,6 +392,39 @@ iframe[src*="razorpay"] {
   :root:not(.dark) .td-banner-bw .td-bw-pill:hover { background: rgba(255,255,255,0.14); }
   :root:not(.dark) .td-banner-bw:hover { box-shadow: 0 28px 52px -26px rgba(0,0,0,0.45) !important; }
 
+  /* Header utility cluster — floating blurred toolbar on xl so page content
+     (e.g. the admin tab scroller) doesn't visually collide with the icons. */
+  @media (min-width: 1280px) {
+    .td-util-bar {
+      background: rgba(14,14,17,0.62);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 9999px;
+      padding: 0.3rem 0.4rem;
+    }
+    :root:not(.dark) .td-util-bar {
+      background: rgba(255,255,255,0.7);
+      border-color: rgb(var(--td-accent-rgb) / 0.12);
+      box-shadow: 0 6px 20px -12px rgba(23,10,60,0.25);
+    }
+  }
+
+  /* Solid blurred surface for the floating "Report an issue" button */
+  .td-util-bar-solid {
+    background: rgba(19,19,22,0.9);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #f7f7f8;
+  }
+  :root:not(.dark) .td-util-bar-solid {
+    background: rgba(255,255,255,0.92);
+    border-color: rgb(var(--td-accent-rgb) / 0.16);
+    color: #0d0d0d;
+    box-shadow: 0 10px 30px -12px rgba(23,10,60,0.3);
+  }
+
   /* ── Side navigation rail — themed, never hardcoded dark ──────────────
      The global light-mode inversion (.td-app .text-white → near-black) only
      works when the panel underneath it is light, so the rail must follow the

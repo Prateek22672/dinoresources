@@ -29,6 +29,7 @@ const Calc = lazy(() => import("./pages/Calc"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const JobsContributor = lazy(() => import("./pages/JobsContributor"));
 const Agent = lazy(() => import("./pages/Agent"));
+const Issues = lazy(() => import("./pages/Issues"));
 
 /** Minimal chunk-load fallback — matches the app's dark stage, no flash of white. */
 const RouteFallback = () => (
@@ -123,7 +124,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="td-theme">
     <TooltipProvider>
       <Toaster />
-      <Sonner position="top-center" theme="dark" />
+      <Sonner position="top-center" theme="dark" closeButton />
       <BrowserRouter>
         <SEO />
         <CartProvider>
@@ -157,6 +158,7 @@ const App = () => (
             {/* Role-gated dashboards */}
             <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><Admin /></ProtectedRoute>} />
             <Route path="/contributor" element={<ProtectedRoute roles={["contributor", "admin"]}><Contributor /></ProtectedRoute>} />
+            <Route path="/issues" element={<ProtectedRoute roles={["contributor", "admin"]}><Issues /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

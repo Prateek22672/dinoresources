@@ -7,7 +7,7 @@ import { useAccent } from "@/hooks/useAccent";
 import { useCart } from "@/context/CartContext";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
-import { Send, X, RefreshCw, Ticket, ArrowRight, Check, Trash2 } from "lucide-react";
+import { Send, X, RefreshCw, Ticket, ArrowRight, Check, Trash2, Bug } from "lucide-react";
 import { AiIcon, DinoIcon } from "@/components/BrandIcons";
 
 interface BotAction {
@@ -258,10 +258,16 @@ export default function HelpBot({
 
           {/* Ticket handoff + input (safe-area padded for iOS home bar) */}
           <div className="px-4 pt-2 border-t border-white/8 shrink-0 space-y-2.5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <button onClick={() => { onClose(); onRaiseTicket(); }}
-              className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5">
-              <Ticket className="w-4 h-4 td-accent-text" /> Raise a ticket manually instead
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => { onClose(); onRaiseTicket(); }}
+                className="flex-1 td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5">
+                <Ticket className="w-4 h-4 td-accent-text" /> Raise a ticket
+              </button>
+              <button onClick={() => { onClose(); window.dispatchEvent(new Event("td:open-issue-reporter")); }}
+                className="flex-1 td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5">
+                <Bug className="w-4 h-4 td-accent-text" /> Report a bug
+              </button>
+            </div>
             <div className="flex items-center gap-2">
               <input
                 value={input}
