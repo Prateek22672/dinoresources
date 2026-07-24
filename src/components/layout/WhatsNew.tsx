@@ -99,6 +99,9 @@ export default function WhatsNew() {
             )}
             <button onClick={dismiss} className="td-btn-ghost rounded-full h-9 px-4 text-[13px] font-semibold">Got it</button>
           </div>
+          <button onClick={() => { dismiss(); navigate("/whats-new"); }} className="text-[11px] text-zinc-500 hover:text-zinc-300 mt-2.5 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> See everything TeamDino can do
+          </button>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import {
-  LayoutDashboard, Store, Library, Receipt, Briefcase, PenSquare, Shield, Settings, Info, Bug,
+  LayoutDashboard, Store, Library, Receipt, Briefcase, PenSquare, Shield, Settings, Info, Bug, Sparkles,
   ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 
@@ -32,6 +32,7 @@ export default function SideNav({
   ];
 
   const bottom = [
+    { label: "What's new", icon: Sparkles, onClick: () => navigate("/whats-new") },
     { label: "Settings", icon: Settings, onClick: () => navigate("/setup?edit=true") },
     { label: "About us", icon: Info, onClick: () => navigate("/about") },
     { label: "Report an issue", icon: Bug, onClick: () => window.dispatchEvent(new Event("td:open-issue-reporter")) },

@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect, lazy, Suspense } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
-  Zap, Menu, X, Briefcase, Bug,
+  Zap, Menu, X, Briefcase, Bug, Sparkles,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
 // DinoBot + the issue reporter ship as their own chunks — loaded on first use.
@@ -12,6 +12,7 @@ import AccentPicker from "@/components/layout/AccentPicker";
 import NoticesBell from "@/components/layout/NoticesBell";
 import SideNav from "@/components/layout/SideNav";
 import WhatsNew from "@/components/layout/WhatsNew";
+import FeatureTour from "@/components/layout/FeatureTour";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -67,6 +68,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const mobileItems: MobileNavItem[] = [
     ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
     { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
+    { label: "What's new", icon: Sparkles, bottom: true, onClick: () => navigate("/whats-new") },
     { label: "Instant Help", icon: Zap, bottom: true, onClick: () => setBotOpen(true) },
     { label: "Report an issue", icon: Bug, bottom: true, onClick: () => setIssueOpen(true) },
     { label: "Settings", icon: UserCog, bottom: true, onClick: () => navigate("/setup?edit=true") },
@@ -146,8 +148,8 @@ export default function AppShell({ children, hideHeader = false }: { children: R
         </div>
       </div>
 
-      {/* Admin-controlled welcome / "What's new" popup, bottom-right.
-          (Report an issue lives in the rail + mobile menu — no floating FAB.) */}
+      {/* First-run guided tour (once per user) + admin-controlled What's-New popup */}
+      <FeatureTour />
       {!botOpen && <WhatsNew />}
 
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
