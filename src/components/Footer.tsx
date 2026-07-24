@@ -2,9 +2,17 @@ import { Heart, Users, ArrowUp, ArrowRight, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import FallingText from "@/components/reactbits/FallingText";
-import FloatingBook from "@/components/brand/FloatingBook";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import fyxLogo from "@/assets/fyx.png";
+
+/* A small hardcover book that tumbles alongside the falling words. */
+const FALLING_BOOK = `<svg width="52" height="68" viewBox="0 0 300 400" style="filter:drop-shadow(0 12px 16px rgba(0,0,0,0.45))">
+  <rect x="24" y="10" width="270" height="384" rx="14" fill="#F4EFE3"/>
+  <rect x="6" y="0" width="274" height="382" rx="16" fill="#1E2B7A"/>
+  <path d="M6 16 A16 16 0 0 1 22 0 H52 V382 H22 A16 16 0 0 1 6 366 Z" fill="#E0559B"/>
+  <rect x="66" y="12" width="5" height="360" rx="2.5" fill="rgba(255,255,255,0.55)"/>
+  <text x="170" y="230" text-anchor="middle" fill="#ffffff" font-weight="800" font-size="86" font-family="'Baloo 2',sans-serif">AI</text>
+</svg>`;
 
 export default function Footer() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -14,13 +22,9 @@ export default function Footer() {
       {/* top sheen */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-white/10" />
 
-      {/* decorative accent blob + floating books, peeking from the top-right */}
-      <div aria-hidden className="absolute -top-24 -right-16 w-80 h-72 opacity-[0.35] pointer-events-none"
+      {/* soft accent blob glow, top-right */}
+      <div aria-hidden className="absolute -top-24 -right-16 w-80 h-72 opacity-[0.3] pointer-events-none"
         style={{ background: "rgb(var(--td-accent-rgb) / 0.2)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(10px)" }} />
-      <FloatingBook cover="#0F9D9A" spine="#0B7A78" title="COA" rot={14} float={2}
-        className="absolute -top-14 right-24 w-[120px] z-0 hidden lg:block pointer-events-none opacity-90" />
-      <FloatingBook cover="#1E2B7A" spine="#E0559B" title="DBMS" rot={-8} float={1}
-        className="absolute -top-8 -right-6 w-[140px] z-0 hidden lg:block pointer-events-none" />
 
       {/* Top: brand + actions */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-8 mb-8">
@@ -74,6 +78,7 @@ export default function Footer() {
         <FallingText
           text="Notes PYQs SGPA Attendance Study with AI Subjects Full-Year Library — TeamDino"
           highlightWords={["AI", "TeamDino", "SGPA", "Full-Year"]}
+          objects={[FALLING_BOOK]}
           trigger="scroll"
           gravity={0.55}
           fontSize="1.6rem"

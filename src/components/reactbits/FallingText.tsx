@@ -12,6 +12,9 @@ interface FallingTextProps {
   mouseConstraintStiffness?: number;
   fontSize?: string;
   className?: string;
+  /** Extra falling bodies rendered from raw HTML (e.g. a book SVG) — they
+   *  tumble with the words and can be dragged just the same. */
+  objects?: string[];
 }
 
 const FallingText = ({
@@ -25,6 +28,7 @@ const FallingText = ({
   mouseConstraintStiffness = 0.9,
   fontSize = "2rem",
   className = "",
+  objects = [],
 }: FallingTextProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const textRef = useRef<HTMLDivElement | null>(null);
@@ -34,13 +38,18 @@ const FallingText = ({
   useEffect(() => {
     if (!textRef.current) return;
     const words = text.split(" ");
-    textRef.current.innerHTML = words
+    const wordHtml = words
       .map((word) => {
         const hl = highlightWords.some((hw) => word.startsWith(hw));
         return `<span class="inline-block mx-[3px] select-none ${hl ? highlightClass : ""}">${word}</span>`;
       })
       .join(" ");
-  }, [text, highlightWords, highlightClass]);
+    // extra objects (e.g. a book SVG) become falling bodies too
+    const objHtml = objects
+      .map((o) => `<span class="inline-block mx-[3px] align-middle select-none">${o}</span>`)
+      .join(" ");
+    textRef.current.innerHTML = wordHtml + (objHtml ? " " + objHtml : "");
+  }, [text, highlightWords, highlightClass, objects]);
 
   useEffect(() => {
     if (trigger === "auto") { setEffectStarted(true); return; }

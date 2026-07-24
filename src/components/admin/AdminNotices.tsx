@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Bell, Send, Trash2, Users, User, Info, AlertTriangle, ShieldAlert, Check } from "lucide-react";
+import { Bell, Send, Trash2, Users, User, Info, AlertTriangle, ShieldAlert, Check, Sparkles, Save } from "lucide-react";
 
 interface NoticeRow {
   id: string; user_id: string | null; title: string; body: string | null;
@@ -32,6 +32,50 @@ export default function AdminNotices() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [expiryDays, setExpiryDays] = useState("30");
+
+  // What's-New / welcome popup (admin-controlled, stored on the app_settings singleton)
+  const [wnId, setWnId] = useState<any>(null);
+  const [wn, setWn] = useState({ active: false, emoji: "✨", title: "", body: "", ctaLabel: "", ctaUrl: "", version: 1 });
+  const [wnSaving, setWnSaving] = useState(false);
+
+  useEffect(() => {
+    tbl("app_settings")
+      .select("id, whats_new_active, whats_new_emoji, whats_new_title, whats_new_body, whats_new_cta_label, whats_new_cta_url, whats_new_version")
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (!data) return;
+        setWnId(data.id);
+        setWn({
+          active: !!data.whats_new_active,
+          emoji: data.whats_new_emoji || "✨",
+          title: data.whats_new_title || "",
+          body: data.whats_new_body || "",
+          ctaLabel: data.whats_new_cta_label || "",
+          ctaUrl: data.whats_new_cta_url || "",
+          version: data.whats_new_version || 1,
+        });
+      });
+  }, []);
+
+  // reshow=true bumps the version so every user sees it again
+  const saveWn = async (reshow: boolean) => {
+    if (wn.active && !wn.title.trim()) { toast.error("Give the popup a title"); return; }
+    setWnSaving(true);
+    const nextVersion = reshow ? wn.version + 1 : wn.version;
+    const { error } = await tbl("app_settings").update({
+      whats_new_active: wn.active,
+      whats_new_emoji: wn.emoji || "✨",
+      whats_new_title: wn.title.trim(),
+      whats_new_body: wn.body.trim() || null,
+      whats_new_cta_label: wn.ctaLabel.trim() || null,
+      whats_new_cta_url: wn.ctaUrl.trim() || null,
+      whats_new_version: nextVersion,
+    }).eq("id", wnId ?? true);
+    setWnSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setWn((p) => ({ ...p, version: nextVersion }));
+    toast.success(reshow ? "Published — everyone will see it again" : "Saved");
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,6 +149,39 @@ export default function AdminNotices() {
         Send an alert or message to one student or everyone — misuse warnings, multi-login alerts,
         maintenance info. It shows in the 🔔 bell in their header until it expires.
       </p>
+
+      {/* What's-New / welcome popup */}
+      <section className="td-surface rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-white font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Welcome / What's-New popup</h3>
+          <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer shrink-0">
+            <input type="checkbox" checked={wn.active} onChange={(e) => setWn((p) => ({ ...p, active: e.target.checked }))} />
+            {wn.active ? "Live" : "Off"}
+          </label>
+        </div>
+        <p className="text-zinc-500 text-xs -mt-1">A greeting / announcement that pops up bottom-right for every student, once. Hit <strong className="text-zinc-300">Publish</strong> to show it again after editing.</p>
+
+        <div className="flex gap-2">
+          <input value={wn.emoji} onChange={(e) => setWn((p) => ({ ...p, emoji: e.target.value.slice(0, 2) }))} placeholder="✨"
+            className="w-14 text-center td-surface-2 rounded-xl h-10 text-lg outline-none" aria-label="Emoji" />
+          <input value={wn.title} onChange={(e) => setWn((p) => ({ ...p, title: e.target.value }))} placeholder="Title — e.g. Welcome to TeamDino!"
+            className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+        </div>
+        <textarea value={wn.body} onChange={(e) => setWn((p) => ({ ...p, body: e.target.value }))} rows={2}
+          placeholder="Message (optional) — what's new, a tip, an update…"
+          className="w-full td-surface-2 rounded-xl px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 resize-y" />
+        <div className="flex flex-wrap gap-2">
+          <input value={wn.ctaLabel} onChange={(e) => setWn((p) => ({ ...p, ctaLabel: e.target.value }))} placeholder="Button text (optional) — e.g. Explore"
+            className="flex-1 min-w-[140px] td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+          <input value={wn.ctaUrl} onChange={(e) => setWn((p) => ({ ...p, ctaUrl: e.target.value }))} placeholder="Link — /store or https://…"
+            className="flex-1 min-w-[140px] td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <button onClick={() => saveWn(false)} disabled={wnSaving} className="td-btn-ghost px-4 h-10 rounded-xl text-sm font-semibold flex items-center gap-1.5 disabled:opacity-60"><Save className="w-4 h-4" /> Save</button>
+          <button onClick={() => saveWn(true)} disabled={wnSaving} className="td-btn-primary px-4 h-10 rounded-xl text-sm font-semibold flex items-center gap-1.5 disabled:opacity-60"><Send className="w-4 h-4" /> Publish (show to all again)</button>
+          <span className="text-zinc-600 text-xs ml-auto">v{wn.version}</span>
+        </div>
+      </section>
 
       {/* Compose */}
       <section className="td-surface rounded-2xl p-5 space-y-3">

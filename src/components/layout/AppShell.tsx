@@ -11,6 +11,7 @@ const IssueReporter = lazy(() => import("@/components/issues/IssueReporter"));
 import AccentPicker from "@/components/layout/AccentPicker";
 import NoticesBell from "@/components/layout/NoticesBell";
 import SideNav from "@/components/layout/SideNav";
+import WhatsNew from "@/components/layout/WhatsNew";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -36,12 +37,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const [botLoaded, setBotLoaded] = useState(false); // chunk fetched on first open, stays mounted
   useEffect(() => { if (botOpen) setBotLoaded(true); }, [botOpen]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [issueOpen, setIssueOpen] = useState(false); // "Report an issue" — open to all users
-  // once dismissed, the FAB tucks away; the rail/menu "Report an issue" item stays
-  const [fabHidden, setFabHidden] = useState(() => {
-    try { return localStorage.getItem("td:issue-fab") === "hidden"; } catch { return false; }
-  });
-  const dismissFab = () => { setFabHidden(true); try { localStorage.setItem("td:issue-fab", "hidden"); } catch { /* ignore */ } };
+  const [issueOpen, setIssueOpen] = useState(false); // "Report an issue" — from rail / menu
   // DinoBot (or anything) can open the reporter by dispatching this event
   useEffect(() => {
     const open = () => setIssueOpen(true);
@@ -150,29 +146,9 @@ export default function AppShell({ children, hideHeader = false }: { children: R
         </div>
       </div>
 
-      {/* Report an issue — floating pill with a dismiss ×. Bottom-right so it clears
-          the left rail; hidden while DinoBot is open. When dismissed it tucks into
-          the rail / mobile menu "Report an issue" item (always available there). */}
-      {!botOpen && !fabHidden && (
-        <div style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
-          className="fixed right-4 z-[90] td-util-bar-solid flex items-center rounded-full shadow-lg overflow-hidden">
-          <button
-            onClick={() => setIssueOpen(true)}
-            className="flex items-center gap-2 h-11 pl-3.5 pr-3 text-[13px] font-semibold hover:opacity-80 transition-opacity"
-            aria-label="Report an issue"
-          >
-            <Bug className="w-4 h-4 td-accent-text" /> <span className="hidden sm:inline">Report an issue</span>
-          </button>
-          <button
-            onClick={dismissFab}
-            className="h-11 w-8 flex items-center justify-center border-l border-white/12 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Hide — you can still report from the menu"
-            title="Hide (still available in the menu)"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      {/* Admin-controlled welcome / "What's new" popup, bottom-right.
+          (Report an issue lives in the rail + mobile menu — no floating FAB.) */}
+      {!botOpen && <WhatsNew />}
 
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       {(botOpen || botLoaded) && (
