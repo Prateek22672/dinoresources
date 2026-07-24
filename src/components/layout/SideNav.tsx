@@ -34,6 +34,7 @@ export default function SideNav({
   const bottom = [
     { label: "Settings", icon: Settings, onClick: () => navigate("/setup?edit=true") },
     { label: "About us", icon: Info, onClick: () => navigate("/about") },
+    { label: "Report an issue", icon: Bug, onClick: () => window.dispatchEvent(new Event("td:open-issue-reporter")) },
   ];
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
