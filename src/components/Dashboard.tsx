@@ -215,7 +215,7 @@ export default function Dashboard() {
       accent: "#7c6cf0", icon: BookOpen, onClick: () => navigate("/library") },
     { key: "store", overline: "Subjects", title: "Explore subjects", desc: "Unlock your subjects & full-year packs.", cta: "Explore subjects",
       accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
-    ...(isOn("agent") ? [{ key: "agent", overline: "Assistant", title: "Agent Fury", desc: "Create your agents — e.g. email fetch & summarizer.", cta: "Launch",
+    ...(isOn("agent") ? [{ key: "agent", overline: "Assistant · Chrome + Web", title: "Agent Fury", desc: "Your AI in Gmail, your browser & reminders.", cta: "Open Agent Fury",
       accent: "#7c6cf0", icon: GenAiIcon, img: agentFuryLogo, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),

@@ -10,6 +10,10 @@ import dinoBlack from "@/assets/dinosaurBlack.png";
 import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
 
+// Agent Fury links — update AGENTFURY_EXT with the real Chrome Web Store listing.
+const AGENTFURY_WEB = "https://agentfury.foliofyx.in/";
+const AGENTFURY_EXT = "https://chromewebstore.google.com/"; // TODO: replace with the extension URL
+
 /* Cursor-follow: elements drift toward/away from the mouse at their own
  * strengths, smoothly lerped (springy, 60fps, transform-only). */
 function useMouseFloat(strengths: { x: number; y: number; r: number }[]) {
@@ -582,20 +586,48 @@ export default function LandingPage() {
       {/* ── Also from us: Agent Fury + FolioFYX — full-width B&W boxes ── */}
       <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
         <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto">
-          <a href="https://agentfury.foliofyx.in/" target="_blank" rel="noopener noreferrer"
-            className="group rounded-[28px] p-8 sm:p-10 bg-white text-black hover:-translate-y-1.5 transition-all shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)] flex flex-col">
-            <div className="flex items-start justify-between">
-              <span className="w-14 h-14 rounded-2xl bg-black/[0.05] border border-black/10 flex items-center justify-center mb-5">
-                <img src={agentFuryLogo} alt="Agent Fury" className="w-9 h-9 rounded-lg" draggable={false} />
+          <div className="rounded-[28px] p-6 sm:p-8 bg-white text-black shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)] flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-12 h-12 rounded-2xl bg-black/[0.05] border border-black/10 flex items-center justify-center shrink-0">
+                <img src={agentFuryLogo} alt="Agent Fury" className="w-8 h-8 rounded-lg" draggable={false} />
               </span>
-              <ArrowUpRight className="w-5 h-5 text-black/35 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-black tracking-[0.18em] uppercase text-black/45">AI assistant · Chrome + Web</p>
+                <h3 className="font-extrabold text-2xl tracking-tight leading-none mt-0.5">Agent Fury</h3>
+              </div>
             </div>
-            <h3 className="font-extrabold text-2xl sm:text-[1.75rem] tracking-tight">Agent Fury</h3>
-            <p className="text-black/60 text-[15px] leading-relaxed mt-2.5 flex-1">
-              Create your own AI agents — e.g. an email fetch &amp; summarizer that works while you study.
+            <p className="text-black/60 text-[15px] leading-relaxed">
+              Your AI in Gmail, your browser, and your reminders — one assistant, everywhere you work.
             </p>
-            <p className="text-[11px] font-black tracking-[0.18em] uppercase mt-8 text-black/70">agentfury.foliofyx.in</p>
-          </a>
+
+            {/* Illustrated preview of the "Ask AgentFury" popup (what it looks like in the wild) */}
+            <div className="mt-5 rounded-2xl bg-[#0e0e11] p-3.5 relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center shrink-0">
+                  <img src={agentFuryLogo} alt="" className="w-4 h-4" />
+                </span>
+                <span className="text-white/50 text-[13px]">Ask AgentFury about this…</span>
+                <span className="ml-auto w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"><ArrowRight className="w-3 h-3 text-white/70" /></span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {["Explain", "Summarize", "Remind", "Note"].map((c, i) => (
+                  <span key={c} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${i === 2 ? "text-white" : "bg-white/10 text-white/80"}`} style={i === 2 ? { background: "#6b5bf0" } : undefined}>{c}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Two redirects: web app + Chrome extension */}
+            <div className="flex flex-wrap gap-2 mt-5">
+              <a href={AGENTFURY_WEB} target="_blank" rel="noopener noreferrer"
+                className="flex-1 min-w-[130px] bg-black text-white rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform">
+                Open web app <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+              <a href={AGENTFURY_EXT} target="_blank" rel="noopener noreferrer"
+                className="flex-1 min-w-[130px] bg-black/[0.06] border border-black/10 text-black rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:bg-black/[0.1] transition-colors">
+                Chrome extension <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
             className="group rounded-[28px] p-8 sm:p-10 bg-white/[0.04] backdrop-blur-xl border-2 border-white/25 text-white hover:-translate-y-1.5 hover:border-white/50 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col">
