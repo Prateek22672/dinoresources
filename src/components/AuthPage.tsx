@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
 export default function AuthPage() {
@@ -23,8 +23,16 @@ export default function AuthPage() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const fullName = ((formData.get("fullName") as string) || "").trim();
+    const phone = ((formData.get("phone") as string) || "").trim();
+    if (!fullName) { setIsLoading(false); toast.error("Please enter your full name"); return; }
     const { error } = await supabase.auth.signUp({
-      email, password, options: { emailRedirectTo: `${window.location.origin}/` },
+      email, password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        // captured into profiles by the handle_new_user trigger
+        data: { full_name: fullName, phone: phone || null },
+      },
     });
     setIsLoading(false);
     if (error) toast.error(error.message);
@@ -239,10 +247,24 @@ export default function AuthPage() {
                 <TabsContent value="signup" className="mt-0">
                   <form onSubmit={handleSignUp} className="flex flex-col gap-3.5">
                     <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="signup-name" className="text-xs font-medium text-zinc-400 pl-1">Full name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                        <input id="signup-name" name="fullName" type="text" autoComplete="name" placeholder="Your full name" className={field} required />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
                       <Label htmlFor="signup-email" className="text-xs font-medium text-zinc-400 pl-1">University email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signup-email" name="email" type="email" placeholder="name@university.edu" className={field} required />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="signup-phone" className="text-xs font-medium text-zinc-400 pl-1">Phone <span className="text-zinc-600 font-normal">· optional</span></Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                        <input id="signup-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="10-digit mobile (optional)" className={field} />
                       </div>
                     </div>
                     <div className="flex flex-col gap-1.5">
