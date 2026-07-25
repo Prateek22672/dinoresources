@@ -69,6 +69,24 @@ export default function Contributor() {
   const [mType, setMType] = useState<"pdf" | "youtube" | "link">("pdf");
   const [mCat, setMCat] = useState("Unit 1");
 
+  // subject-wide Syllabus & PYQs (single Drive links, not per-unit)
+  const [syllabusUrl, setSyllabusUrl] = useState("");
+  const [pyqTitle, setPyqTitle] = useState("");
+  const [pyqUrl, setPyqUrl] = useState("");
+
+  const addSubjectMaterial = async (category: string, url: string, title: string, type: "pdf" | "link" = "pdf") => {
+    if (!subjectId) { toast.error("Pick a subject first"); return; }
+    if (!url.trim()) { toast.error("Paste the Drive/PDF link"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("resources").insert({
+      subject_id: subjectId, title: title.trim() || category, url: url.trim(),
+      type, category, unit_number: null, created_by: user?.id,
+    } as any);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${category} added`);
+    loadMaterials();
+  };
+
   // editorial
   const [editorials, setEditorials] = useState<EditorialRow[]>([]);
   const [edTitle, setEdTitle] = useState("");
@@ -253,6 +271,37 @@ export default function Contributor() {
         </div>
       </div>
 
+      {/* Subject-wide: Syllabus & PYQs (single Drive links, shown to students in
+          the Syllabus / PYQs sections — not tied to a unit) */}
+      <div className="td-surface rounded-3xl p-5 mb-6">
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2"><FileText className="w-4 h-4 td-accent-text" /> Syllabus &amp; PYQs <span className="text-zinc-600 text-xs font-normal">· whole subject</span></h3>
+        <p className="text-zinc-500 text-xs mb-4">Paste a Google Drive / PDF link. The syllabus is one combined document; add previous-year papers as separate links.</p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Syllabus — single doc */}
+          <div>
+            <label className="text-[11px] font-bold tracking-wider uppercase text-zinc-500">Syllabus (one link)</label>
+            <div className="flex flex-col sm:flex-row gap-2 mt-1.5">
+              <input value={syllabusUrl} onChange={(e) => setSyllabusUrl(e.target.value)} placeholder="Drive / PDF link"
+                className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+              <button onClick={() => addSubjectMaterial("Syllabus", syllabusUrl, "Syllabus").then(() => setSyllabusUrl(""))}
+                className="td-btn-primary px-4 h-10 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 shrink-0"><Plus className="w-3.5 h-3.5" /> Add</button>
+            </div>
+          </div>
+          {/* PYQs — multiple links */}
+          <div>
+            <label className="text-[11px] font-bold tracking-wider uppercase text-zinc-500">PYQ paper (add each)</label>
+            <div className="flex flex-col sm:flex-row gap-2 mt-1.5">
+              <input value={pyqTitle} onChange={(e) => setPyqTitle(e.target.value)} placeholder="e.g. 2023 End-sem"
+                className="sm:w-32 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+              <input value={pyqUrl} onChange={(e) => setPyqUrl(e.target.value)} placeholder="Drive / PDF link"
+                className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600" />
+              <button onClick={() => addSubjectMaterial("Previous Papers", pyqUrl, pyqTitle || "PYQ").then(() => { setPyqUrl(""); setPyqTitle(""); })}
+                className="td-btn-primary px-4 h-10 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 shrink-0"><Plus className="w-3.5 h-3.5" /> Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Q&A editor */}
         <div className="space-y-4">
@@ -338,7 +387,7 @@ export default function Contributor() {
               <select value={mType} onChange={(e) => setMType(e.target.value as any)} className="td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
                 <option value="pdf">PDF</option><option value="youtube">YouTube</option><option value="link">Link</option>
               </select>
-              <select value={mCat} onChange={(e) => setMCat(e.target.value)} className="flex-1 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
+              <select value={mCat} onChange={(e) => setMCat(e.target.value)} className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
                 {RES_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               <button onClick={addMaterial} className="td-btn-primary px-4 text-sm flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add</button>
