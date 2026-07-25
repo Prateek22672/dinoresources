@@ -8,6 +8,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { formatPaise } from "@/lib/money";
 import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@/lib/recent";
 import { getReadiness, readinessColor } from "@/lib/readiness";
+import { matchProfileYear } from "@/lib/year";
 
 import AppShell from "@/components/layout/AppShell";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
@@ -231,7 +232,11 @@ export default function Dashboard() {
       accent: "#f5b042", icon: Megaphone, onClick: () => setTool("announcements") },
   ];
 
-  const comboYear = years.find((y) => !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id));
+  // only suggest the student's OWN year pack — never another year's
+  const studentYearId = matchProfileYear(profile?.semester ?? null, years);
+  const comboYear = years.find((y) =>
+    y.id === studentYearId && !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id),
+  );
 
   // ── Exam helpers ──
   const daysTo = (iso: string) =>

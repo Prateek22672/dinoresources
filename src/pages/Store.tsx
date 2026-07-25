@@ -4,30 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import { useCart } from "@/context/CartContext";
 import { formatPaise } from "@/lib/money";
+import { matchProfileYear } from "@/lib/year";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
-import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, Zap } from "lucide-react";
+import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, ArrowRight, Zap } from "lucide-react";
 
 interface YearGroup { year: YearRow; subjects: SubjectRow[] }
-
-function matchProfileYear(sem: string | null, years: YearRow[]): string | null {
-  if (!sem) return null;
-  const s = sem.toLowerCase().trim();
-  const n = parseInt(s, 10);
-  const bySlug = (slug: string) => years.find((y) => y.slug === slug)?.id ?? null;
-  if (Number.isFinite(n)) {
-    const slug = n <= 2 ? "first-year" : n <= 4 ? "second-year" : n <= 6 ? "third-year" : n <= 8 ? "fourth-year" : "supplementary";
-    const id = bySlug(slug); if (id) return id;
-  }
-  const tests: [RegExp, string][] = [
-    [/\bfirst\b|\b1st\b/, "first-year"], [/\bsecond\b|\b2nd\b/, "second-year"],
-    [/\bthird\b|\b3rd\b/, "third-year"], [/\bfourth\b|\b4th\b/, "fourth-year"],
-    [/supp/, "supplementary"],
-  ];
-  for (const [re, slug] of tests) if (re.test(s)) { const id = bySlug(slug); if (id) return id; }
-  const y = years.find((yr) => s.includes(yr.name.toLowerCase()) || yr.name.toLowerCase().includes(s));
-  return y?.id ?? null;
-}
 
 export default function Store() {
   const navigate = useNavigate();
@@ -37,6 +19,7 @@ export default function Store() {
   const [ownedYears, setOwnedYears] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [activeYear, setActiveYear] = useState<string>("all");
+  const [studentYear, setStudentYear] = useState<YearRow | null>(null); // the signed-in student's own year
   const [query, setQuery] = useState("");
   const [searchFocus, setSearchFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,10 +60,14 @@ export default function Store() {
     }
     setGroups(grouped);
 
-    // initial filter from the student's profile year (if that year has subjects)
+    // Default the Store to the student's OWN year — they should not see other
+    // years' packs/subjects unless they deliberately switch. Applies even if their
+    // year has no subjects yet (a friendly empty state shows instead of other years).
     const profSem = (profRes.data as any)?.semester ?? null;
     const matchedYear = matchProfileYear(profSem, years);
-    if (matchedYear && grouped.some((g) => g.year.id === matchedYear)) setActiveYear(matchedYear);
+    const myYear = matchedYear ? years.find((y) => y.id === matchedYear) ?? null : null;
+    setStudentYear(myYear);
+    if (myYear) setActiveYear(myYear.id);
 
     setLoading(false);
   }, []);
@@ -155,30 +142,49 @@ export default function Store() {
         )}
       </div>
 
-      {/* Year filter chips */}
-      {!loading && groups.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
-          <button onClick={() => setActiveYear("all")}
-            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium ${activeYear === "all" ? "bg-white text-black" : "td-btn-ghost"}`}>
-            All
-          </button>
-          {groups.map((g) => (
-            <button key={g.year.id} onClick={() => setActiveYear(g.year.id)}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${activeYear === g.year.id ? "bg-white text-black" : "td-btn-ghost"}`}>
-              {g.year.name}
+      {/* Year filter chips — the student's own year always shows (even if empty),
+          so their year is the default and other years are opt-in. */}
+      {!loading && (groups.length > 0 || studentYear) && (() => {
+        // dedupe: student's year first, then every year that has subjects
+        const chips: YearRow[] = [];
+        if (studentYear) chips.push(studentYear);
+        groups.forEach((g) => { if (g.year.id !== "__none__" && !chips.some((c) => c.id === g.year.id)) chips.push(g.year); });
+        const otherJunk = groups.find((g) => g.year.id === "__none__");
+        if (otherJunk) chips.push(otherJunk.year);
+        return (
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
+            {chips.map((y) => (
+              <button key={y.id} onClick={() => setActiveYear(y.id)}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center gap-1.5 ${activeYear === y.id ? "bg-white text-black" : "td-btn-ghost"}`}>
+                {y.name}{studentYear && y.id === studentYear.id && <span className="text-[10px] font-bold opacity-70">· your year</span>}
+              </button>
+            ))}
+            <button onClick={() => setActiveYear("all")}
+              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium ${activeYear === "all" ? "bg-white text-black" : "td-btn-ghost"}`}>
+              All years
             </button>
-          ))}
-        </div>
-      )}
+          </div>
+        );
+      })()}
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-44 rounded-3xl td-surface animate-pulse" />)}
         </div>
       ) : visibleGroups.length === 0 ? (
-        <div className="py-24 text-center td-surface rounded-[32px]">
+        <div className="py-20 text-center td-surface rounded-[32px] px-6">
           <BookOpen className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-          <p className="text-zinc-400 font-medium">{query ? "No subjects match your search." : "No subjects here yet."}</p>
+          {query ? (
+            <p className="text-zinc-400 font-medium">No subjects match your search.</p>
+          ) : studentYear && activeYear === studentYear.id ? (
+            <>
+              <p className="text-white font-semibold">Subjects for {studentYear.name} are coming soon</p>
+              <p className="text-zinc-500 text-sm mt-1 mb-4">We're adding content for your year. Meanwhile, you can browse everything.</p>
+              <button onClick={() => setActiveYear("all")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5">Browse all years <ArrowRight className="w-4 h-4" /></button>
+            </>
+          ) : (
+            <p className="text-zinc-400 font-medium">No subjects here yet.</p>
+          )}
         </div>
       ) : (
         <div className="space-y-12">
