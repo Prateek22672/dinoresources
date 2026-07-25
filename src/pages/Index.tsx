@@ -247,9 +247,10 @@
 
 // export default Index;
 
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lazyWithReload as lazy } from "@/lib/lazyWithReload";
 
 // Landing stays in the entry bundle — logged-out first paint must be instant.
 // The signed-in app (Dashboard + shell) is its own chunk, fetched behind the splash.
