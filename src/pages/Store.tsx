@@ -7,7 +7,7 @@ import { formatPaise } from "@/lib/money";
 import { matchProfileYear } from "@/lib/year";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
-import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, ArrowRight, Zap } from "lucide-react";
+import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, ArrowRight, Zap, Eye } from "lucide-react";
 
 interface YearGroup { year: YearRow; subjects: SubjectRow[] }
 
@@ -255,22 +255,35 @@ export default function Store() {
                           <Link to={`/subject/${s.slug ?? s.id}`} className="block">
                             <h3 className="text-white font-semibold leading-snug line-clamp-2 hover:underline">{s.name}</h3>
                           </Link>
-                          {s.description && <p className="text-zinc-500 text-xs mt-1.5 line-clamp-2">{s.description}</p>}
+                          {s.description
+                            ? <p className="text-zinc-500 text-xs mt-1.5 line-clamp-2">{s.description}</p>
+                            : !owned && <p className="text-zinc-500 text-xs mt-1.5">Syllabus, 5 units, PYQs &amp; Study-With-AI.</p>}
+                          {!owned && (
+                            <span className="inline-flex items-center gap-1.5 mt-2.5 td-accent-bg text-[10px] font-bold px-2 py-1 rounded-full">
+                              <Eye className="w-3 h-3" /> Free preview inside
+                            </span>
+                          )}
                         </div>
 
-                        <div className="mt-4">
+                        <div className="mt-4 space-y-2">
                           {owned ? (
-                            <Link to={`/subject/${s.slug ?? s.id}`} className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5">
+                            <Link to={`/subject/${s.slug ?? s.id}`} className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5">
                               <Check className="w-3.5 h-3.5" /> Open <ChevronRight className="w-3.5 h-3.5" />
                             </Link>
                           ) : (
-                            <button
-                              disabled={inCart}
-                              onClick={() => addSubject(s.id, s.name)}
-                              className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
-                            >
-                              {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add</>}
-                            </button>
+                            <>
+                              {/* Preview is the discovery action — read the free content before buying */}
+                              <Link to={`/subject/${s.slug ?? s.id}`} className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5">
+                                <Eye className="w-3.5 h-3.5" /> Preview free
+                              </Link>
+                              <button
+                                disabled={inCart}
+                                onClick={() => addSubject(s.id, s.name)}
+                                className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
+                              >
+                                {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add · {formatPaise(s.price_paise)}</>}
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
