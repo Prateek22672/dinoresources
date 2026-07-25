@@ -10,9 +10,11 @@ import dinoBlack from "@/assets/dinosaurBlack.png";
 import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
 
-// Agent Fury links — update AGENTFURY_EXT with the real Chrome Web Store listing.
+// Agent Fury links. The extension is in Chrome Web Store review — flip
+// AGENTFURY_EXT_LIVE to true and drop in the URL once it's published.
 const AGENTFURY_WEB = "https://agentfury.foliofyx.in/";
-const AGENTFURY_EXT = "https://chromewebstore.google.com/"; // TODO: replace with the extension URL
+const AGENTFURY_EXT_LIVE = false;
+const AGENTFURY_EXT = "https://chromewebstore.google.com/"; // TODO: real listing when live
 
 /* Cursor-follow: elements drift toward/away from the mouse at their own
  * strengths, smoothly lerped (springy, 60fps, transform-only). */
@@ -622,10 +624,16 @@ export default function LandingPage() {
                 className="flex-1 min-w-[130px] bg-black text-white rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform">
                 Open web app <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
-              <a href={AGENTFURY_EXT} target="_blank" rel="noopener noreferrer"
-                className="flex-1 min-w-[130px] bg-black/[0.06] border border-black/10 text-black rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:bg-black/[0.1] transition-colors">
-                Chrome extension <ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
+              {AGENTFURY_EXT_LIVE ? (
+                <a href={AGENTFURY_EXT} target="_blank" rel="noopener noreferrer"
+                  className="flex-1 min-w-[130px] bg-black/[0.06] border border-black/10 text-black rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:bg-black/[0.1] transition-colors">
+                  Chrome extension <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              ) : (
+                <span className="flex-1 min-w-[130px] bg-black/[0.04] border border-black/10 text-black/45 rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-default">
+                  Chrome extension · Soon
+                </span>
+              )}
             </div>
           </div>
 

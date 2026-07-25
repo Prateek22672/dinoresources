@@ -11,6 +11,7 @@ import { getReadiness, readinessColor } from "@/lib/readiness";
 import { matchProfileYear } from "@/lib/year";
 
 import AppShell from "@/components/layout/AppShell";
+import FloatingBook from "@/components/brand/FloatingBook";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
 import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
@@ -357,27 +358,36 @@ export default function Dashboard() {
 
         {/* ── CENTER ── */}
         <div className="min-w-0">
-          {/* compact greeting + resume */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div>
-              <p className="td-accent-text text-[13px] font-semibold">{greeting} <span aria-hidden>👋</span>
-                <span className="text-zinc-500 font-medium ml-2"><GraduationCap className="w-3.5 h-3.5 inline -mt-0.5" /> {profile?.department} · {profile?.semester}</span>
-              </p>
-              <h1 className="text-2xl sm:text-[1.7rem] font-extrabold tracking-tight text-white leading-tight">Hey {profile?.name}.</h1>
+          {/* greeting hero — accent energy + a floating book (landing vibe) */}
+          <div className="td-hero relative overflow-hidden rounded-[28px] p-6 sm:p-7 mb-8">
+            <div aria-hidden className="absolute -top-16 -left-12 w-72 h-64 opacity-[0.5] pointer-events-none"
+              style={{ background: "rgb(var(--td-accent-rgb) / 0.24)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(6px)" }} />
+            <div aria-hidden className="absolute -bottom-24 right-[26%] w-64 h-60 opacity-[0.4] pointer-events-none hidden sm:block"
+              style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%", filter: "blur(8px)" }} />
+            <FloatingBook cover="#1E2B7A" spine="#E0559B" title="DBMS" rot={9} float={1}
+              className="absolute -right-5 -bottom-12 w-[150px] lg:w-[180px] z-[1] hidden sm:block pointer-events-none" />
+
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="td-accent-text text-[13px] font-semibold">{greeting} <span aria-hidden>👋</span>
+                  <span className="text-zinc-500 font-medium ml-2"><GraduationCap className="w-3.5 h-3.5 inline -mt-0.5" /> {profile?.department} · {profile?.semester}</span>
+                </p>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">Hey {profile?.name}.</h1>
+              </div>
+              {resume && (
+                <button onClick={() => navigate(`/subject/${resume.slug}`)}
+                  className="group td-glass td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
+                  <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                    <Play className="w-4 h-4" fill="currentColor" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">Continue learning</span>
+                    <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{resume.name}</span>
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                </button>
+              )}
             </div>
-            {resume && (
-              <button onClick={() => navigate(`/subject/${resume.slug}`)}
-                className="group td-surface td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
-                <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
-                  <Play className="w-4 h-4" fill="currentColor" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">Continue learning</span>
-                  <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{resume.name}</span>
-                </span>
-                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-              </button>
-            )}
           </div>
 
           {/* ── Top picks (reference: "Top courses you may like") ── */}
