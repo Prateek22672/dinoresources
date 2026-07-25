@@ -4,6 +4,7 @@ import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrati
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
   Sparkles, FileText, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
+  Lock, Gift, Check, Plus, ArrowRight,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
 import { markStudied, ReadinessSection } from "@/lib/readiness";
@@ -22,6 +23,10 @@ interface UnitViewProps {
   section: Section;
   hasAccess: boolean;
   onUnlock?: () => void;
+  // free-preview unlock CTA (shown to non-owners)
+  priceLabel?: string;
+  inCart?: boolean;
+  onAddToCart?: () => void;
 }
 
 /** Convert a Drive/YouTube share URL into an embeddable preview URL. */
@@ -41,7 +46,7 @@ function ytId(url: string): string | null {
   return url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/)?.[1] ?? null;
 }
 
-export default function UnitView({ subjectId, subjectName, section }: UnitViewProps) {
+export default function UnitView({ subjectId, subjectName, section, hasAccess, priceLabel, inCart, onAddToCart }: UnitViewProps) {
   const isUnit = typeof section === "number";
   const [tab, setTab] = useState<UnitTab>("ai");
 
@@ -104,16 +109,59 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
 
   if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 rounded-2xl td-surface animate-pulse" />)}</div>;
 
+  // ── Free preview: give non-owners a real taste (first Q&A, first video,
+  //    first resource + anything a contributor marked free) so they experience
+  //    the quality and want to unlock — instead of hitting a wall of locks. ──
+  const preview = !hasAccess;
+  const freeQaIds = new Set<string>();
+  if (preview) {
+    qa.forEach((x) => { if ((x as any).is_free) freeQaIds.add(x.id); });
+    if (qa[0]) freeQaIds.add(qa[0].id);
+  }
+  const freeEdId = preview ? editorial[0]?.id ?? null : null;
+  const freeResId = preview ? resources[0]?.id ?? null : null;
+  const qaFree = (id: string) => !preview || freeQaIds.has(id);
+  const edFree = (id: string) => !preview || id === freeEdId;
+  const resFree = (id: string) => !preview || id === freeResId;
+
+  // reusable unlock button for the preview banner / locked teasers
+  const UnlockBtn = ({ small }: { small?: boolean }) =>
+    inCart ? (
+      <span className={`td-accent-bg rounded-full font-semibold inline-flex items-center gap-1.5 ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}`}>
+        <Check className={small ? "w-3.5 h-3.5" : "w-4 h-4"} /> In cart
+      </span>
+    ) : (
+      <button onClick={onAddToCart} className={`td-btn-primary rounded-full font-semibold inline-flex items-center gap-1.5 ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}`}>
+        <Plus className={small ? "w-3.5 h-3.5" : "w-4 h-4"} /> Unlock{priceLabel ? ` · ${priceLabel}` : ""}
+      </button>
+    );
+
+  // a locked teaser row (question/title visible, content sealed behind unlock)
+  const LockedCard = ({ title, sub }: { title: string; sub?: string }) => (
+    <div className="td-surface rounded-2xl overflow-hidden opacity-95">
+      <div className="flex items-center gap-3 px-4 sm:px-5 py-4">
+        <span className="shrink-0 w-7 h-7 rounded-lg td-surface-2 flex items-center justify-center"><Lock className="w-3.5 h-3.5 text-zinc-500" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-zinc-400 font-medium truncate">{title}</span>
+          {sub && <span className="block text-zinc-600 text-xs">{sub}</span>}
+        </span>
+        <button onClick={onAddToCart} className="td-btn-ghost px-3 py-1.5 text-xs font-semibold shrink-0 flex items-center gap-1">Unlock <ArrowRight className="w-3 h-3" /></button>
+      </div>
+    </div>
+  );
+
   // ── Materials — grouped topic-wise inside units, flat elsewhere ──
   const renderResource = (r: ResourceRow) => {
+    if (!resFree(r.id)) return <LockedCard key={r.id} title={r.title} sub={r.type} />;
     const Icon = resTypeIcon[r.type] ?? ExternalLink;
     const embed = toEmbedUrl(r.url);
     const open = openMaterial === r.id;
+    const free = preview && r.id === freeResId;
     return (
       <div key={r.id} className="td-surface rounded-2xl overflow-hidden">
         <div className="flex items-center gap-3 p-4">
           <div className="w-10 h-10 rounded-xl td-surface-2 flex items-center justify-center shrink-0"><Icon className="w-4.5 h-4.5 text-zinc-300" /></div>
-          <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate">{r.title}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
+          <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate flex items-center gap-2">{r.title}{free && <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">FREE</span>}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
           {embed && <button onClick={() => { setOpenMaterial(open ? null : r.id); markStudied(subjectId, readinessKey); }} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
           <a href={r.url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
         </div>
@@ -193,6 +241,22 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
         )}
       </div>
 
+      {/* Free-preview banner — showcase what's free + invite to unlock */}
+      {preview && (
+        <div className="td-hero rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+          <div aria-hidden className="absolute -top-12 -right-8 w-40 h-36 opacity-45 pointer-events-none"
+            style={{ background: "rgb(var(--td-accent-rgb) / 0.22)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(8px)" }} />
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
+            <span className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Gift className="w-5 h-5" /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-white font-bold">You're previewing {subjectName ?? "this subject"} free 🎁</p>
+              <p className="text-zinc-400 text-[13px] mt-0.5">The first question, video and resource are on us. Unlock everything — all units, notes, PYQs &amp; Study-With-AI.</p>
+            </div>
+            <div className="shrink-0"><UnlockBtn /></div>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1.5 td-surface rounded-full p-1 w-fit max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {tabs.map((t) => (
@@ -233,7 +297,20 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
                     </p>
                   )}
                   {items.map((item, qi) => {
+                    // locked in preview → enticing teaser (question shown, answer sealed)
+                    if (!qaFree(item.id)) {
+                      return (
+                        <div key={item.id} className="td-surface rounded-2xl overflow-hidden">
+                          <div className="w-full flex items-center gap-3 px-4 sm:px-5 py-4">
+                            <span className="shrink-0 w-7 h-7 rounded-lg td-surface-2 flex items-center justify-center"><Lock className="w-3.5 h-3.5 text-zinc-500" /></span>
+                            <span className="flex-1 font-medium text-zinc-400 truncate">{item.question}</span>
+                            <button onClick={onAddToCart} className="td-btn-ghost px-3 py-1.5 text-xs font-semibold shrink-0 flex items-center gap-1">Unlock <ArrowRight className="w-3 h-3" /></button>
+                          </div>
+                        </div>
+                      );
+                    }
                     const open = openId === item.id;
+                    const free = preview && freeQaIds.has(item.id);
                     return (
                       <div key={item.id} className={`td-surface rounded-2xl overflow-hidden transition-shadow ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
                         <button onClick={() => { setOpenId(open ? null : item.id); markStudied(subjectId, readinessKey); }} className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left">
@@ -245,7 +322,10 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
                           >
                             {qi + 1}
                           </span>
-                          <span className={`flex-1 font-medium ${open ? "text-white" : "text-zinc-200"}`}>{item.question}</span>
+                          <span className={`flex-1 font-medium flex items-center gap-2 ${open ? "text-white" : "text-zinc-200"}`}>
+                            {item.question}
+                            {free && <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">FREE</span>}
+                          </span>
                           <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
                         </button>
                         {open && (
@@ -308,21 +388,24 @@ export default function UnitView({ subjectId, subjectName, section }: UnitViewPr
                           {items.map((e) => {
                             const vid = ytId(e.youtube_url);
                             const active = edPlaying === e.id;
+                            const locked = !edFree(e.id);
+                            const free = preview && e.id === freeEdId;
                             return (
-                              <button key={e.id} onClick={() => { setEdPlaying(active ? null : e.id); markStudied(subjectId, readinessKey); }}
+                              <button key={e.id} onClick={() => { if (locked) { onAddToCart?.(); return; } setEdPlaying(active ? null : e.id); markStudied(subjectId, readinessKey); }}
                                 className={`td-surface td-card-click rounded-2xl overflow-hidden text-left group ${active ? "ring-2 ring-[var(--td-accent)]" : ""}`}>
                                 <div className="relative aspect-video bg-black">
                                   {vid
-                                    ? <img src={`https://i.ytimg.com/vi/${vid}/hqdefault.jpg`} alt="" loading="lazy" className="w-full h-full object-cover" />
+                                    ? <img src={`https://i.ytimg.com/vi/${vid}/hqdefault.jpg`} alt="" loading="lazy" className={`w-full h-full object-cover ${locked ? "blur-[3px] scale-105 opacity-70" : ""}`} />
                                     : <span className="absolute inset-0 flex items-center justify-center"><Clapperboard className="w-6 h-6 text-zinc-600" /></span>}
                                   <span className="absolute inset-0 flex items-center justify-center">
                                     <span className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                      <Play className="w-4 h-4 text-white fill-white" />
+                                      {locked ? <Lock className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white fill-white" />}
                                     </span>
                                   </span>
+                                  {free && <span className="absolute top-2 left-2 td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full">FREE</span>}
                                 </div>
                                 <div className="px-3 py-2.5">
-                                  <p className="text-white text-[13px] font-medium line-clamp-2">{e.title || "Editorial video"}</p>
+                                  <p className={`text-[13px] font-medium line-clamp-2 ${locked ? "text-zinc-400" : "text-white"}`}>{locked ? "Unlock to watch" : (e.title || "Editorial video")}</p>
                                 </div>
                               </button>
                             );

@@ -107,44 +107,19 @@ export default function SubjectPage() {
           </div>
         </aside>
 
-        {/* Content */}
+        {/* Content — always shown, with a free preview for non-owners so they
+            can taste the quality (first Q&A, video & resource) and unlock. */}
         <div className="min-w-0">
-          {!hasAccess && !accessLoading ? (
-            <div className="td-hero rounded-[28px] p-8 sm:p-10 text-center">
-              <div className="relative z-10 max-w-md mx-auto">
-                <div className="w-14 h-14 rounded-2xl td-surface-2 flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-6 h-6 td-accent-text" />
-                </div>
-                <h2 className="text-xl font-bold text-white">Unlock {subject.name}</h2>
-                <p className="text-zinc-400 mt-2 leading-relaxed">
-                  Get permanent access to all units, notes, PYQs and Study-With-AI for this subject.
-                </p>
-                <div className="flex items-center justify-center gap-3 mt-6">
-                  {isInCart("subject", subject.id) ? (
-                    <Link to="/cart" className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
-                      <Check className="w-4 h-4" /> In cart — review & unlock
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => addSubject(subject.id, subject.name)}
-                      className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5"
-                    >
-                      <Plus className="w-4 h-4" /> Add · {formatPaise(subject.price_paise)}
-                    </button>
-                  )}
-                  <Link to="/store" className="td-btn-ghost px-5 py-3 text-sm">View combos</Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <UnitView
-              subjectId={subject.id}
-              subjectName={subject.name}
-              section={section}
-              hasAccess={hasAccess}
-              onUnlock={refreshAccess}
-            />
-          )}
+          <UnitView
+            subjectId={subject.id}
+            subjectName={subject.name}
+            section={section}
+            hasAccess={hasAccess}
+            onUnlock={refreshAccess}
+            priceLabel={formatPaise(subject.price_paise)}
+            inCart={isInCart("subject", subject.id)}
+            onAddToCart={() => (isInCart("subject", subject.id) ? navigate("/cart") : addSubject(subject.id, subject.name))}
+          />
         </div>
       </div>
     </AppShell>
