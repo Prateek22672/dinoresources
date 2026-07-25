@@ -603,7 +603,7 @@ export default function LandingPage() {
               <span className="h-14" aria-hidden />
               <ArrowUpRight className="w-5 h-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <img src={fyxLogo} alt="FolioFYX" className="h-9 w-auto brightness-0 invert" draggable={false} />
+            <img src={fyxLogo} alt="FolioFYX" className="h-7 sm:h-8 w-auto max-w-[190px] object-contain object-left brightness-0 invert" draggable={false} />
             <p className="text-white/60 text-[15px] leading-relaxed mt-3.5 flex-1">
               Build a standout portfolio site in minutes — because placements don't wait for perfect.
             </p>

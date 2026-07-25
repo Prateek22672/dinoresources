@@ -656,7 +656,7 @@ export default function Dashboard() {
                   )}
                   <p className="td-bw-soft text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5">{b.overline}</p>
                   {b.logo ? (
-                    <img src={b.logo} alt={b.title} className="td-bw-word h-6 w-auto my-1" draggable={false} />
+                    <img src={b.logo} alt={b.title} className="td-bw-word h-6 w-auto max-w-[150px] object-contain object-left my-1" draggable={false} />
                   ) : (
                     <h3 className="text-[20px] font-semibold leading-tight tracking-tight">{b.title}</h3>
                   )}
