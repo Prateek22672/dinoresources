@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
-  Sparkles, FileText, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
+  Sparkles, FileText, FileQuestion, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
   Lock, Gift, Check, Plus, ArrowRight,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
@@ -21,6 +21,7 @@ interface UnitViewProps {
   subjectId: string;
   subjectName?: string;
   section: Section;
+  onSection?: (s: Section) => void; // jump to Syllabus / PYQs from the tab row
   hasAccess: boolean;
   onUnlock?: () => void;
   // free-preview unlock CTA (shown to non-owners)
@@ -46,7 +47,7 @@ function ytId(url: string): string | null {
   return url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/)?.[1] ?? null;
 }
 
-export default function UnitView({ subjectId, subjectName, section, hasAccess, priceLabel, inCart, onAddToCart }: UnitViewProps) {
+export default function UnitView({ subjectId, subjectName, section, onSection, hasAccess, priceLabel, inCart, onAddToCart }: UnitViewProps) {
   const isUnit = typeof section === "number";
   const [tab, setTab] = useState<UnitTab>("ai");
 
@@ -257,14 +258,29 @@ export default function UnitView({ subjectId, subjectName, section, hasAccess, p
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1.5 td-surface rounded-full p-1 w-fit max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden">
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors ${tab === t.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
-            <t.icon className="w-3.5 h-3.5" /> {t.label}
-          </button>
-        ))}
+      {/* Tabs — content tabs + quick jump to Syllabus / PYQs (so they're not
+          buried in the left nav) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex gap-1.5 td-surface rounded-full p-1 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          {tabs.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors ${tab === t.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
+              <t.icon className="w-3.5 h-3.5" /> {t.label}
+            </button>
+          ))}
+        </div>
+        {onSection && (
+          <div className="flex gap-1.5">
+            <button onClick={() => onSection("syllabus")}
+              className="td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+              <FileText className="w-3.5 h-3.5" /> Syllabus
+            </button>
+            <button onClick={() => onSection("pyq")}
+              className="td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+              <FileQuestion className="w-3.5 h-3.5" /> PYQs
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Study With AI — grouped topic-wise (topics always visible as structure) */}

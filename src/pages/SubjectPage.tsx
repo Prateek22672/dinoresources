@@ -114,6 +114,7 @@ export default function SubjectPage() {
             subjectId={subject.id}
             subjectName={subject.name}
             section={section}
+            onSection={setSection}
             hasAccess={hasAccess}
             onUnlock={refreshAccess}
             priceLabel={formatPaise(subject.price_paise)}

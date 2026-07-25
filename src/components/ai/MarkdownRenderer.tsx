@@ -209,7 +209,7 @@ function Callout({ kind, text }: { kind: string; text: string }) {
   const c = CALLOUTS[kind];
   const Icon = c.icon;
   return (
-    <div className="my-3.5 rounded-2xl border p-4 flex gap-3" style={{ borderColor: `${c.tint}38`, background: `${c.tint}0d` }}>
+    <div className="my-3 rounded-2xl border p-3.5 flex gap-3" style={{ borderColor: `${c.tint}38`, background: `${c.tint}0d` }}>
       <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: `${c.tint}22` }}>
         <Icon className="w-4 h-4" style={{ color: c.tint }} />
       </span>
@@ -239,48 +239,53 @@ function LineBlock({
 
   if (line.startsWith("> ")) {
     return (
-      <blockquote className="my-3.5 rounded-r-xl pl-4 py-2.5 pr-3 border-l-4" style={{ borderColor: "rgb(var(--td-accent-rgb) / 0.5)", background: "rgb(var(--td-accent-rgb) / 0.06)" }}>
+      <blockquote className="my-3 rounded-r-xl pl-4 py-2.5 pr-3 border-l-4" style={{ borderColor: "rgb(var(--td-accent-rgb) / 0.5)", background: "rgb(var(--td-accent-rgb) / 0.06)" }}>
         <p className="text-zinc-300 text-[0.95em] leading-relaxed">{renderInline(line.slice(2))}</p>
       </blockquote>
     );
   }
 
+  // A section rule — subtle and compact (the heading margins carry the break)
   if (line.trim() === "---") {
-    return <hr className="border-white/10 my-6" />;
+    return <hr className="border-0 h-px bg-white/8 my-4" />;
   }
 
-  if (!line.trim()) return <div className="h-4" />;
+  // Blank lines add NO fixed spacer — block margins collapse naturally, which
+  // keeps the vertical rhythm tight instead of piling up dead space.
+  if (!line.trim()) return null;
 
   if (line.startsWith("### ")) {
     return (
-      <h3 className="text-lg sm:text-xl font-bold text-white mt-7 mb-3 flex items-center gap-2.5">
-        <span className="w-1.5 h-6 rounded-full inline-block shrink-0" style={{ background: "var(--td-accent)" }} />
+      <h3 className="text-[1.05rem] sm:text-lg font-bold text-white mt-5 mb-2 flex items-center gap-2.5">
+        <span className="w-1 h-5 rounded-full inline-block shrink-0" style={{ background: "var(--td-accent)" }} />
         {renderInline(line.replace(/^### /, ""))}
       </h3>
     );
   }
   if (line.startsWith("## ")) {
     return (
-      <h2 className="text-xl sm:text-2xl font-extrabold text-white mt-8 mb-4" style={{ textWrap: "balance" as any }}>
+      <h2 className="text-xl sm:text-[1.4rem] font-extrabold text-white mt-6 mb-2.5 pb-2 border-b border-white/8" style={{ textWrap: "balance" as any }}>
         {renderInline(line.replace(/^## /, ""))}
       </h2>
     );
   }
   if (line.startsWith("# ")) {
     return (
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-8 mb-4" style={{ textWrap: "balance" as any }}>
+      <h1 className="text-2xl sm:text-[1.7rem] font-extrabold text-white mt-6 mb-3" style={{ textWrap: "balance" as any }}>
         {renderInline(line.replace(/^# /, ""))}
       </h1>
     );
   }
 
-  // Unordered list — accept -, *, • and – bullets (pasted notes use all of them)
-  const ulMatch = line.match(/^\s*[-*•–]\s+(.+)/);
+  // Unordered list — accept -, *, • and – bullets (pasted notes use all of them).
+  // Leading whitespace → deeper indent, so nested bullets read as nested.
+  const ulMatch = line.match(/^(\s*)[-*•–]\s+(.+)/);
   if (ulMatch && !line.trimStart().startsWith("**")) {
+    const indent = Math.min(Math.floor(ulMatch[1].replace(/\t/g, "  ").length / 2), 3);
     return (
-      <div className="flex items-start gap-3 my-2 ml-4 sm:ml-6">
-        <span className="w-1.5 h-1.5 rounded-full mt-2.5 shrink-0" style={{ background: "var(--td-accent)" }} />
-        <p className="flex-1 min-w-0">{renderInline(ulMatch[1])}</p>
+      <div className="flex items-start gap-2.5 my-1" style={{ marginLeft: `${0.75 + indent * 1.1}rem` }}>
+        <span className="w-1.5 h-1.5 rounded-full mt-[0.55rem] shrink-0" style={{ background: indent > 0 ? "rgb(var(--td-accent-rgb) / 0.5)" : "var(--td-accent)" }} />
+        <p className="flex-1 min-w-0">{renderInline(ulMatch[2])}</p>
       </div>
     );
   }
@@ -289,14 +294,14 @@ function LineBlock({
   const numMatch = line.match(/^\s*(\d+)[.)]\s+(.+)/);
   if (numMatch) {
     return (
-      <div className="flex items-start gap-3 my-2 ml-1">
+      <div className="flex items-start gap-2.5 my-1.5">
         <span
-          className="shrink-0 min-w-[1.375rem] h-[1.375rem] px-1 rounded-full text-[11px] flex items-center justify-center font-bold mt-0.5"
+          className="shrink-0 min-w-[1.375rem] h-[1.375rem] px-1 rounded-full text-[11px] flex items-center justify-center font-bold mt-px"
           style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent)" }}
         >
           {numMatch[1]}
         </span>
-        <p className="flex-1 min-w-0">{renderInline(numMatch[2])}</p>
+        <p className="flex-1 min-w-0 font-medium">{renderInline(numMatch[2])}</p>
       </div>
     );
   }
@@ -305,12 +310,12 @@ function LineBlock({
   const t = line.trim();
   if (t.endsWith(":") && t.length <= 64 && !t.includes(". ") && /^[A-Z0-9]/.test(t)) {
     return (
-      <p className="text-white font-semibold mt-5 mb-1.5 text-[1.02em]">{renderInline(t)}</p>
+      <p className="text-white font-semibold mt-3.5 mb-1 text-[1.01em]">{renderInline(t)}</p>
     );
   }
 
   return (
-    <p className="my-3">
+    <p className="my-2.5">
       {renderInline(line)}
       {isTyping && isLast && <Cursor />}
     </p>
@@ -328,7 +333,7 @@ export function MarkdownRenderer({
   const blocks = parseBlocks(content);
 
   return (
-    <div className="text-[15px] sm:text-base leading-[1.75] text-zinc-300 max-w-[70ch]">
+    <div className="text-[15px] sm:text-base leading-[1.65] text-zinc-300 max-w-[70ch] [&>*:first-child]:!mt-0">
       {blocks.map((block, i) => {
         const isLast = i === blocks.length - 1;
 
