@@ -203,19 +203,19 @@ export default function AdminUsers() {
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="flex gap-2">
                   <select value={grantSubject} onChange={(e) => setGrantSubject(e.target.value)}
-                    className="flex-1 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
+                    className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
                     <option value="">Grant a subject…</option>
                     {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
-                  <button disabled={busy || !grantSubject} onClick={() => doGrant("subject", grantSubject)} className="td-btn-primary px-3 text-sm disabled:opacity-50">Grant</button>
+                  <button disabled={busy || !grantSubject} onClick={() => doGrant("subject", grantSubject)} className="td-btn-primary px-4 h-10 text-sm font-semibold shrink-0 disabled:opacity-50">Grant</button>
                 </div>
                 <div className="flex gap-2">
                   <select value={grantYear} onChange={(e) => setGrantYear(e.target.value)}
-                    className="flex-1 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
+                    className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none">
                     <option value="">Grant a year combo…</option>
                     {years.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
                   </select>
-                  <button disabled={busy || !grantYear} onClick={() => doGrant("year", grantYear)} className="td-btn-primary px-3 text-sm disabled:opacity-50">Grant</button>
+                  <button disabled={busy || !grantYear} onClick={() => doGrant("year", grantYear)} className="td-btn-primary px-4 h-10 text-sm font-semibold shrink-0 disabled:opacity-50">Grant</button>
                 </div>
               </div>
             </div>

@@ -35,8 +35,16 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
     if (couponCode) orderBody.coupon_code = couponCode;
     if (chargeIds && chargeIds.length) orderBody.charge_ids = chargeIds;
     const { data, error: orderErr } = await invokeFn<{
-      order_id: string; key_id: string; amount: number; currency: string;
+      order_id?: string; key_id?: string; amount?: number; currency?: string; free?: boolean;
     }>("create-cart-order", Object.keys(orderBody).length ? orderBody : undefined);
+
+    // Free cart (all ₹0 items): unlocked server-side already — no Razorpay.
+    if (data?.free) {
+      setState("success");
+      toast.success("🎉 Unlocked — it's free!");
+      await onSuccess?.();
+      return;
+    }
 
     if (orderErr || !data?.order_id) {
       setState("failed");

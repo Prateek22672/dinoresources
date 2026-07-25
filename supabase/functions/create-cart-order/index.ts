@@ -57,7 +57,53 @@ Deno.serve(async (req) => {
     }
 
     const subtotal = items.reduce((sum, i) => sum + i.price_paise, 0);
-    if (subtotal <= 0) return jsonResponse({ error: "Invalid cart total" }, 400);
+
+    // ── FREE UNLOCK ──────────────────────────────────────────────────────────
+    // If every item is ₹0 (free / preview subjects), grant access instantly and
+    // skip Razorpay entirely — a zero-price cart must never hit the gateway
+    // (Razorpay cannot charge ₹0). This makes free subjects work forever.
+    if (subtotal <= 0) {
+      const { data: settings } = await db.from("app_settings").select("purchase_validity_days").maybeSingle();
+      const validityDays = Number(settings?.purchase_validity_days ?? 0);
+      const expiresAt = validityDays > 0 ? new Date(Date.now() + validityDays * 86_400_000).toISOString() : null;
+
+      const { data: freeOrder, error: foErr } = await db
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          razorpay_order_id: `free_${user.id.slice(0, 8)}_${Date.now()}`,
+          razorpay_payment_id: "free",
+          amount_paise: 0,
+          currency: "INR",
+          status: "paid",
+        })
+        .select("id")
+        .single();
+      if (foErr) throw foErr;
+
+      await db.from("order_items").insert(items.map((i) => ({ ...i, order_id: freeOrder.id })));
+
+      for (const i of items) {
+        if (i.item_type === "subject" && i.subject_id) {
+          const { data: ex } = await db.from("user_subject_access").select("id")
+            .eq("user_id", user.id).eq("subject_id", i.subject_id).is("revoked_at", null).maybeSingle();
+          if (!ex) await db.from("user_subject_access").insert({
+            user_id: user.id, subject_id: i.subject_id, source: "purchase",
+            order_id: freeOrder.id, amount_paise: 0, expires_at: expiresAt,
+          });
+        } else if (i.item_type === "combo" && i.year_id) {
+          const { data: ex } = await db.from("user_year_access").select("id")
+            .eq("user_id", user.id).eq("year_id", i.year_id).is("revoked_at", null).maybeSingle();
+          if (!ex) await db.from("user_year_access").insert({
+            user_id: user.id, year_id: i.year_id, source: "combo",
+            order_id: freeOrder.id, amount_paise: 0, expires_at: expiresAt,
+          });
+        }
+      }
+
+      await db.from("cart_items").delete().eq("user_id", user.id);
+      return jsonResponse({ free: true, success: true });
+    }
 
     // Parse the request body once (coupon + selected optional charges).
     const body = await req.json().catch(() => ({} as any));
