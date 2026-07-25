@@ -347,54 +347,6 @@ export default function Dashboard() {
     </>
   );
 
-  // ── Stat cards — rendered full-width BELOW the quick-access cards ──
-  const statCards = (
-    <>
-      {/* Overall information */}
-      <div className="td-surface rounded-[24px] p-5">
-        <p className="text-white font-semibold text-sm mb-3">Overall information</p>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center shrink-0"><TrendingUp className="w-4 h-4" /></span>
-            <div className="flex-1"><p className="text-zinc-500 text-xs">Library unlocked</p><p className="td-grad-text text-lg font-extrabold w-fit">{pct}%</p></div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl td-surface-2 flex items-center justify-center shrink-0 text-zinc-300"><BookOpen className="w-4 h-4" /></span>
-            <div className="flex-1"><p className="text-zinc-500 text-xs">Subjects owned</p><p className="text-white text-lg font-extrabold">{owned.length} <span className="text-zinc-500 text-sm font-medium">/ {subjects.length}</span></p></div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center shrink-0"><Flame className="w-4 h-4" /></span>
-            <div className="flex-1"><p className="text-zinc-500 text-xs">Login streak</p><p className="text-white text-lg font-extrabold">{streak} day{streak === 1 ? "" : "s"}</p></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Productivity */}
-      <div className="td-surface rounded-[24px] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-white font-semibold text-sm">Productivity</p>
-          <span className="text-zinc-600 text-[11px]">last 7 days</span>
-        </div>
-        <div className="flex items-end gap-2 h-24">
-          {last7.map((d) => {
-            const active = activity.includes(d.iso);
-            return (
-              <div key={d.iso} className="flex-1 flex flex-col items-center gap-1.5 h-full">
-                <div className="flex-1 w-full max-w-[18px] mx-auto rounded-full bg-white/6 overflow-hidden flex items-end">
-                  <div className={`w-full rounded-full ${active ? "td-grad-bar" : "bg-white/12"}`} style={{ height: active ? "85%" : "16%" }} />
-                </div>
-                <span className={`text-[9px] font-semibold ${d.iso === todayIso ? "td-accent-text" : "text-zinc-600"}`}>{d.label}</span>
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-4 mt-3">
-          <span className="flex items-center gap-1.5 text-[10px] text-zinc-500"><span className="w-2 h-2 rounded-full td-accent-solid inline-block" /> Studied</span>
-          <span className="flex items-center gap-1.5 text-[10px] text-zinc-500"><span className="w-2 h-2 rounded-full bg-white/15 inline-block" /> Away</span>
-        </div>
-      </div>
-    </>
-  );
 
   return (
     <AppShell>
@@ -670,11 +622,6 @@ export default function Dashboard() {
               )
             ))}
           </div>
-      </div>
-
-      {/* ── Stat boxes — full width, below the quick-access cards ── */}
-      <div className="grid sm:grid-cols-2 gap-4 mt-2">
-        {statCards}
       </div>
 
       <Footer />
