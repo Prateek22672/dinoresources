@@ -24,7 +24,6 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/store", label: "Subjects", icon: Store },
   { to: "/library", label: "My Library", icon: Library },
-  { to: "/purchases", label: "My Access", icon: Receipt },
 ];
 
 export default function AppShell({ children, hideHeader = false }: { children: ReactNode; hideHeader?: boolean }) {

@@ -24,7 +24,6 @@ export default function SideNav({
     { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
     { label: "Subjects", icon: Store, to: "/store" },
     { label: "My Library", icon: Library, to: "/library" },
-    { label: "My Access", icon: Receipt, to: "/purchases" },
     ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
     ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),
     ...((isContributor || isAdmin) ? [{ label: "Issues", icon: Bug, to: "/issues" }] : []),

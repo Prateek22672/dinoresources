@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
-import { BookOpen, Library as LibraryIcon, ArrowRight, Package } from "lucide-react";
+import { BookOpen, Library as LibraryIcon, ArrowRight, Package, Receipt } from "lucide-react";
 
 export default function Library() {
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
@@ -56,9 +56,14 @@ export default function Library() {
         title="Everything you own, in one place."
         subtitle="Open any subject to jump into notes, PYQs and Study-With-AI."
         actions={
-          <Link to="/store" className="td-btn-ghost px-5 py-3 text-sm flex items-center gap-1.5">
-            Browse store <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <>
+            <Link to="/store" className="td-btn-primary px-5 py-3 text-sm flex items-center gap-1.5">
+              Explore subjects <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <Link to="/purchases" className="td-btn-ghost px-5 py-3 text-sm flex items-center gap-1.5">
+              <Receipt className="w-4 h-4" /> Purchase history
+            </Link>
+          </>
         }
         stats={[
           { label: "Subjects owned", value: subjects.length, icon: BookOpen },
