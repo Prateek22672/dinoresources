@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
+import { collegeName } from "@/config/college";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -138,7 +139,7 @@ export default function AuthPage() {
               <span className="text-zinc-600">covered.</span>
             </h1>
             <p className="text-zinc-400 leading-relaxed max-w-sm">
-              Everything a GITAM student actually needs, in one place.
+              Everything a {collegeName()} student actually needs, in one place.
             </p>
 
             {/* what's inside */}

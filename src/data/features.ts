@@ -59,7 +59,7 @@ export const FEATURES: Feature[] = [
     how: "Dashboard → calendar on the right → tap a date to mark an exam." },
   { category: "Track your progress", roles: ["student"],
     name: "SGPA & CGPA calculators",
-    desc: "Estimate your semester result and predict your CGPA with the GITAM grade chart.",
+    desc: "Estimate your semester result and predict your CGPA with your college's grade chart.",
     how: "Dashboard → Calculators tile, or the SGPA/Attendance quick links. Free, no login needed." },
   { category: "Track your progress", roles: ["student"],
     name: "Attendance planner",

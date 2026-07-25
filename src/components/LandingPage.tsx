@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import Footer from "./Footer";
 import { AiIcon } from "@/components/BrandIcons";
+import { collegeName } from "@/config/college";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 import agentFuryLogo from "@/assets/icon-192.png";
@@ -137,7 +138,7 @@ const FAQS = [
   { q: "What's inside a subject pack?", a: "Syllabus, 5 units of curated notes, previous year questions, editorial videos, and Study-With-AI answers organised topic by topic. Access unlocks instantly after payment." },
   { q: "What's a full-year pack?", a: "Every subject in your year for one price. If you'll need more than two subjects, the full-year pack always wins." },
   { q: "I paid but can't access — what now?", a: "Tap Instant Help inside the app — DinoBot files a support ticket for you and the team resolves it within 24 hours." },
-  { q: "Which college is this for?", a: "Built by and for GITAM students — the grade chart, units and PYQs match GITAM's actual pattern." },
+  { q: "Which college is this for?", a: `Built by and for ${collegeName()} students — the grade chart, units and PYQs match your college's actual pattern.` },
 ];
 
 /* Pinned showcase steps (Fluently-style: one scroll, panel swaps in place) */
@@ -499,7 +500,7 @@ export default function LandingPage() {
         <p className="text-[clamp(4.5rem,13vw,9rem)] font-extrabold tracking-tight leading-none text-white" style={{ fontVariantNumeric: "tabular-nums" }}>
           {counts[0].toLocaleString("en-IN")}+
         </p>
-        <p className="text-zinc-500 font-medium mt-3">active GITAM students and counting</p>
+        <p className="text-zinc-500 font-medium mt-3">active {collegeName()} students and counting</p>
 
         <div className="flex items-center justify-center flex-wrap gap-x-8 gap-y-4 mt-10">
           {[
@@ -748,7 +749,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[7%] top-[47%] md:top-auto md:right-[3%] md:bottom-[20%] rotate-[-10deg] z-[6] will-change-transform">
         <div ref={(el) => (mouseEls.current[2] = el)} className="will-change-transform">
           <p className="ld-hand text-[#6D5BD0] text-xl sm:text-2xl md:text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
-            made for<br />GITAM students
+            made for<br />{collegeName()} students
           </p>
         </div>
       </div>

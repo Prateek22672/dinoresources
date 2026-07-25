@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useFeatureFlags } from "./hooks/useFeatureFlags";
+import { collegeName } from "./config/college";
 import Index from "./pages/Index";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
@@ -55,12 +56,12 @@ const ROUTE_META: Record<string, { title: string; desc: string }> = {
     desc: "Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking. Stop searching for notes, start mastering your subjects.",
   },
   "/sgpa-calc": {
-    title: "Free SGPA Calculator (GITAM) — WGP, Grades & CGPA | Team Dino",
-    desc: "Calculate your SGPA & CGPA in seconds with the GITAM grade chart — Sessional 1 (30%), Sessional 2 (45%) and Lab/External (25%) weights. Free, no login needed.",
+    title: `Free SGPA Calculator (${collegeName()}) — WGP, Grades & CGPA | Team Dino`,
+    desc: `Calculate your SGPA & CGPA in seconds with the ${collegeName()} grade chart — Sessional 1 (30%), Sessional 2 (45%) and Lab/External (25%) weights. Free, no login needed.`,
   },
   "/calc": {
     title: "Free SGPA, CGPA & Attendance Calculators | Team Dino",
-    desc: "GITAM grade calculator, What-If CGPA predictor and attendance planner in one place. Free, no login needed.",
+    desc: `${collegeName()} grade calculator, What-If CGPA predictor and attendance planner in one place. Free, no login needed.`,
   },
   "/attendance-calc": {
     title: "Attendance Calculator — How Many Classes Can You Miss? | Team Dino",
