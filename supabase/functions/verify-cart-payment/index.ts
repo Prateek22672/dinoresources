@@ -4,6 +4,7 @@
 // clears the cart. Idempotent: re-running on an already-paid order is a no-op.
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient, getAuthUser, verifyRazorpaySignature } from "../_shared/razorpay.ts";
+import { rewardReferrerOnFirstPurchase } from "../_shared/referral.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -25,7 +26,7 @@ Deno.serve(async (req) => {
     // Find the pending order for THIS user (prevents cross-user claims)
     const { data: order, error: orderErr } = await db
       .from("orders")
-      .select("id, user_id, status, coupon_code")
+      .select("id, user_id, status, coupon_code, coins_used")
       .eq("razorpay_order_id", razorpay_order_id)
       .eq("user_id", user.id)
       .single();
@@ -86,6 +87,17 @@ Deno.serve(async (req) => {
       const { data: c } = await db.from("coupons").select("id, times_redeemed").ilike("code", order.coupon_code).maybeSingle();
       if (c) await db.from("coupons").update({ times_redeemed: (c.times_redeemed ?? 0) + 1 }).eq("id", c.id);
     }
+
+    // Deduct coins spent on this order (only now, on confirmed payment)
+    if (Number(order.coins_used) > 0) {
+      const { data: prof } = await db.from("profiles").select("coins").eq("id", user.id).maybeSingle();
+      const newBal = Math.max(0, Number(prof?.coins ?? 0) - Number(order.coins_used));
+      await db.from("profiles").update({ coins: newBal }).eq("id", user.id);
+      await db.from("coin_transactions").insert({ user_id: user.id, delta: -Number(order.coins_used), reason: "checkout_spend" });
+    }
+
+    // Referral: pay the referrer on this user's first successful purchase.
+    await rewardReferrerOnFirstPurchase(db, user.id);
 
     return jsonResponse({ success: true });
   } catch (err) {

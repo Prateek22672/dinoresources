@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Plus, Save, Trash2, Ticket, Disc3 } from "lucide-react";
+import { Plus, Save, Trash2, Ticket, Disc3, Gift } from "lucide-react";
 
 interface SpinSeg {
   id: string; label: string; percent: number; weight: number; active: boolean; order_index: number;
@@ -26,19 +26,46 @@ export default function AdminCoupons() {
   const [cooldown, setCooldown] = useState("30");
   const [settingsId, setSettingsId] = useState<string | null>(null);
 
+  // Referral & coins config
+  const [ref, setRef] = useState({ active: false, referrer: "100", signup: "40", perRupee: "20", maxPaise: "0" });
+  const [refSaving, setRefSaving] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data }, { data: sg }, { data: st }] = await Promise.all([
       tbl("coupons").select("*").order("created_at", { ascending: false }),
       tbl("spin_segments").select("*").order("order_index", { ascending: true }),
-      tbl("app_settings").select("id, spin_cooldown_days").maybeSingle(),
+      tbl("app_settings").select("id, spin_cooldown_days, referral_active, referral_referrer_coins, referral_signup_coins, coins_per_rupee, coins_max_paise_per_order").maybeSingle(),
     ]);
     setRows((data ?? []) as CouponRow[]);
     setSegs((sg ?? []) as SpinSeg[]);
-    if (st) { setSettingsId(st.id); setCooldown(String(st.spin_cooldown_days ?? 30)); }
+    if (st) {
+      const s = st as any;
+      setSettingsId(s.id); setCooldown(String(s.spin_cooldown_days ?? 30));
+      setRef({
+        active: !!s.referral_active,
+        referrer: String(s.referral_referrer_coins ?? 100),
+        signup: String(s.referral_signup_coins ?? 40),
+        perRupee: String(s.coins_per_rupee ?? 20),
+        maxPaise: String(s.coins_max_paise_per_order ?? 0),
+      });
+    }
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  const saveReferral = async () => {
+    setRefSaving(true);
+    const { error } = await tbl("app_settings").update({
+      referral_active: ref.active,
+      referral_referrer_coins: Math.max(0, parseInt(ref.referrer) || 0),
+      referral_signup_coins: Math.max(0, parseInt(ref.signup) || 0),
+      coins_per_rupee: Math.max(1, parseInt(ref.perRupee) || 20),
+      coins_max_paise_per_order: Math.max(0, parseInt(ref.maxPaise) || 0),
+    }).eq("id", settingsId ?? true);
+    setRefSaving(false);
+    if (error) toast.error(error.message); else toast.success("Referral settings saved");
+  };
 
   const totalWeight = segs.filter((s) => s.active).reduce((n, s) => n + (s.weight || 0), 0);
   const odds = (s: SpinSeg) => (s.active && totalWeight > 0 ? Math.round((s.weight / totalWeight) * 1000) / 10 : 0);
@@ -118,6 +145,33 @@ export default function AdminCoupons() {
 
   return (
     <div className="space-y-8 max-w-3xl">
+      {/* Referral & coins */}
+      <section className="td-surface rounded-2xl p-5">
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <h3 className="text-white font-semibold flex items-center gap-2"><Gift className="w-4 h-4 td-accent-text" /> Referral &amp; coins</h3>
+          <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer shrink-0">
+            <input type="checkbox" checked={ref.active} onChange={(e) => setRef((p) => ({ ...p, active: e.target.checked }))} />
+            {ref.active ? "Live" : "Off"}
+          </label>
+        </div>
+        <p className="text-zinc-500 text-xs mb-4">Coins are earned via invites and spent as a checkout discount. Set 0 to disable a reward. {ref.perRupee} coins = ₹1.</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {([
+            ["Referrer coins (on friend's 1st buy)", "referrer"],
+            ["New-friend welcome coins", "signup"],
+            ["Coins per ₹1", "perRupee"],
+            ["Max ₹ off/order (paise, 0=none)", "maxPaise"],
+          ] as const).map(([label, key]) => (
+            <label key={key} className="block">
+              <span className="text-[11px] font-semibold text-zinc-500">{label}</span>
+              <input type="number" value={(ref as any)[key]} onChange={(e) => setRef((p) => ({ ...p, [key]: e.target.value }))}
+                className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none mt-1" />
+            </label>
+          ))}
+        </div>
+        <button onClick={saveReferral} disabled={refSaving} className="td-btn-primary px-4 h-10 rounded-xl text-sm font-semibold flex items-center gap-1.5 mt-4 disabled:opacity-60"><Save className="w-4 h-4" /> Save referral settings</button>
+      </section>
+
       {/* Create */}
       <section className="td-surface rounded-2xl p-5">
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2"><Plus className="w-4 h-4 td-accent-text" /> Create coupon</h3>

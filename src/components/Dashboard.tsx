@@ -21,7 +21,7 @@ import Footer from "./Footer";
 import {
   BookOpen, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
   CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
-  Play, Flame, TrendingUp, ChevronLeft, ChevronRight,
+  Play, Flame, TrendingUp, ChevronLeft, ChevronRight, Gift,
 } from "lucide-react";
 import { GenAiIcon } from "@/components/BrandIcons";
 import agentFuryLogo from "@/assets/icon-192.png";
@@ -227,6 +227,8 @@ export default function Dashboard() {
         { overline: "Performance", title: "SGPA Calc", desc: "Estimate your semester grades.", icon: Calculator, onClick: () => navigate("/sgpa-calc") },
         { overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", icon: CalendarDays, onClick: () => navigate("/attendance-calc") },
       ] },
+    { key: "invite", overline: "Invite & earn", title: "Bring a friend", desc: "Earn coins for your next unlock.", cta: "Get your link",
+      accent: "#34d399", icon: Gift, onClick: () => navigate("/invite") },
     { key: "foliofyx", overline: "Create your website", title: "FolioFYX", desc: "Build a standout portfolio.", cta: "Create Now Free",
       accent: "#f472b6", icon: Globe, logo: fyxLogo, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
     { key: "announcements", overline: "Updates", title: "Announcements", desc: "Latest campus updates.", cta: "View Updates",

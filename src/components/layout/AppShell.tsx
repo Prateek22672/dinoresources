@@ -44,6 +44,17 @@ export default function AppShell({ children, hideHeader = false }: { children: R
     window.addEventListener("td:open-issue-reporter", open);
     return () => window.removeEventListener("td:open-issue-reporter", open);
   }, []);
+  // Claim a pending referral code once (idempotent server-side)
+  useEffect(() => {
+    let ref = "";
+    try { ref = localStorage.getItem("td:ref") || ""; } catch { /* ignore */ }
+    if (!ref) return;
+    import("@/integrations/supabase/revamp").then(({ invokeFn }) => {
+      invokeFn("claim-referral", { code: ref }).finally(() => {
+        try { localStorage.removeItem("td:ref"); } catch { /* ignore */ }
+      });
+    });
+  }, []);
   // Side rail collapse (persisted) — icons-only mode frees width on dense pages
   const [navMin, setNavMin] = useState(() => {
     try { return localStorage.getItem("td:nav") === "min"; } catch { return false; }

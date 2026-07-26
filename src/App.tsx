@@ -33,6 +33,7 @@ const JobsContributor = lazy(() => import("./pages/JobsContributor"));
 const Agent = lazy(() => import("./pages/Agent"));
 const Issues = lazy(() => import("./pages/Issues"));
 const WhatsNewPage = lazy(() => import("./pages/WhatsNewPage"));
+const Invite = lazy(() => import("./pages/Invite"));
 
 /** Minimal chunk-load fallback — matches the app's dark stage, no flash of white. */
 const RouteFallback = () => (
@@ -164,6 +165,7 @@ const App = () => (
             <Route path="/contributor" element={<ProtectedRoute roles={["contributor", "admin"]}><Contributor /></ProtectedRoute>} />
             <Route path="/issues" element={<ProtectedRoute roles={["contributor", "admin"]}><Issues /></ProtectedRoute>} />
             <Route path="/whats-new" element={<ProtectedRoute><WhatsNewPage /></ProtectedRoute>} />
+            <Route path="/invite" element={<ProtectedRoute><Invite /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
