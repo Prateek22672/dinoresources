@@ -134,8 +134,9 @@ export default function AuthPage() {
         </button>
       </header>
 
-      {/* Main */}
-      <main className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-4 py-8 lg:py-4">
+      {/* Main — scrolls if the form is taller than the viewport (short screens) */}
+      <main className="relative z-10 flex-1 min-h-0 overflow-y-auto">
+        <div className="min-h-full flex items-center justify-center px-4 py-6">
         <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left — brand (desktop) */}
           <div className="hidden lg:flex flex-col gap-5 td-auth-in">
@@ -306,6 +307,7 @@ export default function AuthPage() {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </main>
     </div>
