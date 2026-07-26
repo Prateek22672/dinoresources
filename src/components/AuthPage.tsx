@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone, Gift } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
 export default function AuthPage() {
@@ -17,10 +17,11 @@ export default function AuthPage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
-  // Capture a referral code from ?ref= — claimed on first login (AppShell).
+  // Referral code — pre-filled from ?ref=, or typed in the signup form.
+  const [refCode, setRefCode] = useState("");
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
-    if (ref) { try { localStorage.setItem("td:ref", ref.trim()); } catch { /* ignore */ } }
+    if (ref) { setRefCode(ref.trim()); try { localStorage.setItem("td:ref", ref.trim()); } catch { /* ignore */ } }
   }, []);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -32,6 +33,9 @@ export default function AuthPage() {
     const fullName = ((formData.get("fullName") as string) || "").trim();
     const phone = ((formData.get("phone") as string) || "").trim();
     if (!fullName) { setIsLoading(false); toast.error("Please enter your full name"); return; }
+    // stash the referral code — claimed on first login by AppShell
+    const rc = ((formData.get("referralCode") as string) || refCode || "").trim();
+    if (rc) { try { localStorage.setItem("td:ref", rc); } catch { /* ignore */ } }
     const { error } = await supabase.auth.signUp({
       email, password,
       options: {
@@ -82,7 +86,7 @@ export default function AuthPage() {
   };
 
   const field =
-    "w-full h-12 rounded-xl bg-white/[0.03] border border-white/10 pl-10 pr-3 text-sm text-white " +
+    "w-full h-10 rounded-xl bg-white/[0.03] border border-white/10 pl-10 pr-3 text-[13px] text-white " +
     "placeholder:text-zinc-600 outline-none transition-shadow td-auth-field";
 
   return (
@@ -199,15 +203,15 @@ export default function AuthPage() {
 
                 {/* Sign in */}
                 <TabsContent value="signin" className="mt-0">
-                  <form onSubmit={handleSignIn} className="flex flex-col gap-3.5">
-                    <div className="flex flex-col gap-1.5">
+                  <form onSubmit={handleSignIn} className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-1">
                       <Label htmlFor="signin-email" className="text-xs font-medium text-zinc-400 pl-1">Email address</Label>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signin-email" name="email" type="email" placeholder="name@university.edu" className={field} required />
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <div className="flex items-center justify-between px-1">
                         <Label htmlFor="signin-password" className="text-xs font-medium text-zinc-400">Password</Label>
                         <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
@@ -223,7 +227,7 @@ export default function AuthPage() {
                               <DialogDescription className="text-zinc-500 text-sm">Enter your registered email and we'll send you a secure reset link.</DialogDescription>
                             </DialogHeader>
                             <form onSubmit={handleForgotPassword} className="flex flex-col gap-4 mt-2">
-                              <div className="flex flex-col gap-1.5">
+                              <div className="flex flex-col gap-1">
                                 <Label htmlFor="reset-email" className="text-xs font-medium text-zinc-400 pl-1">Email address</Label>
                                 <div className="relative">
                                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
@@ -251,33 +255,41 @@ export default function AuthPage() {
 
                 {/* Sign up */}
                 <TabsContent value="signup" className="mt-0">
-                  <form onSubmit={handleSignUp} className="flex flex-col gap-3.5">
-                    <div className="flex flex-col gap-1.5">
+                  <form onSubmit={handleSignUp} className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-1">
                       <Label htmlFor="signup-name" className="text-xs font-medium text-zinc-400 pl-1">Full name</Label>
                       <div className="relative">
                         <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signup-name" name="fullName" type="text" autoComplete="name" placeholder="Your full name" className={field} required />
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <Label htmlFor="signup-email" className="text-xs font-medium text-zinc-400 pl-1">University email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signup-email" name="email" type="email" placeholder="name@university.edu" className={field} required />
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <Label htmlFor="signup-phone" className="text-xs font-medium text-zinc-400 pl-1">Phone <span className="text-zinc-600 font-normal">· optional</span></Label>
                       <div className="relative">
                         <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signup-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="10-digit mobile (optional)" className={field} />
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <Label htmlFor="signup-password" className="text-xs font-medium text-zinc-400 pl-1">Create password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signup-password" name="password" type="password" placeholder="Minimum 6 characters" minLength={6} className={field} required />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="signup-ref" className="text-xs font-medium text-zinc-400 pl-1">Referral code <span className="text-zinc-600 font-normal">· optional</span></Label>
+                      <div className="relative">
+                        <Gift className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                        <input id="signup-ref" name="referralCode" type="text" value={refCode} onChange={(e) => setRefCode(e.target.value)}
+                          placeholder="A friend's code (earn bonus coins)" className={`${field} uppercase`} />
                       </div>
                     </div>
                     <button type="submit" disabled={isLoading} className="td-btn-primary h-12 mt-1 flex items-center justify-center gap-2 text-sm disabled:opacity-60">

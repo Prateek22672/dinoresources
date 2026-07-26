@@ -72,6 +72,20 @@ export default function Dashboard() {
   const [streak, setStreak] = useState(0);
   const [activity, setActivity] = useState<string[]>([]);
 
+  // referral banner state (only shows when admin has it Live)
+  const [referral, setReferral] = useState<{ active: boolean; coins: number; perRupee: number }>({ active: false, coins: 0, perRupee: 20 });
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const [{ data: prof }, { data: s }] = await Promise.all([
+        (supabase.from("profiles") as any).select("coins").eq("id", user.id).maybeSingle(),
+        (supabase.from("app_settings") as any).select("referral_active, coins_per_rupee").maybeSingle(),
+      ]);
+      setReferral({ active: !!s?.referral_active, coins: prof?.coins ?? 0, perRupee: Math.max(1, s?.coins_per_rupee ?? 20) });
+    })();
+  }, []);
+
   // readiness refresh tick — recompute rings when engagement changes
   const [readyTick, setReadyTick] = useState(0);
   useEffect(() => {
@@ -227,8 +241,6 @@ export default function Dashboard() {
         { overline: "Performance", title: "SGPA Calc", desc: "Estimate your semester grades.", icon: Calculator, onClick: () => navigate("/sgpa-calc") },
         { overline: "Tracking", title: "Attendance", desc: "Plan the classes you need.", icon: CalendarDays, onClick: () => navigate("/attendance-calc") },
       ] },
-    { key: "invite", overline: "Invite & earn", title: "Bring a friend", desc: "Earn coins for your next unlock.", cta: "Get your link",
-      accent: "#34d399", icon: Gift, onClick: () => navigate("/invite") },
     { key: "foliofyx", overline: "Create your website", title: "FolioFYX", desc: "Build a standout portfolio.", cta: "Create Now Free",
       accent: "#f472b6", icon: Globe, logo: fyxLogo, onClick: () => window.open("https://www.foliofyx.in", "_blank") },
     { key: "announcements", overline: "Updates", title: "Announcements", desc: "Latest campus updates.", cta: "View Updates",
@@ -455,6 +467,27 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* Invite & earn banner (only when admin has it Live) */}
+          {referral.active && (
+            <button onClick={() => navigate("/invite")}
+              className="td-hero td-card-click rounded-3xl p-5 mb-8 w-full flex items-center justify-between gap-4 flex-wrap text-left relative overflow-hidden">
+              <div aria-hidden className="absolute -top-12 -right-8 w-44 h-40 opacity-40 pointer-events-none"
+                style={{ background: "rgb(var(--td-accent-rgb) / 0.2)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(8px)" }} />
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Gift className="w-5 h-5" /></div>
+                <div>
+                  <p className="text-white font-semibold">Invite friends, earn coins</p>
+                  <p className="text-zinc-400 text-sm">
+                    {referral.coins > 0
+                      ? <>You have <strong className="td-accent-text">{referral.coins} coins</strong> (≈₹{Math.floor(referral.coins / referral.perRupee)}) to spend.</>
+                      : <>They join, you both get coins for your next unlock.</>}
+                  </p>
+                </div>
+              </div>
+              <span className="relative z-10 td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5 shrink-0">Get your link <ArrowRight className="w-4 h-4" /></span>
+            </button>
           )}
 
           {/* ── Exam readiness — the "how ready am I?" USP ── */}
