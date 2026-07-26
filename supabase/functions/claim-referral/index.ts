@@ -35,9 +35,7 @@ Deno.serve(async (req) => {
     // welcome bonus to the NEW user (referrer is paid later, on first purchase)
     const signupCoins = Number(settings.referral_signup_coins ?? 0);
     if (signupCoins > 0) {
-      const { data: prof } = await db.from("profiles").select("coins").eq("id", user.id).maybeSingle();
-      await db.from("profiles").update({ coins: (prof?.coins ?? 0) + signupCoins }).eq("id", user.id);
-      await db.from("coin_transactions").insert({ user_id: user.id, delta: signupCoins, reason: "referral_welcome" });
+      await db.rpc("award_coins", { _user: user.id, _delta: signupCoins, _reason: "referral_welcome" });
     }
 
     return jsonResponse({ ok: true, welcome_coins: signupCoins });

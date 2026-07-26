@@ -88,12 +88,9 @@ Deno.serve(async (req) => {
       if (c) await db.from("coupons").update({ times_redeemed: (c.times_redeemed ?? 0) + 1 }).eq("id", c.id);
     }
 
-    // Deduct coins spent on this order (only now, on confirmed payment)
+    // Deduct coins spent on this order (only now, on confirmed payment) — atomic
     if (Number(order.coins_used) > 0) {
-      const { data: prof } = await db.from("profiles").select("coins").eq("id", user.id).maybeSingle();
-      const newBal = Math.max(0, Number(prof?.coins ?? 0) - Number(order.coins_used));
-      await db.from("profiles").update({ coins: newBal }).eq("id", user.id);
-      await db.from("coin_transactions").insert({ user_id: user.id, delta: -Number(order.coins_used), reason: "checkout_spend" });
+      await db.rpc("award_coins", { _user: user.id, _delta: -Number(order.coins_used), _reason: "checkout_spend" });
     }
 
     // Referral: pay the referrer on this user's first successful purchase.
