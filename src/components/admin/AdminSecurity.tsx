@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Shield, Check, Code2, Lock, Ban, CalendarClock, Smartphone, Save } from "lucide-react";
+import { Shield, Check, Code2, Lock, Ban, CalendarClock, Smartphone, Save, CreditCard } from "lucide-react";
 
 const LEVELS = [
   { value: 0, title: "Off — Developer mode", desc: "Nothing is blocked. DevTools, right-click, copy/paste all allowed.", icon: Code2 },
@@ -15,14 +15,26 @@ export default function AdminSecurity() {
   const [saving, setSaving] = useState(false);
   const [validityDays, setValidityDays] = useState("0");
   const [singleDevice, setSingleDevice] = useState(false);
+  const [gateway, setGateway] = useState<"primary" | "secondary">("primary");
+  const [secondaryReady, setSecondaryReady] = useState(false);
 
   useEffect(() => {
-    tbl("app_settings").select("security_level, purchase_validity_days, single_device").maybeSingle().then(({ data }: any) => {
+    tbl("app_settings").select("security_level, purchase_validity_days, single_device, active_gateway, gateway_secondary_ready").maybeSingle().then(({ data }: any) => {
       setLevel(data?.security_level ?? 1);
       setValidityDays(String(data?.purchase_validity_days ?? 0));
       setSingleDevice(!!data?.single_device);
+      setGateway(data?.active_gateway === "secondary" ? "secondary" : "primary");
+      setSecondaryReady(!!data?.gateway_secondary_ready);
     });
   }, []);
+
+  const switchGateway = async (slot: "primary" | "secondary") => {
+    if (slot === "secondary" && !secondaryReady) { toast.error("Secondary gateway has no keys yet — ask the dev to add them."); return; }
+    const { error } = await tbl("app_settings").update({ active_gateway: slot, updated_at: new Date().toISOString() }).eq("id", true);
+    if (error) { toast.error(error.message); return; }
+    setGateway(slot);
+    toast.success(`Payments now go through the ${slot} gateway`);
+  };
 
   const choose = async (value: number) => {
     setSaving(true);
@@ -51,6 +63,34 @@ export default function AdminSecurity() {
 
   return (
     <div className="max-w-2xl">
+      {/* ── Payment gateway switch ── */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <CreditCard className="w-5 h-5 td-accent-text" />
+        <h2 className="text-lg font-bold text-white">Payment gateway</h2>
+      </div>
+      <p className="text-zinc-500 text-sm mb-4">
+        Two Razorpay accounts are wired. Switch the active one instantly — e.g. if one has an outage or you want to route through the other. All payments flow through whichever is active.
+      </p>
+      <div className="grid sm:grid-cols-2 gap-3 mb-8">
+        {([
+          { slot: "primary" as const, name: "Gateway 1 (Primary)", ready: true },
+          { slot: "secondary" as const, name: "Gateway 2 (Secondary)", ready: secondaryReady },
+        ]).map((g) => (
+          <button key={g.slot} onClick={() => switchGateway(g.slot)}
+            className={`td-surface rounded-2xl p-4 text-left transition-colors ${gateway === g.slot ? "ring-2 ring-[var(--td-accent)]" : ""} ${!g.ready ? "opacity-60" : ""}`}>
+            <div className="flex items-center justify-between">
+              <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center"><CreditCard className="w-4 h-4" /></span>
+              {gateway === g.slot
+                ? <span className="td-accent-bg text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Check className="w-3 h-3" /> Active</span>
+                : g.ready ? <span className="text-zinc-500 text-[11px] font-semibold">Tap to activate</span>
+                : <span className="text-amber-400 text-[11px] font-semibold">No keys yet</span>}
+            </div>
+            <p className="text-white font-semibold text-sm mt-2.5">{g.name}</p>
+            <p className="text-zinc-500 text-xs mt-0.5">{g.ready ? "Razorpay · keys configured" : "Ask the dev to add its keys"}</p>
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center gap-2.5 mb-2">
         <Shield className="w-5 h-5 td-accent-text" />
         <h2 className="text-lg font-bold text-white">Site protection</h2>

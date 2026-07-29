@@ -7,7 +7,8 @@ import {
   adminClient,
   createRazorpayOrder,
   getAuthUser,
-  RZP_KEY_ID,
+  gatewayKeys,
+  type GatewaySlot,
 } from "../_shared/razorpay.ts";
 import { rewardReferrerOnFirstPurchase } from "../_shared/referral.ts";
 
@@ -170,15 +171,22 @@ Deno.serve(async (req) => {
     const total = grossTotal - coinsPaise;
     if (total < 100) return jsonResponse({ error: "Order total too low" }, 400);
 
-    // 3) Create the Razorpay order for the DISCOUNTED amount
-    const rzpOrder = await createRazorpayOrder(total, `cart_${user.id.slice(0, 8)}_${Date.now()}`);
+    // 3) Which gateway account is active? (admin-switchable in Admin → Payments)
+    const { data: gwCfg } = await db.from("app_settings").select("active_gateway").maybeSingle();
+    const slot: GatewaySlot = gwCfg?.active_gateway === "secondary" ? "secondary" : "primary";
+    const keys = gatewayKeys(slot);
 
-    // 4) Persist pending order + items
+    // Create the Razorpay order with the ACTIVE account's keys
+    const rzpOrder = await createRazorpayOrder(total, `cart_${user.id.slice(0, 8)}_${Date.now()}`, keys);
+
+    // 4) Persist pending order + items (record which gateway so verify uses the
+    // matching secret)
     const { data: order, error: orderErr } = await db
       .from("orders")
       .insert({
         user_id: user.id,
         razorpay_order_id: rzpOrder.id,
+        gateway: slot,
         amount_paise: total,
         discount_paise: discount,
         coupon_code: couponCode,
@@ -200,7 +208,7 @@ Deno.serve(async (req) => {
     return jsonResponse({
       order_id: rzpOrder.id,
       db_order_id: order.id,
-      key_id: RZP_KEY_ID,
+      key_id: keys.id,
       amount: total,
       currency: "INR",
     });

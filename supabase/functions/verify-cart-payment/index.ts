@@ -3,7 +3,7 @@
 // order_item (subject -> user_subject_access, combo -> user_year_access), and
 // clears the cart. Idempotent: re-running on an already-paid order is a no-op.
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { adminClient, getAuthUser, verifyRazorpaySignature } from "../_shared/razorpay.ts";
+import { adminClient, getAuthUser, verifyRazorpaySignature, gatewayKeys } from "../_shared/razorpay.ts";
 import { rewardReferrerOnFirstPurchase } from "../_shared/referral.ts";
 
 Deno.serve(async (req) => {
@@ -18,19 +18,22 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Missing payment fields" }, 400);
     }
 
-    const ok = await verifyRazorpaySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
-    if (!ok) return jsonResponse({ error: "Signature verification failed" }, 400);
-
     const db = adminClient();
 
-    // Find the pending order for THIS user (prevents cross-user claims)
+    // Find the pending order for THIS user FIRST (prevents cross-user claims,
+    // and tells us which gateway account signed it).
     const { data: order, error: orderErr } = await db
       .from("orders")
-      .select("id, user_id, status, coupon_code, coins_used")
+      .select("id, user_id, status, coupon_code, coins_used, gateway")
       .eq("razorpay_order_id", razorpay_order_id)
       .eq("user_id", user.id)
       .single();
     if (orderErr || !order) return jsonResponse({ error: "Order not found" }, 404);
+
+    // Verify the signature with the SAME account that created the order
+    const slot = order.gateway === "secondary" ? "secondary" : "primary";
+    const ok = await verifyRazorpaySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, gatewayKeys(slot).secret);
+    if (!ok) return jsonResponse({ error: "Signature verification failed" }, 400);
 
     // Idempotency: already processed
     if (order.status === "paid") return jsonResponse({ success: true, already: true });
