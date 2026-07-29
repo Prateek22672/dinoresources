@@ -7,7 +7,7 @@ import { formatPaise } from "@/lib/money";
 import { matchProfileYear } from "@/lib/year";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
-import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, ArrowRight, Zap, Eye } from "lucide-react";
+import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, ArrowRight, Zap, Eye, GraduationCap } from "lucide-react";
 
 interface YearGroup { year: YearRow; subjects: SubjectRow[] }
 
@@ -152,16 +152,17 @@ export default function Store() {
         const otherJunk = groups.find((g) => g.year.id === "__none__");
         if (otherJunk) chips.push(otherJunk.year);
         return (
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
             {chips.map((y) => (
               <button key={y.id} onClick={() => setActiveYear(y.id)}
                 className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center gap-1.5 ${activeYear === y.id ? "bg-white text-black" : "td-btn-ghost"}`}>
                 {y.name}{studentYear && y.id === studentYear.id && <span className="text-[10px] font-bold opacity-70">· your year</span>}
               </button>
             ))}
-            <button onClick={() => setActiveYear("all")}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium ${activeYear === "all" ? "bg-white text-black" : "td-btn-ghost"}`}>
-              All years
+            {/* Change your year → profile (Store opens on your year by default) */}
+            <button onClick={() => navigate("/setup?edit=true")}
+              className="shrink-0 td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+              <GraduationCap className="w-3.5 h-3.5" /> Change year
             </button>
           </div>
         );
@@ -179,8 +180,8 @@ export default function Store() {
           ) : studentYear && activeYear === studentYear.id ? (
             <>
               <p className="text-white font-semibold">Subjects for {studentYear.name} are coming soon</p>
-              <p className="text-zinc-500 text-sm mt-1 mb-4">We're adding content for your year. Meanwhile, you can browse everything.</p>
-              <button onClick={() => setActiveYear("all")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5">Browse all years <ArrowRight className="w-4 h-4" /></button>
+              <p className="text-zinc-500 text-sm mt-1 mb-4">We're adding content for your year. If your year is wrong, you can change it.</p>
+              <button onClick={() => navigate("/setup?edit=true")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5"><GraduationCap className="w-4 h-4" /> Change my year</button>
             </>
           ) : (
             <p className="text-zinc-400 font-medium">No subjects here yet.</p>
