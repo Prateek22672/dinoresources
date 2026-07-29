@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut } from "lucide-react";
+import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, Gift, LibraryBig, Sparkles } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 
 const DEPARTMENTS = ["CSE", "ECE", "Mechanical Engineering"];
@@ -103,18 +103,39 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
       `}</style>
 
       <div className="max-w-2xl">
-        {/* Identity header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-[22px] td-accent-solid text-white flex items-center justify-center text-2xl font-black shrink-0">
-            {initial}
+        {/* Identity hero — accent glow, like the rest of the app */}
+        <div className="td-hero relative overflow-hidden rounded-[28px] p-6 sm:p-7 mb-6">
+          <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56 opacity-50 pointer-events-none"
+            style={{ background: "rgb(var(--td-accent-rgb) / 0.24)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(6px)" }} />
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="w-16 h-16 rounded-[22px] td-accent-solid text-white flex items-center justify-center text-2xl font-black shrink-0">
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="td-accent-text text-[11px] font-bold tracking-[0.18em] uppercase">Your account</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">{fullName || "Profile & Settings"}</h1>
+              <p className="text-zinc-400 text-sm mt-0.5 truncate">{email}</p>
+            </div>
+            <button onClick={signOut} className="td-btn-ghost px-4 py-2.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 text-red-400 hover:text-red-300 shrink-0">
+              <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Sign out</span>
+            </button>
           </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">Profile &amp; Settings</h1>
-            <p className="text-zinc-500 text-sm mt-0.5">Your account and academic details, in sync.</p>
-          </div>
-          <button onClick={signOut} className="td-btn-ghost px-4 py-2.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 text-red-400 hover:text-red-300 shrink-0">
-            <LogOut className="w-3.5 h-3.5" /> Sign out
-          </button>
+        </div>
+
+        {/* Quick links — a real settings hub, not just a form */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+          {[
+            { label: "My unlocks", icon: Receipt, to: "/purchases" },
+            { label: "Invite & earn", icon: Gift, to: "/invite" },
+            { label: "My Library", icon: LibraryBig, to: "/library" },
+            { label: "What's new", icon: Sparkles, to: "/whats-new" },
+          ].map((q) => (
+            <button key={q.to} onClick={() => navigate(q.to)}
+              className="td-surface td-card-click rounded-2xl p-3.5 flex flex-col items-start gap-2 text-left">
+              <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center"><q.icon className="w-4 h-4" /></span>
+              <span className="text-white text-[13px] font-semibold">{q.label}</span>
+            </button>
+          ))}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

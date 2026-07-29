@@ -53,15 +53,36 @@ export default function AboutPage() {
         ]}
       />
 
+      {/* Mission — a real narrative, not just feature cards */}
+      <section className="td-hero relative overflow-hidden rounded-[28px] p-7 sm:p-10 mb-10">
+        <div aria-hidden className="absolute -top-20 -right-16 w-80 h-72 opacity-40 pointer-events-none"
+          style={{ background: "rgb(var(--td-accent-rgb) / 0.2)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(10px)" }} />
+        <div className="relative z-10 max-w-2xl">
+          <p className="td-accent-text text-[11px] font-bold tracking-[0.25em] uppercase mb-3">Why we built this</p>
+          <p className="text-white text-xl sm:text-2xl font-bold leading-snug tracking-tight">
+            The night before an exam shouldn't be spent hunting for notes across ten WhatsApp groups and dead Drive links.
+          </p>
+          <p className="text-zinc-400 leading-relaxed mt-4">
+            We're students who lived that chaos. So we built the tool we wished we had — one place with the notes, PYQs and AI explanations that match your exact syllabus, plus the calculators and trackers that tell you where you actually stand. Not a bloated LMS. A sharp, affordable companion made for the way exams really work.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-5">
+            {["Made by GITAM students", "Affordable by design", "Exam-first, always"].map((v) => (
+              <span key={v} className="td-glass px-3 py-1.5 rounded-full text-[12px] font-semibold text-zinc-300">{v}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-        {PILLARS.map((p) => (
-          <div key={p.title} className={`${p.span} td-surface rounded-[28px] p-7 sm:p-8`}>
-            <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center mb-5">
+        {PILLARS.map((p, i) => (
+          <div key={p.title} className={`${p.span} td-surface rounded-[28px] p-7 sm:p-8 relative overflow-hidden`}>
+            <span className="absolute top-5 right-6 text-5xl font-black text-white/[0.04] select-none">0{i + 1}</span>
+            <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center mb-5 relative z-10">
               <p.icon className="w-5 h-5" strokeWidth={1.7} />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2 tracking-tight">{p.title}</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed max-w-xl">{p.desc}</p>
+            <h3 className="text-lg font-bold text-white mb-2 tracking-tight relative z-10">{p.title}</h3>
+            <p className="text-zinc-400 text-sm leading-relaxed max-w-xl relative z-10">{p.desc}</p>
           </div>
         ))}
       </div>
