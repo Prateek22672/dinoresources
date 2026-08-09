@@ -57,7 +57,7 @@ export default function Calc({ initial = "sgpa" }: { initial?: Tab }) {
           <div className="min-w-0">
             {tab === "attendance" && (
               <div className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1">Attendance Calculator</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1">Attendance Calculator(VSP)</h1>
                 <p className="text-zinc-500">Plan exactly how many classes you can miss. Free · no login.</p>
               </div>
             )}

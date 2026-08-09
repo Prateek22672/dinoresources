@@ -31,16 +31,16 @@ interface Timetable {
 
 /* ------------------ Semester Config ------------------ */
 
-const SEMESTER_START = new Date(2026, 6, 29); // June 29 2026
-const SEMESTER_END = new Date(2026, 11, 6);  // Apr 15, 2026
-const SESSION_1_END = new Date(2026, 8, 14);   // Aug 14 2026 (end of Session 1)
+const SEMESTER_START = new Date(2026, 5, 29); // June 29 2026
+const SEMESTER_END = new Date(2026, 10, 6);  // Nov 6 2026 (end of semester)
+const SESSION_1_END = new Date(2026, 7, 14);   // Aug 14 2026 (end of Session 1)
 
 const HOLIDAYS: Record<string, number[]> = {
-  "2026-07": [4, 5, 11, 12, 18, 19, 25, 26, 28],
-  "2026-08": [1, 2, 8, 9, 15, 16, 22, 23, 29, 30],
-  "2026-09": [4, 5, 6, 12, 13, 14, 19, 20, 26, 27],
-  "2026-10": [2, 3, 4, 10, 11, 17, 18, 20, 24, 25, 31],
-  "2026-11": [1],
+  "2026-06": [4, 5, 11, 12, 18, 19, 25, 26],
+  "2026-07": [1, 2, 8, 9, 15, 16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+  "2026-08": [4, 5, 6, 12, 13, 14, 19, 20, 26, 27],
+  "2026-09": [2, 3, 4, 10, 11, 17, 18, 20, 24, 25, 31],
+  "2026-10": [1],
 };
 
 /* ------------------ Date Helpers ------------------ */
@@ -537,7 +537,7 @@ export default function AttendanceCalculator() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Session 1 Target</CardTitle>
-                  <CardDescription>75% by Feb 3, 2026 (Mid-term)</CardDescription>
+                  <CardDescription>75% by Aug 14, 2026 (Mid-term)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -573,7 +573,7 @@ export default function AttendanceCalculator() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Session 2 Target</CardTitle>
-                <CardDescription>75% by Apr 15, 2026 (Finals)</CardDescription>
+                <CardDescription>75% by Nov 6, 2026 (Finals)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex justify-between items-center">
