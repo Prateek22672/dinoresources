@@ -17,7 +17,7 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
 
   const busy = ["creating_order", "checkout_open", "verifying"].includes(state);
 
-  const start = useCallback(async (couponCode?: string, chargeIds?: string[], coinsToUse?: number) => {
+  const start = useCallback(async (couponCode?: string, chargeIds?: string[]) => {
     setError(null);
     try {
       await ensureRazorpaySDK();
@@ -34,7 +34,6 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
     const orderBody: Record<string, unknown> = {};
     if (couponCode) orderBody.coupon_code = couponCode;
     if (chargeIds && chargeIds.length) orderBody.charge_ids = chargeIds;
-    if (coinsToUse && coinsToUse > 0) orderBody.coins_to_use = coinsToUse;
     const { data, error: orderErr } = await invokeFn<{
       order_id?: string; key_id?: string; amount?: number; currency?: string; free?: boolean;
     }>("create-cart-order", Object.keys(orderBody).length ? orderBody : undefined);

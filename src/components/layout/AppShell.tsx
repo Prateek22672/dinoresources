@@ -11,7 +11,6 @@ const IssueReporter = lazy(() => import("@/components/issues/IssueReporter"));
 import AccentPicker from "@/components/layout/AccentPicker";
 import NoticesBell from "@/components/layout/NoticesBell";
 import SideNav from "@/components/layout/SideNav";
-import CoinsBadge from "@/components/layout/CoinsBadge";
 import WhatsNew from "@/components/layout/WhatsNew";
 import FeatureTour from "@/components/layout/FeatureTour";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
@@ -44,17 +43,6 @@ export default function AppShell({ children, hideHeader = false }: { children: R
     const open = () => setIssueOpen(true);
     window.addEventListener("td:open-issue-reporter", open);
     return () => window.removeEventListener("td:open-issue-reporter", open);
-  }, []);
-  // Claim a pending referral code once (idempotent server-side)
-  useEffect(() => {
-    let ref = "";
-    try { ref = localStorage.getItem("td:ref") || ""; } catch { /* ignore */ }
-    if (!ref) return;
-    import("@/integrations/supabase/revamp").then(({ invokeFn }) => {
-      invokeFn("claim-referral", { code: ref }).finally(() => {
-        try { localStorage.removeItem("td:ref"); } catch { /* ignore */ }
-      });
-    });
   }, []);
   // Side rail collapse (persisted) — icons-only mode frees width on dense pages
   const [navMin, setNavMin] = useState(() => {
@@ -124,7 +112,6 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             <button onClick={() => navigate("/setup?edit=true")} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Profile" title="Profile & settings">
               <UserCog className="w-4 h-4" />
             </button>
-            <CoinsBadge />
             <AccentPicker />
             <button onClick={() => setBotOpen(true)} className="hidden lg:flex td-btn-ghost h-9 px-3 rounded-full items-center gap-1.5 text-[13px] font-medium" aria-label="Help">
               <Zap className="w-4 h-4 td-accent-text" /> Instant Help

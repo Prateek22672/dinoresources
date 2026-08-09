@@ -9,7 +9,7 @@ import { formatPaise } from "@/lib/money";
 import AppShell from "@/components/layout/AppShell";
 import SpinWheel from "@/components/cart/SpinWheel";
 import {
-  ShoppingCart, Trash2, BookOpen, Package, ArrowRight, RefreshCw, AlertCircle, Tag, Check, X, Coins,
+  ShoppingCart, Trash2, BookOpen, Package, ArrowRight, RefreshCw, AlertCircle, Tag, Check, X,
   ChevronDown, Gift, BadgePercent, ShieldCheck,
 } from "lucide-react";
 
@@ -32,22 +32,6 @@ export default function Cart() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCharges, setShowCharges] = useState(false);
 
-  // coins wallet
-  const [coins, setCoins] = useState(0);
-  const [perRupee, setPerRupee] = useState(20);
-  const [useCoins, setUseCoins] = useState(false);
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const [{ data: prof }, { data: s }] = await Promise.all([
-        (supabase.from("profiles") as any).select("coins").eq("id", user.id).maybeSingle(),
-        (supabase.from("app_settings") as any).select("coins_per_rupee").maybeSingle(),
-      ]);
-      setCoins(prof?.coins ?? 0);
-      setPerRupee(Math.max(1, s?.coins_per_rupee ?? 20));
-    })();
-  }, []);
   const [celebrate, setCelebrate] = useState<{ code: string; amount: number } | null>(null);
 
   // Spin & Win
@@ -97,12 +81,7 @@ export default function Cart() {
   const chargesTotal = appliedCharges.reduce((s, c) => s + c.amt, 0);
   const optionalCharges = charges.filter((c) => !c.mandatory);
   const grossTotal = taxable + chargesTotal;
-
-  // coins discount — capped by balance, and always leave ≥ ₹1 for Razorpay
-  const coinsPaiseMax = Math.floor((coins / perRupee) * 100);
-  const coinsPaise = useCoins ? Math.max(0, Math.min(coinsPaiseMax, grossTotal - 100)) : 0;
-  const coinsSpent = Math.ceil((coinsPaise / 100) * perRupee);
-  const finalTotal = grossTotal - coinsPaise;
+  const finalTotal = grossTotal;
 
   const { state, error, busy, start } = useCheckout(async () => {
     await refresh();
@@ -315,20 +294,6 @@ export default function Cart() {
                     )}
                   </div>
                 )}
-                {/* Coins — spend your referral coins */}
-                {coins > 0 && grossTotal > 100 && (
-                  <button type="button" onClick={() => setUseCoins((v) => !v)}
-                    className="w-full flex items-center justify-between gap-3 td-surface-2 rounded-xl px-3 py-2.5 mt-1">
-                    <span className="flex items-center gap-2.5 min-w-0">
-                      <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${useCoins ? "td-accent-bg" : "bg-white/8 text-zinc-400"}`}><Coins className="w-4 h-4" /></span>
-                      <span className="text-left min-w-0">
-                        <span className="block text-white text-[13px] font-semibold">Use {coinsSpent || coins} coins</span>
-                        <span className="block text-zinc-500 text-[11px]">You have {coins} · {perRupee} = ₹1</span>
-                      </span>
-                    </span>
-                    <span className={`shrink-0 text-sm font-bold ${useCoins ? "text-emerald-400" : "text-zinc-500"}`}>{useCoins ? `− ${formatPaise(coinsPaise)}` : "Apply"}</span>
-                  </button>
-                )}
                 <div className="h-px bg-white/8 my-3" />
                 <div className="flex justify-between text-white font-bold text-base">
                   <span>Total</span>
@@ -344,7 +309,7 @@ export default function Cart() {
               )}
 
               <button
-                onClick={() => start(applied?.code, [...selected], useCoins ? coinsSpent : 0)}
+                onClick={() => start(applied?.code, [...selected])}
                 disabled={busy || state === "success"}
                 className="w-full td-btn-primary py-4 mt-5 flex items-center justify-center gap-2 disabled:opacity-60"
               >

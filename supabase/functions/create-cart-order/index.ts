@@ -10,7 +10,6 @@ import {
   gatewayKeys,
   type GatewaySlot,
 } from "../_shared/razorpay.ts";
-import { rewardReferrerOnFirstPurchase } from "../_shared/referral.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -149,26 +148,7 @@ Deno.serve(async (req) => {
     const grossTotal = taxable + chargesTotal;
     if (grossTotal <= 0) return jsonResponse({ error: "Order total must be greater than zero" }, 400);
 
-    // 2d) Apply COINS as a discount (server-side; balance deducted only on
-    // payment success in verify-cart-payment, so an abandoned cart keeps its coins).
-    const coinsToUse = Math.max(0, parseInt(body?.coins_to_use, 10) || 0);
-    let coinsUsed = 0;
-    let coinsPaise = 0;
-    if (coinsToUse > 0) {
-      const { data: cfg } = await db.from("app_settings").select("coins_per_rupee, coins_max_paise_per_order").maybeSingle();
-      const { data: prof } = await db.from("profiles").select("coins").eq("id", user.id).maybeSingle();
-      const perRupee = Math.max(1, Number(cfg?.coins_per_rupee ?? 20));
-      const balance = Number(prof?.coins ?? 0);
-      const usableCoins = Math.min(coinsToUse, balance);
-      let discount = Math.floor((usableCoins / perRupee) * 100); // paise
-      const maxCap = Number(cfg?.coins_max_paise_per_order ?? 0);
-      if (maxCap > 0) discount = Math.min(discount, maxCap);
-      discount = Math.max(0, Math.min(discount, grossTotal - 100)); // always leave ≥ ₹1 for Razorpay
-      coinsPaise = discount;
-      coinsUsed = Math.ceil((discount / 100) * perRupee);
-    }
-
-    const total = grossTotal - coinsPaise;
+    const total = grossTotal;
     if (total < 100) return jsonResponse({ error: "Order total too low" }, 400);
 
     // 3) Which gateway account is active? (admin-switchable in Admin → Payments)
@@ -192,7 +172,6 @@ Deno.serve(async (req) => {
         coupon_code: couponCode,
         charges_paise: chargesTotal,
         charges_detail: chargeDetail.length ? chargeDetail : null,
-        coins_used: coinsUsed,
         currency: "INR",
         status: "created",
       })

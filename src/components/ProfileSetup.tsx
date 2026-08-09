@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, Gift, LibraryBig, Sparkles } from "lucide-react";
+import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, LibraryBig, Sparkles } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 
 const DEPARTMENTS = ["CSE", "ECE", "Mechanical Engineering"];
@@ -126,7 +126,6 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
           {[
             { label: "My unlocks", icon: Receipt, to: "/purchases" },
-            { label: "Invite & earn", icon: Gift, to: "/invite" },
             { label: "My Library", icon: LibraryBig, to: "/library" },
             { label: "What's new", icon: Sparkles, to: "/whats-new" },
           ].map((q) => (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone, Gift } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
 export default function AuthPage() {
@@ -16,13 +16,6 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-
-  // Referral code — pre-filled from ?ref=, or typed in the signup form.
-  const [refCode, setRefCode] = useState("");
-  useEffect(() => {
-    const ref = new URLSearchParams(window.location.search).get("ref");
-    if (ref) { setRefCode(ref.trim()); try { localStorage.setItem("td:ref", ref.trim()); } catch { /* ignore */ } }
-  }, []);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,9 +26,6 @@ export default function AuthPage() {
     const fullName = ((formData.get("fullName") as string) || "").trim();
     const phone = ((formData.get("phone") as string) || "").trim();
     if (!fullName) { setIsLoading(false); toast.error("Please enter your full name"); return; }
-    // stash the referral code — claimed on first login by AppShell
-    const rc = ((formData.get("referralCode") as string) || refCode || "").trim();
-    if (rc) { try { localStorage.setItem("td:ref", rc); } catch { /* ignore */ } }
     const { error } = await supabase.auth.signUp({
       email, password,
       options: {
@@ -156,8 +146,7 @@ export default function AuthPage() {
             <ul className="space-y-2.5">
               {[
                 "Notes, PYQs & Study-With-AI for every subject",
-                "Free SGPA, CGPA & attendance calculators",
-                "Placement prep — company by company",
+                "Free SGPA, CGPA & attendance calculators"
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2.5 text-sm text-zinc-300">
                   <span className="w-5 h-5 rounded-full td-accent-bg flex items-center justify-center shrink-0">
@@ -175,7 +164,7 @@ export default function AuthPage() {
                 ))}
                 <span className="w-8 h-8 rounded-full td-accent-solid border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black text-white">1.4k</span>
               </div>
-              <span className="text-sm text-zinc-500 font-medium">1400+ students already inside</span>
+              <span className="text-sm text-zinc-500 font-medium">1200+ students already inside</span>
             </div>
           </div>
 
@@ -193,7 +182,6 @@ export default function AuthPage() {
 
               <div className="mb-5">
                 <h2 className="text-xl font-bold tracking-tight">Sign in to your workspace</h2>
-                <p className="text-zinc-500 text-sm mt-1">Access notes, AI help and everything else.</p>
               </div>
 
               <Tabs defaultValue="signin" className="w-full">
@@ -250,7 +238,7 @@ export default function AuthPage() {
                     <button type="submit" disabled={isLoading} className="td-btn-primary h-12 mt-1 flex items-center justify-center gap-2 text-sm disabled:opacity-60">
                       {isLoading ? "Authenticating…" : <>Log In <ArrowRight className="w-4 h-4" /></>}
                     </button>
-                    <p className="text-center text-[11px] uppercase tracking-wider text-zinc-600 font-medium">Trusted by 1400+ students</p>
+                    <p className="text-center text-[11px] uppercase tracking-wider text-zinc-600 font-medium">Trusted by 1200+ students</p>
                   </form>
                 </TabsContent>
 
@@ -283,14 +271,6 @@ export default function AuthPage() {
                       <div className="relative">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input id="signup-password" name="password" type="password" placeholder="Minimum 6 characters" minLength={6} className={field} required />
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <Label htmlFor="signup-ref" className="text-xs font-medium text-zinc-400 pl-1">Referral code <span className="text-zinc-600 font-normal">· optional</span></Label>
-                      <div className="relative">
-                        <Gift className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
-                        <input id="signup-ref" name="referralCode" type="text" value={refCode} onChange={(e) => setRefCode(e.target.value)}
-                          placeholder="A friend's code (earn bonus coins)" className={`${field} uppercase`} />
                       </div>
                     </div>
                     <button type="submit" disabled={isLoading} className="td-btn-primary h-12 mt-1 flex items-center justify-center gap-2 text-sm disabled:opacity-60">

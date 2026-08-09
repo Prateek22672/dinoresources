@@ -21,7 +21,7 @@ import Footer from "./Footer";
 import {
   BookOpen, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
   CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
-  Play, Flame, TrendingUp, ChevronLeft, ChevronRight, Gift,
+  Play, TrendingUp, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { GenAiIcon } from "@/components/BrandIcons";
 import agentFuryLogo from "@/assets/icon-192.png";
@@ -51,8 +51,6 @@ const GRADS = ["#7c6cf0", "#f472b6", "#34d399", "#f59e0b", "#6b8afd", "#a78bfa"]
 const grad = (name: string) =>
   GRADS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % GRADS.length];
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const { role } = useUserRole();
@@ -72,20 +70,6 @@ export default function Dashboard() {
   const [streak, setStreak] = useState(0);
   const [activity, setActivity] = useState<string[]>([]);
 
-  // referral banner state (only shows when admin has it Live)
-  const [referral, setReferral] = useState<{ active: boolean; coins: number; perRupee: number }>({ active: false, coins: 0, perRupee: 20 });
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const [{ data: prof }, { data: s }] = await Promise.all([
-        (supabase.from("profiles") as any).select("coins").eq("id", user.id).maybeSingle(),
-        (supabase.from("app_settings") as any).select("referral_active, coins_per_rupee").maybeSingle(),
-      ]);
-      setReferral({ active: !!s?.referral_active, coins: prof?.coins ?? 0, perRupee: Math.max(1, s?.coins_per_rupee ?? 20) });
-    })();
-  }, []);
-
   // readiness refresh tick — recompute rings when engagement changes
   const [readyTick, setReadyTick] = useState(0);
   useEffect(() => {
@@ -102,41 +86,7 @@ export default function Dashboard() {
     el.scrollBy({ left: dir * (el.clientWidth * 0.8), behavior: "smooth" });
   };
 
-  // exam countdown (user-set dates)
-  interface ExamRow { id: string; title: string; exam_date: string; }
-  const [exams, setExams] = useState<ExamRow[]>([]);
-  const [pickDay, setPickDay] = useState<number | null>(null);
-  const [examTitle, setExamTitle] = useState("");
-
-  const loadExams = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await tbl("user_exams").select("id, title, exam_date")
-      .eq("user_id", user.id)
-      .gte("exam_date", new Date().toLocaleDateString("en-CA"))
-      .order("exam_date", { ascending: true });
-    setExams((data ?? []) as ExamRow[]);
-  }, []);
-
-  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); setActivity(logActivity()); loadExams(); }, [loadExams]);
-
-  const addExam = async () => {
-    if (pickDay == null) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await tbl("user_exams").insert({
-      user_id: user.id,
-      title: examTitle.trim() || "Exam",
-      exam_date: `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(pickDay)}`,
-    });
-    if (!error) { setExamTitle(""); setPickDay(null); loadExams(); }
-  };
-
-  const removeExam = async (id: string) => {
-    await tbl("user_exams").delete().eq("id", id);
-    setPickDay(null);
-    loadExams();
-  };
+  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); setActivity(logActivity()); }, []);
 
   const checkAuthAndLoad = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -185,18 +135,6 @@ export default function Dashboard() {
   const pct = subjects.length ? Math.round((owned.length / subjects.length) * 100) : 0;
   // only surface the resume card when the user actually owns that subject
   const resume = recent && owned.some((s) => (s.slug ?? String(s.id)) === recent.slug) ? recent : null;
-
-  // ── Calendar + productivity data ──
-  const now = new Date();
-  const monthLabel = now.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const startDow = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7; // Mon-first
-  const cellIso = (d: number) => `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(d)}`;
-  const todayIso = now.toLocaleDateString("en-CA");
-  const last7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i));
-    return { label: d.toLocaleDateString("en-IN", { weekday: "short" }).slice(0, 2), iso: d.toLocaleDateString("en-CA") };
-  });
 
   if (showSplash) return <SplashScreen />;
 
@@ -253,125 +191,12 @@ export default function Dashboard() {
     y.id === studentYearId && !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id),
   );
 
-  // ── Exam helpers ──
-  const daysTo = (iso: string) =>
-    Math.round((new Date(iso + "T00:00:00").getTime() - new Date(todayIso + "T00:00:00").getTime()) / 86_400_000);
-  const examOn = (iso: string) => exams.find((e) => e.exam_date === iso);
-  const nextExam = exams[0];
-  const countdownLabel = (n: number) => (n === 0 ? "Today!" : n === 1 ? "Tomorrow" : `${n} days to go`);
-  const urgencyCls = (n: number) =>
-    n <= 3 ? "bg-red-500/15 text-red-300" : n <= 7 ? "bg-amber-500/15 text-amber-300" : "td-accent-bg";
-  const pickedExam = pickDay != null ? examOn(cellIso(pickDay)) : undefined;
-
-  // ── Right rail: the exam calendar only, so the center column keeps its width ──
-  const railCards = (
-    <>
-      {/* Exam calendar — tap a date to mark your exam */}
-      <div className="td-surface rounded-[24px] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-white font-semibold text-sm">{monthLabel}</p>
-          <CalendarDays className="w-4 h-4 td-accent-text" />
-        </div>
-
-        {/* Countdown alert */}
-        {nextExam && (
-          <div className={`rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2.5 ${urgencyCls(daysTo(nextExam.exam_date))}`}>
-            <Flame className="w-4 h-4 shrink-0" />
-            <p className="text-[13px] font-semibold leading-tight min-w-0">
-              <span className="truncate">{nextExam.title}</span>
-              <span className="block text-[11px] font-bold opacity-90">{countdownLabel(daysTo(nextExam.exam_date))}</span>
-            </p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-            <span key={d} className="text-[10px] font-semibold text-zinc-500 pb-1">{d}</span>
-          ))}
-          {Array.from({ length: startDow }).map((_, i) => <span key={`b${i}`} />)}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const d = i + 1;
-            const iso = cellIso(d);
-            const isToday = iso === todayIso;
-            const exam = examOn(iso);
-            const past = daysTo(iso) < 0;
-            const active = activity.includes(iso);
-            return (
-              <button
-                key={d}
-                disabled={past && !exam}
-                onClick={() => setPickDay(pickDay === d ? null : d)}
-                title={exam ? `${exam.title} — tap to manage` : past ? undefined : "Tap to mark an exam"}
-                className={`h-7 w-7 mx-auto flex items-center justify-center rounded-full text-[11px] font-medium transition-colors
-                  ${exam ? (isToday ? "bg-red-500 text-white font-bold" : "bg-red-500/25 text-red-300 font-bold")
-                    : isToday ? "td-accent-solid text-white font-bold"
-                    : active ? "td-accent-bg"
-                    : past ? "text-zinc-700" : "text-zinc-400 hover:bg-white/10"}
-                  ${pickDay === d ? "ring-2 ring-white/40" : ""}`}
-              >
-                {d}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Add / manage exam on the picked day */}
-        {pickDay != null && (
-          <div className="mt-3 td-surface-2 rounded-xl p-3 td-in">
-            {pickedExam ? (
-              <div className="flex items-center gap-2">
-                <p className="text-white text-sm font-semibold flex-1 min-w-0 truncate">{pickedExam.title}</p>
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${urgencyCls(daysTo(pickedExam.exam_date))}`}>
-                  {countdownLabel(daysTo(pickedExam.exam_date))}
-                </span>
-                <button onClick={() => removeExam(pickedExam.id)} className="text-red-400 text-xs font-semibold hover:text-red-300">Remove</button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  value={examTitle}
-                  onChange={(e) => setExamTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addExam()}
-                  placeholder={`Exam on ${monthLabel.split(" ")[0]} ${pickDay}…`}
-                  className="flex-1 min-w-0 bg-transparent border border-white/10 rounded-lg px-2.5 h-8 text-xs text-white outline-none placeholder:text-zinc-600"
-                  autoFocus
-                />
-                <button onClick={addExam} className="td-btn-primary px-3 h-8 text-xs font-bold shrink-0">Add</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Upcoming exams */}
-        {pickDay == null && exams.length > 1 && (
-          <div className="mt-3 space-y-1.5">
-            {exams.slice(1, 3).map((e) => (
-              <div key={e.id} className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-zinc-400 truncate">{e.title}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${urgencyCls(daysTo(e.exam_date))}`}>
-                  {countdownLabel(daysTo(e.exam_date))}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-        {pickDay == null && exams.length === 0 && (
-          <p className="text-zinc-600 text-[11px] mt-3 text-center">Tap a date to mark your exam — we'll count down for you.</p>
-        )}
-      </div>
-    </>
-  );
-
-
   return (
     <AppShell>
       {/* ── 1st anniversary ── */}
 
-      {/* SideNav rail comes from AppShell (global on xl+); here: center + right rail */}
-      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_296px] xl:gap-6 items-start">
-
-        {/* ── CENTER ── */}
-        <div className="min-w-0">
+      {/* SideNav rail comes from AppShell (global on xl+) */}
+      <div className="min-w-0">
           {/* greeting hero — accent energy + a floating book (landing vibe) */}
           <div className="td-hero relative overflow-hidden rounded-[28px] p-6 sm:p-7 mb-8">
             <div aria-hidden className="absolute -top-16 -left-12 w-72 h-64 opacity-[0.5] pointer-events-none"
@@ -404,50 +229,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ── Top picks (reference: "Top courses you may like") ── */}
-          {available.length > 0 && (
-            <section className="mb-8">
-              <div className="flex items-baseline justify-between mb-3">
-                <h2 className="text-white font-bold">Top picks for you</h2>
-                <button onClick={() => navigate("/store")} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></button>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {available.slice(0, 4).map((s) => {
-                  const inCart = isInCart("subject", s.id);
-                  return (
-                    <div key={s.id} className="td-surface td-card-click rounded-[22px] p-3 flex flex-col">
-                      {/* colorful thumb */}
-                      <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
-                        className="relative h-24 rounded-2xl overflow-hidden mb-3 text-left" style={{ background: grad(s.name) }}>
-                        <span className="absolute inset-0 flex items-center justify-center text-white/40 text-5xl font-black select-none">
-                          {s.name.trim().charAt(0).toUpperCase()}
-                        </span>
-                        <span className="absolute top-2 left-2 bg-white/90 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          {yearName(s.year_id) ?? "Subject"}
-                        </span>
-                      </button>
-                      <button onClick={() => navigate(`/subject/${s.slug ?? s.id}`)} className="text-left">
-                        <h3 className="text-white text-sm font-semibold leading-snug line-clamp-2">{s.name}</h3>
-                      </button>
-                      <p className="text-zinc-600 text-[11px] mt-0.5 mb-3">5 units · notes · PYQs · AI</p>
-                      <div className="mt-auto flex items-center justify-between gap-2">
-                        <div className="leading-none">
-                          <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
-                          <span className="block text-[9px] text-zinc-500 mt-0.5">Lifetime</span>
-                        </div>
-                        {inCart ? (
-                          <button onClick={() => navigate("/cart")} className="td-btn-ghost px-3.5 py-2 text-xs flex items-center gap-1"><Check className="w-3 h-3" /> In cart</button>
-                        ) : (
-                          <button onClick={() => addSubject(s.id, s.name)} className="td-btn-primary px-3.5 py-2 text-xs flex items-center gap-1"><Plus className="w-3 h-3" /> Add</button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
           {/* combo strip */}
           {comboYear && (
             <div className="td-hero rounded-3xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
@@ -468,71 +249,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-
-          {/* Invite & earn banner (only when admin has it Live) */}
-          {referral.active && (
-            <button onClick={() => navigate("/invite")}
-              className="td-hero td-card-click rounded-3xl p-5 mb-8 w-full flex items-center justify-between gap-4 flex-wrap text-left relative overflow-hidden">
-              <div aria-hidden className="absolute -top-12 -right-8 w-44 h-40 opacity-40 pointer-events-none"
-                style={{ background: "rgb(var(--td-accent-rgb) / 0.2)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(8px)" }} />
-              <div className="relative z-10 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Gift className="w-5 h-5" /></div>
-                <div>
-                  <p className="text-white font-semibold">Invite friends, earn coins</p>
-                  <p className="text-zinc-400 text-sm">
-                    {referral.coins > 0
-                      ? <>You have <strong className="td-accent-text">{referral.coins} coins</strong> (≈₹{Math.floor(referral.coins / referral.perRupee)}) to spend.</>
-                      : <>They join, you both get coins for your next unlock.</>}
-                  </p>
-                </div>
-              </div>
-              <span className="relative z-10 td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5 shrink-0">Get your link <ArrowRight className="w-4 h-4" /></span>
-            </button>
-          )}
-
-          {/* ── Exam readiness — the "how ready am I?" USP ── */}
-          {owned.length > 0 && (() => {
-            const rs = owned.map((s) => ({ s, r: getReadiness(s.id) }));
-            const avg = Math.round(rs.reduce((n, x) => n + x.r.pct, 0) / rs.length);
-            const started = rs.filter((x) => x.r.pct > 0).length;
-            const nx = nextExam;
-            const nxDays = nx ? daysTo(nx.exam_date) : null;
-            void readyTick; // recompute on engagement
-            return (
-              <section className="mb-8">
-                <div className="td-surface rounded-[24px] p-5 relative overflow-hidden">
-                  <div aria-hidden className="absolute -top-14 -right-10 w-44 h-40 opacity-40 pointer-events-none"
-                    style={{ background: "rgb(var(--td-accent-rgb) / 0.18)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(8px)" }} />
-                  <div className="relative z-10 flex items-center gap-5">
-                    {/* overall ring */}
-                    <div className="relative w-24 h-24 shrink-0">
-                      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
-                        <circle cx="50" cy="50" r="42" fill="none" stroke={readinessColor(avg)} strokeWidth="9" strokeLinecap="round"
-                          strokeDasharray={2 * Math.PI * 42} strokeDashoffset={2 * Math.PI * 42 * (1 - avg / 100)}
-                          style={{ transition: "stroke-dashoffset .6s ease" }} />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-extrabold text-white leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>{avg}%</span>
-                        <span className="text-[9px] font-bold tracking-[0.15em] text-zinc-500 uppercase mt-0.5">ready</span>
-                      </div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-white font-bold">Your exam readiness</p>
-                      <p className="text-zinc-500 text-xs mt-0.5">{started} of {owned.length} subject{owned.length === 1 ? "" : "s"} in progress</p>
-                      {nx && nxDays != null && (
-                        <p className="text-zinc-300 text-[13px] mt-2.5">
-                          <span className="td-accent-text font-semibold">{nx.title}</span> in <strong className="text-white">{nxDays === 0 ? "today" : nxDays === 1 ? "1 day" : `${nxDays} days`}</strong>
-                          {nxDays >= 0 && nxDays <= 7 && avg < 80 && <span className="text-amber-400"> · time to push 💪</span>}
-                        </p>
-                      )}
-                      <p className="text-zinc-600 text-[11px] mt-2">Open units, Q&amp;A and PYQs to raise your score — we're the tool that tells you exactly where you stand.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            );
-          })()}
 
           {/* ── My subjects (reference: "My Courses" rows) ── */}
           <section className="mb-8">
@@ -580,19 +296,9 @@ export default function Dashboard() {
               </div>
             )}
           </section>
-
-        </div>
-
-        {/* ── RIGHT RAIL (xl+) — calendar only ── */}
-        <aside className="hidden xl:flex flex-col gap-4 sticky top-24">
-          {railCards}
-        </aside>
       </div>
 
-      {/* calendar stacked below on smaller screens */}
-      <div className="xl:hidden mt-6">{railCards}</div>
-
-      {/* ── Quick access carousel — full width, clear of the rail ── */}
+      {/* ── Quick access carousel ── */}
       <div className="mt-8">
           <div className="flex items-center justify-between mb-3 px-0.5">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>

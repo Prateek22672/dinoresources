@@ -4,7 +4,6 @@
 // clears the cart. Idempotent: re-running on an already-paid order is a no-op.
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient, getAuthUser, verifyRazorpaySignature, gatewayKeys } from "../_shared/razorpay.ts";
-import { rewardReferrerOnFirstPurchase } from "../_shared/referral.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -24,7 +23,7 @@ Deno.serve(async (req) => {
     // and tells us which gateway account signed it).
     const { data: order, error: orderErr } = await db
       .from("orders")
-      .select("id, user_id, status, coupon_code, coins_used, gateway")
+      .select("id, user_id, status, coupon_code, gateway")
       .eq("razorpay_order_id", razorpay_order_id)
       .eq("user_id", user.id)
       .single();
@@ -90,14 +89,6 @@ Deno.serve(async (req) => {
       const { data: c } = await db.from("coupons").select("id, times_redeemed").ilike("code", order.coupon_code).maybeSingle();
       if (c) await db.from("coupons").update({ times_redeemed: (c.times_redeemed ?? 0) + 1 }).eq("id", c.id);
     }
-
-    // Deduct coins spent on this order (only now, on confirmed payment) — atomic
-    if (Number(order.coins_used) > 0) {
-      await db.rpc("award_coins", { _user: user.id, _delta: -Number(order.coins_used), _reason: "checkout_spend" });
-    }
-
-    // Referral: pay the referrer on this user's first successful purchase.
-    await rewardReferrerOnFirstPurchase(db, user.id);
 
     return jsonResponse({ success: true });
   } catch (err) {

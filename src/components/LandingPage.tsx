@@ -120,7 +120,7 @@ function useCounter(target: number, active: boolean, duration = 1400) {
 
 /* ─── Data ───────────────────────────────────────────────────── */
 const STATS = [
-  { value: 1400, suffix: "+", label: "Active students" },
+  { value: 1200, suffix: "+", label: "Active students" },
   { value: 89, suffix: "%", label: "Found it useful" },
   { value: 15, suffix: "+", label: "Subjects covered" },
   { value: 2, suffix: "AM", label: "We're still here" },
@@ -796,7 +796,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
       {/* content — old-style headline + CTA on the new stage */}
       <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 min-h-[100svh] flex flex-col justify-end pb-[6.5rem] pt-10 sm:min-h-0 sm:block sm:pt-40 sm:pb-24 will-change-transform">
         <h1 className="text-black font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
-          {["Make.", "Exams.", "Easy."].map((w, i) => (
+          {["Make", "Exams", "Easy."].map((w, i) => (
             <span key={w} className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
               <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.15 + i * 0.13}s both` }}>{w}</span>
             </span>
@@ -804,9 +804,9 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
         </h1>
         <div className="ld-in-3 flex flex-wrap items-center gap-5 mt-8">
           <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform shadow-[0_18px_40px_-14px_rgba(0,0,0,0.35)]">
-            Start studying free <ArrowRight className="w-4 h-4" />
+            Start studying<ArrowRight className="w-4 h-4" />
           </button>
-          <p className="text-black/80 font-semibold text-[15px]">Notes · PYQs · Study with AI</p>
+          <p className="text-black/80 font-semibold text-[15px]">Study with AI · Notes · PYQs</p>
         </div>
       </div>
 
