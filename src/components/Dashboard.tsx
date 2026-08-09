@@ -7,7 +7,6 @@ import { useCart } from "@/context/CartContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { formatPaise } from "@/lib/money";
 import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@/lib/recent";
-import { getReadiness, readinessColor } from "@/lib/readiness";
 import { matchProfileYear } from "@/lib/year";
 
 import AppShell from "@/components/layout/AppShell";
@@ -69,14 +68,6 @@ export default function Dashboard() {
   const [recent, setRecent] = useState<RecentSubject | null>(null);
   const [streak, setStreak] = useState(0);
   const [activity, setActivity] = useState<string[]>([]);
-
-  // readiness refresh tick — recompute rings when engagement changes
-  const [readyTick, setReadyTick] = useState(0);
-  useEffect(() => {
-    const h = () => setReadyTick((t) => t + 1);
-    window.addEventListener("td:readiness-changed", h);
-    return () => window.removeEventListener("td:readiness-changed", h);
-  }, []);
 
   // quick-access carousel — arrow buttons step by roughly one card
   const quickRef = useRef<HTMLDivElement>(null);
@@ -250,52 +241,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ── My subjects (reference: "My Courses" rows) ── */}
-          <section className="mb-8">
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-white font-bold">My subjects</h2>
-              {owned.length > 0 && (
-                <button onClick={() => navigate("/library")} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></button>
-              )}
-            </div>
-            {owned.length === 0 ? (
-              <div className="td-surface rounded-[24px] p-8 text-center">
-                <div className="w-12 h-12 rounded-2xl td-surface-2 flex items-center justify-center mx-auto mb-3"><BookOpen className="w-5 h-5 text-zinc-400" /></div>
-                <p className="text-white font-semibold">No subjects unlocked yet</p>
-                <p className="text-zinc-500 text-sm mt-1 mb-4">Notes, PYQs and Study-With-AI — from {formatPaise(Math.min(...(available.map((s) => s.price_paise).concat([1100]))))}.</p>
-                <button onClick={() => navigate("/store")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5">Explore the Store <ArrowRight className="w-4 h-4" /></button>
-              </div>
-            ) : (
-              <div className="td-surface rounded-[24px] overflow-hidden">
-                {owned.slice(0, 6).map((s) => {
-                  const r = getReadiness(s.id);
-                  void readyTick;
-                  return (
-                  <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors group">
-                    <span className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-white/60 font-black" style={{ background: grad(s.name) }}>
-                      {s.name.trim().charAt(0).toUpperCase()}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-white text-sm font-semibold truncate">{s.name}</span>
-                      <span className="block text-zinc-600 text-[11px]">{yearName(s.year_id) ?? "Subject"} · {r.pct > 0 ? `${r.pct}% ready` : "Not started"}</span>
-                    </span>
-                    {/* mini readiness ring */}
-                    <span className="relative w-9 h-9 shrink-0" title={`${r.pct}% ready`}>
-                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                        <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="3.5" />
-                        <circle cx="18" cy="18" r="15" fill="none" stroke={readinessColor(r.pct)} strokeWidth="3.5" strokeLinecap="round"
-                          strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - r.pct / 100)} />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-300" style={{ fontVariantNumeric: "tabular-nums" }}>{r.pct}</span>
-                    </span>
-                    <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors shrink-0" />
-                  </button>
-                  );
-                })}
-              </div>
-            )}
-          </section>
       </div>
 
       {/* ── Quick access carousel ── */}
@@ -374,6 +319,40 @@ export default function Dashboard() {
             ))}
           </div>
       </div>
+
+      {/* ── My subjects (reference: "My Courses" rows) ── */}
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-white font-bold">My subjects</h2>
+          {owned.length > 0 && (
+            <button onClick={() => navigate("/library")} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></button>
+          )}
+        </div>
+        {owned.length === 0 ? (
+          <div className="td-surface rounded-[24px] p-8 text-center">
+            <div className="w-12 h-12 rounded-2xl td-surface-2 flex items-center justify-center mx-auto mb-3"><BookOpen className="w-5 h-5 text-zinc-400" /></div>
+            <p className="text-white font-semibold">No subjects unlocked yet</p>
+            <p className="text-zinc-500 text-sm mt-1 mb-4">Notes, PYQs and Study-With-AI — from {formatPaise(Math.min(...(available.map((s) => s.price_paise).concat([1100]))))}.</p>
+            <button onClick={() => navigate("/store")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5">Explore the Store <ArrowRight className="w-4 h-4" /></button>
+          </div>
+        ) : (
+          <div className="td-surface rounded-[24px] overflow-hidden">
+            {owned.slice(0, 6).map((s) => (
+              <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors group">
+                <span className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-white/60 font-black" style={{ background: grad(s.name) }}>
+                  {s.name.trim().charAt(0).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-white text-sm font-semibold truncate">{s.name}</span>
+                  <span className="block text-zinc-600 text-[11px]">{yearName(s.year_id) ?? "Subject"}</span>
+                </span>
+                <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Footer />
     </AppShell>
