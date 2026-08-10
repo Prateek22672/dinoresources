@@ -267,10 +267,20 @@ export async function invokeFn<T = unknown>(
 ): Promise<{ data: T | null; error: string | null }> {
   const res = await supabase.functions.invoke(name, { body: body ?? {} });
   if (res.error) {
-    // Surface the function's JSON error message when present
+    // Surface the function's JSON error message when present. On a non-2xx,
+    // supabase-js leaves `data` null and reports the useless "Edge Function
+    // returned a non-2xx status code" — the real reason is in the unread
+    // Response hanging off the error, so read it back.
     // deno-lint-ignore no-explicit-any
-    const msg = (res.data as any)?.error ?? res.error.message ?? "Request failed";
-    return { data: (res.data as T) ?? null, error: msg };
+    let msg: string | null = (res.data as any)?.error ?? null;
+    const ctx: unknown = (res.error as { context?: unknown }).context;
+    if (!msg && ctx instanceof Response) {
+      try {
+        const text = await ctx.clone().text();
+        try { msg = JSON.parse(text)?.error ?? null; } catch { msg = text?.trim() || null; }
+      } catch { /* body already consumed or unreadable */ }
+    }
+    return { data: (res.data as T) ?? null, error: msg ?? res.error.message ?? "Request failed" };
   }
   // deno-lint-ignore no-explicit-any
   const data = res.data as any;
