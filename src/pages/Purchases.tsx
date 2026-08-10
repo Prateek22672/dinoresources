@@ -1,10 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, OrderRow, OrderItemRow } from "@/integrations/supabase/revamp";
 import { formatPaise } from "@/lib/money";
+import { orderToReceipt, ReceiptData } from "@/lib/receipt";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
-import { Receipt, BookOpen, Package, CheckCircle2, XCircle, Clock, RotateCcw, IndianRupee } from "lucide-react";
+import { Receipt, BookOpen, Package, CheckCircle2, XCircle, Clock, RotateCcw, IndianRupee, Download } from "lucide-react";
+
+// jsPDF pulls in html2canvas + DOMPurify internally — defer that weight until a receipt is actually opened.
+const ReceiptDialog = lazy(() => import("@/components/receipt/ReceiptDialog"));
 
 interface OrderWithItems extends OrderRow { items: OrderItemRow[] }
 
@@ -22,11 +26,21 @@ function fmtDate(iso: string) {
 export default function Purchases() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billTo, setBillTo] = useState<{ name: string; email: string | null }>({ name: "You", email: null });
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptEverOpened, setReceiptEverOpened] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
+
+    const { data: profile } = await tbl("profiles").select("full_name, username, email").eq("id", user.id).maybeSingle();
+    setBillTo({
+      name: profile?.full_name ?? profile?.username ?? user.email ?? "You",
+      email: profile?.email ?? user.email ?? null,
+    });
 
     const { data: orderRows } = await tbl("orders")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
@@ -42,6 +56,12 @@ export default function Purchases() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const viewReceipt = (o: OrderWithItems) => {
+    setReceipt(orderToReceipt(o, o.items, billTo));
+    setReceiptOpen(true);
+    setReceiptEverOpened(true);
+  };
 
   const paidOrders = orders.filter((o) => o.status === "paid");
   const totalSpent = paidOrders.reduce((sum, o) => sum + o.amount_paise, 0);
@@ -90,7 +110,7 @@ export default function Purchases() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap items-center gap-2">
                   {o.items.map((i) => (
                     <span key={i.id} className="td-surface-2 rounded-full px-3 py-1.5 text-xs text-zinc-300 flex items-center gap-1.5">
                       {i.item_type === "combo"
@@ -100,11 +120,25 @@ export default function Purchases() {
                       <span className="text-zinc-500">· {formatPaise(i.price_paise)}</span>
                     </span>
                   ))}
+                  {(o.status === "paid" || o.status === "refunded") && (
+                    <button
+                      onClick={() => viewReceipt(o)}
+                      className="ml-auto td-btn-ghost rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      <Download className="w-3 h-3" /> Receipt
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {receiptEverOpened && (
+        <Suspense fallback={null}>
+          <ReceiptDialog data={receipt} open={receiptOpen} onOpenChange={setReceiptOpen} />
+        </Suspense>
       )}
     </AppShell>
   );

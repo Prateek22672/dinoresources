@@ -1,13 +1,18 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  tbl, invokeFn, ProfileRow, SubjectRow, YearRow, OrderRow,
+  tbl, invokeFn, ProfileRow, SubjectRow, YearRow, OrderRow, fetchOrderItems,
 } from "@/integrations/supabase/revamp";
 import { useUserRole, UserRole } from "@/hooks/useUserRole";
 import { formatPaise } from "@/lib/money";
+import { orderToReceipt, manualReceipt, ReceiptData } from "@/lib/receipt";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// jsPDF pulls in html2canvas + DOMPurify internally — defer that weight until a receipt is actually opened.
+const ReceiptDialog = lazy(() => import("@/components/receipt/ReceiptDialog"));
 import { toast } from "sonner";
 import {
-  Search, User, ShieldCheck, BookOpen, Package, Plus, X, Trash2, RefreshCw,
+  Search, User, ShieldCheck, BookOpen, Package, Plus, X, Trash2, RefreshCw, FileText, Download,
 } from "lucide-react";
 
 interface AccessInfo {
@@ -29,6 +34,14 @@ export default function AdminUsers() {
   const [busy, setBusy] = useState(false);
   const [grantSubject, setGrantSubject] = useState("");
   const [grantYear, setGrantYear] = useState("");
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptEverOpened, setReceiptEverOpened] = useState(false);
+  const [receiptLoadingId, setReceiptLoadingId] = useState<string | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualDesc, setManualDesc] = useState("");
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualNote, setManualNote] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -115,6 +128,35 @@ export default function AdminUsers() {
     loadAccess(selected);
   };
 
+  const openOrderReceipt = async (order: OrderRow) => {
+    if (!selected) return;
+    setReceiptLoadingId(order.id);
+    const items = await fetchOrderItems(order.id);
+    setReceiptLoadingId(null);
+    setReceipt(orderToReceipt(order, items, { name: selected.full_name ?? selected.username ?? selected.email ?? "User", email: selected.email }));
+    setReceiptOpen(true);
+    setReceiptEverOpened(true);
+  };
+
+  const generateManualReceipt = () => {
+    if (!selected) return;
+    const rupees = parseFloat(manualAmount);
+    if (!manualDesc.trim() || !Number.isFinite(rupees) || rupees <= 0) {
+      toast.error("Enter a description and a valid amount.");
+      return;
+    }
+    setReceipt(manualReceipt({
+      billTo: { name: selected.full_name ?? selected.username ?? selected.email ?? "User", email: selected.email },
+      description: manualDesc.trim(),
+      amount_paise: Math.round(rupees * 100),
+      note: manualNote,
+    }));
+    setManualOpen(false);
+    setReceiptOpen(true);
+    setReceiptEverOpened(true);
+    setManualDesc(""); setManualAmount(""); setManualNote("");
+  };
+
   return (
     <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-6">
       {/* Search + results */}
@@ -193,6 +235,12 @@ export default function AdminUsers() {
                       </button>
                     );
                   })}
+                  <button
+                    onClick={() => setManualOpen(true)}
+                    className="td-btn-ghost px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <FileText className="w-3 h-3" /> Generate receipt
+                  </button>
                 </div>
               </div>
             </div>
@@ -253,10 +301,20 @@ export default function AdminUsers() {
               ) : (
                 <div className="space-y-2">
                   {access.orders.map((o) => (
-                    <div key={o.id} className="flex items-center justify-between text-sm td-surface-2 rounded-xl px-3 py-2">
+                    <div key={o.id} className="flex items-center justify-between gap-2 text-sm td-surface-2 rounded-xl px-3 py-2">
                       <span className="text-zinc-400">{new Date(o.created_at).toLocaleDateString("en-IN")}</span>
                       <span className="text-white font-medium">{formatPaise(o.amount_paise)}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${o.status === "paid" ? "text-emerald-400 bg-emerald-500/10" : "text-zinc-400 bg-white/5"}`}>{o.status}</span>
+                      {(o.status === "paid" || o.status === "refunded") && (
+                        <button
+                          onClick={() => openOrderReceipt(o)}
+                          disabled={receiptLoadingId === o.id}
+                          className="ml-auto w-7 h-7 rounded-full td-btn-ghost flex items-center justify-center disabled:opacity-50"
+                          title="View / download receipt"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -265,6 +323,58 @@ export default function AdminUsers() {
           </div>
         )}
       </div>
+
+      {receiptEverOpened && (
+        <Suspense fallback={null}>
+          <ReceiptDialog data={receipt} open={receiptOpen} onOpenChange={setReceiptOpen} />
+        </Suspense>
+      )}
+
+      {/* Ad-hoc receipt — proof of purchase for a user with no real order (e.g. manual/offline access grant) */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate a receipt</DialogTitle>
+          </DialogHeader>
+          <p className="text-zinc-500 text-sm -mt-2">
+            For {selected?.full_name ?? selected?.username ?? selected?.email ?? "this user"}. Issued instantly, marked
+            as manually generated — not tied to a real payment.
+          </p>
+          <div className="space-y-3 mt-1">
+            <div>
+              <label className="text-xs text-zinc-500 font-medium mb-1 block">Description</label>
+              <input
+                value={manualDesc}
+                onChange={(e) => setManualDesc(e.target.value)}
+                placeholder="e.g. AWS — full subject access"
+                className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 font-medium mb-1 block">Amount (₹)</label>
+              <input
+                value={manualAmount}
+                onChange={(e) => setManualAmount(e.target.value)}
+                type="number" min="0" step="0.01"
+                placeholder="350"
+                className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 font-medium mb-1 block">Note (optional)</label>
+              <input
+                value={manualNote}
+                onChange={(e) => setManualNote(e.target.value)}
+                placeholder="Manually issued by an administrator."
+                className="w-full td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none"
+              />
+            </div>
+            <button onClick={generateManualReceipt} className="td-btn-primary w-full h-10 rounded-xl text-sm font-semibold">
+              Generate
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -55,6 +55,13 @@ export interface CartItemRow {
   added_at: string;
 }
 
+export interface OrderChargeDetail {
+  id: string;
+  label: string;
+  amount_paise: number;
+  kind: string;
+}
+
 export interface OrderRow {
   id: string;
   user_id: string;
@@ -63,6 +70,11 @@ export interface OrderRow {
   amount_paise: number;
   currency: string;
   status: OrderStatus;
+  discount_paise: number;
+  coupon_code: string | null;
+  charges_paise: number;
+  charges_detail: OrderChargeDetail[] | null;
+  gateway: string;
   created_at: string;
   updated_at: string;
 }
@@ -75,6 +87,12 @@ export interface OrderItemRow {
   year_id: string | null;
   price_paise: number;
   label: string | null;
+}
+
+/** Line items for one order — fetched on demand (e.g. when opening a receipt). */
+export async function fetchOrderItems(orderId: string): Promise<OrderItemRow[]> {
+  const { data } = await tbl("order_items").select("*").eq("order_id", orderId);
+  return (data ?? []) as OrderItemRow[];
 }
 
 export interface SubjectAccessRow {
