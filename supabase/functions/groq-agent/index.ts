@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b",
         temperature: 0.5,
         max_tokens: 1024,
         messages: [{ role: "system", content: SYSTEM }, ...msgs.map((m: any) => ({

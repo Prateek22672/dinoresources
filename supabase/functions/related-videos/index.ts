@@ -8,7 +8,7 @@ import { getAuthUser, adminClient } from "../_shared/razorpay.ts";
 const GROQ_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
 const YT_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? "";
 // Overridable so a retired Groq model can be swapped from the dashboard.
-const MODEL = Deno.env.get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+const MODEL = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b";
 
 // A YouTube search costs 100 of the default 10,000 daily quota units, so ~100
 // clicks/day for ALL users. Suggestions for a topic barely change, so serve

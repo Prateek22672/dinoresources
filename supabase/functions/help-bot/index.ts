@@ -11,7 +11,7 @@ const GROQ_KEY = Deno.env.get("GROQ_API_KEY_HELP") ?? Deno.env.get("GROQ_API_KEY
 // Groq retires models on a rolling basis, and a decommissioned one fails
 // exactly like a bad key. Overridable via the GROQ_MODEL secret so a swap is a
 // dashboard edit, not a code change + redeploy.
-const MODEL = Deno.env.get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+const MODEL = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
 
 const TICKET_CATEGORIES = [
   "paid_not_granted", "payment_deducted_failed", "subject_not_opening",
