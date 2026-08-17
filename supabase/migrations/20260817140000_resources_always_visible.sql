@@ -31,34 +31,45 @@ RETURNS TABLE (
   topic_id    uuid,
   is_free     boolean
 )
+-- NOTE: `type` and `category` are ENUMs (resource_type / resource_category), so
+-- they are cast to text before use -- COALESCE(category, '') against the enum
+-- fails with "invalid input value for enum resource_category". Columns are
+-- aliased away from the RETURNS TABLE names to avoid output-parameter ambiguity.
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   WITH ranked AS (
     SELECT
-      r.id, r.subject_id, r.title, r.type, r.url, r.category, r.unit_number, r.topic_id,
+      r.id            AS r_id,
+      r.subject_id    AS r_subject_id,
+      r.title         AS r_title,
+      r.type::text    AS r_type,
+      r.url           AS r_url,
+      r.category::text AS r_category,
+      r.unit_number   AS r_unit_number,
+      r.topic_id      AS r_topic_id,
       (row_number() OVER (
-         PARTITION BY r.subject_id, COALESCE(r.category, '')
+         PARTITION BY r.subject_id, COALESCE(r.category::text, '')
          ORDER BY r.created_at NULLS LAST, r.id
        ) = 1) AS first_in_section
     FROM public.resources r
     WHERE r.subject_id = _subject_id
   )
   SELECT
-    ranked.id,
-    ranked.subject_id,
-    ranked.title,
-    ranked.type::text,
+    ranked.r_id,
+    ranked.r_subject_id,
+    ranked.r_title,
+    ranked.r_type,
     CASE
       WHEN ranked.first_in_section
-        OR public.has_subject_access(auth.uid(), ranked.subject_id)
+        OR public.has_subject_access(auth.uid(), ranked.r_subject_id)
         OR public.has_role(auth.uid(), 'admin')
         OR public.has_role(auth.uid(), 'contributor')
-      THEN ranked.url
+      THEN ranked.r_url
       ELSE NULL
-    END AS url,
-    ranked.category,
-    ranked.unit_number,
-    ranked.topic_id,
-    ranked.first_in_section AS is_free
+    END,
+    ranked.r_category,
+    ranked.r_unit_number,
+    ranked.r_topic_id,
+    ranked.first_in_section
   FROM ranked;
 $$;
 
