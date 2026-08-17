@@ -154,9 +154,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   if (preview) {
     qa.forEach((x) => { if ((x as any).is_free) freeQaIds.add(x.id); });
   }
-  const freeEdId = preview ? editorial[0]?.id ?? null : null;
   const qaFree = (id: string) => !preview || freeQaIds.has(id);
-  const edFree = (id: string) => !preview || id === freeEdId;
   // The server decides which material is unlocked (it withholds the url), so
   // trust that rather than guessing client-side.
   const resFree = (r: ResourceRow) => !!r.url;
@@ -259,9 +257,9 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     );
   }
 
-  const tabs: { id: UnitTab; label: string; icon: any }[] = [
+  const tabs: { id: UnitTab; label: string; icon: any; badge?: string }[] = [
     { id: "ai", label: "Study With AI", icon: AiIcon },
-    { id: "videos", label: "Videos", icon: Clapperboard },
+    { id: "videos", label: "Videos", icon: Clapperboard, badge: "Free" },
     { id: "resources", label: "Resources", icon: Layers },
   ];
 
@@ -299,8 +297,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
             <span className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Gift className="w-5 h-5" /></span>
             <div className="min-w-0 flex-1">
-              <p className="text-white font-bold">You're previewing {subjectName ?? "this subject"} free 🎁</p>
-              <p className="text-zinc-400 text-[13px] mt-0.5">The first question, video and resource are on us. Unlock everything — all units, notes, PYQs &amp; Study-With-AI.</p>
+              <p className="text-white font-bold">Every video is free 🎁</p>
+              <p className="text-zinc-400 text-[13px] mt-0.5">Watch the full {subjectName ?? "subject"} video library free, plus a taste of the notes and questions. Unlock everything — all units, notes, PYQs &amp; Study-With-AI.</p>
             </div>
             <div className="shrink-0"><UnlockBtn /></div>
           </div>
@@ -315,6 +313,9 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors ${tab === t.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
               <t.icon className="w-3.5 h-3.5" /> {t.label}
+              {t.badge && (
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? "bg-black/10 text-black" : "td-accent-bg"}`}>{t.badge}</span>
+              )}
             </button>
           ))}
         </div>
@@ -491,24 +492,23 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                           {items.map((e) => {
                             const vid = ytId(e.youtube_url);
                             const active = edPlaying === e.id;
-                            const locked = !edFree(e.id);
-                            const free = preview && e.id === freeEdId;
+                            // Videos are free for everyone — curated links to public
+                            // YouTube content, so there's nothing to gate here.
                             return (
-                              <button key={e.id} onClick={() => { if (locked) { onAddToCart?.(); return; } setEdPlaying(active ? null : e.id); markStudied(subjectId, readinessKey); }}
+                              <button key={e.id} onClick={() => { setEdPlaying(active ? null : e.id); markStudied(subjectId, readinessKey); }}
                                 className={`td-surface td-card-click rounded-2xl overflow-hidden text-left group ${active ? "ring-2 ring-[var(--td-accent)]" : ""}`}>
                                 <div className="relative aspect-video bg-black">
                                   {vid
-                                    ? <img src={`https://i.ytimg.com/vi/${vid}/hqdefault.jpg`} alt="" loading="lazy" className={`w-full h-full object-cover ${locked ? "blur-[3px] scale-105 opacity-70" : ""}`} />
+                                    ? <img src={`https://i.ytimg.com/vi/${vid}/hqdefault.jpg`} alt="" loading="lazy" className="w-full h-full object-cover" />
                                     : <span className="absolute inset-0 flex items-center justify-center"><Clapperboard className="w-6 h-6 text-zinc-600" /></span>}
                                   <span className="absolute inset-0 flex items-center justify-center">
                                     <span className="w-9 h-9 rounded-full bg-black/60 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                      {locked ? <Lock className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white fill-white" />}
+                                      <Play className="w-4 h-4 text-white fill-white" />
                                     </span>
                                   </span>
-                                  {free && <span className="absolute top-2 left-2 td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full">FREE</span>}
                                 </div>
                                 <div className="px-3 py-2.5">
-                                  <p className={`text-[13px] font-medium line-clamp-2 ${locked ? "text-zinc-400" : "text-white"}`}>{locked ? "Unlock to watch" : (e.title || "Video")}</p>
+                                  <p className="text-[13px] font-medium line-clamp-2 text-white">{e.title || "Video"}</p>
                                 </div>
                               </button>
                             );
