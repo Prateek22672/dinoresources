@@ -89,6 +89,12 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
         tbl("subject_editorial").select("*").eq("subject_id", subjectId).or(`unit_number.eq.${section},unit_number.is.null`).order("created_at", { ascending: false }),
         tbl("unit_topics").select("*").eq("subject_id", subjectId).eq("unit_number", section).order("order_index", { ascending: true }),
       ]);
+      // Surface load failures. A blocked/errored fetch returns no rows, which is
+      // indistinguishable from "nothing added" once it reaches the UI — that is
+      // exactly how the RLS bugs here stayed invisible.
+      if (qaRes.error) console.error("[UnitView] Q&A failed to load:", qaRes.error.message);
+      if (edRes.error) console.error("[UnitView] videos failed to load:", edRes.error.message);
+      if (tpRes.error) console.error("[UnitView] topics failed to load:", tpRes.error.message);
       setQa((qaRes.data ?? []) as SubjectQARow[]);
       setEditorial((edRes.data ?? []) as EditorialRow[]);
       setTopics((tpRes.data ?? []) as TopicRow[]);
@@ -97,7 +103,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     // Materials are always listed; the RPC nulls out `url` unless the row is the
     // free preview or the caller owns the subject — a plain select would hide the
     // whole row via RLS and read as "nothing here" (see the matching QA RPC).
-    const { data: allRes } = await (supabase as any).rpc("get_subject_resources", { _subject_id: subjectId });
+    const { data: allRes, error: resErr } = await (supabase as any).rpc("get_subject_resources", { _subject_id: subjectId });
+    if (resErr) console.error("[UnitView] materials failed to load:", resErr.message);
     const all = (allRes ?? []) as ResourceRow[];
     setResources(all.filter((r) => {
       if (section === "syllabus") return r.category === "Syllabus";
