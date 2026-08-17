@@ -66,8 +66,6 @@ export default function Dashboard() {
   const [ownedYearIds, setOwnedYearIds] = useState<Set<string>>(new Set());
   const [tool, setTool] = useState<ToolView>(null);
   const [recent, setRecent] = useState<RecentSubject | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [activity, setActivity] = useState<string[]>([]);
 
   // quick-access carousel — arrow buttons step by roughly one card
   const quickRef = useRef<HTMLDivElement>(null);
@@ -77,7 +75,9 @@ export default function Dashboard() {
     el.scrollBy({ left: dir * (el.clientWidth * 0.8), behavior: "smooth" });
   };
 
-  useEffect(() => { setRecent(getRecentSubject()); setStreak(bumpStreak()); setActivity(logActivity()); }, []);
+  // bumpStreak/logActivity are kept for their local tracking side effects; the
+  // dashboard no longer surfaces streak or activity counters.
+  useEffect(() => { setRecent(getRecentSubject()); bumpStreak(); logActivity(); }, []);
 
   const checkAuthAndLoad = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -123,7 +123,6 @@ export default function Dashboard() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const pct = subjects.length ? Math.round((owned.length / subjects.length) * 100) : 0;
   // only surface the resume card when the user actually owns that subject
   const resume = recent && owned.some((s) => (s.slug ?? String(s.id)) === recent.slug) ? recent : null;
 
@@ -198,13 +197,20 @@ export default function Dashboard() {
               className="absolute -right-5 -bottom-12 w-[150px] lg:w-[180px] z-[1] hidden sm:block pointer-events-none" />
 
             <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <p className="td-accent-text text-[13px] font-semibold">{greeting} <span aria-hidden>👋</span>
                   <span className="text-zinc-500 font-medium ml-2"><GraduationCap className="w-3.5 h-3.5 inline -mt-0.5" /> {profile?.department} · {profile?.semester}</span>
                 </p>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">Hey {profile?.name}.</h1>
+                <p className="text-zinc-400 text-[13px] mt-1.5">
+                  {owned.length > 0
+                    ? <>You've unlocked <span className="text-white font-semibold">{owned.length}</span> of {subjects.length} subjects in your year.</>
+                    : <>Your notes, PYQs and Study-With-AI live here — unlock a subject to get started.</>}
+                </p>
               </div>
-              {resume && (
+              {/* Always give the hero a right-hand action — it used to sit empty
+                  whenever there was nothing to resume. */}
+              {resume ? (
                 <button onClick={() => navigate(`/subject/${resume.slug}`)}
                   className="group td-glass td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
                   <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
@@ -213,6 +219,18 @@ export default function Dashboard() {
                   <span className="min-w-0">
                     <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">Continue learning</span>
                     <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{resume.name}</span>
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                </button>
+              ) : (
+                <button onClick={() => navigate(owned.length > 0 ? "/library" : "/store")}
+                  className="group td-glass td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
+                  <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                    {owned.length > 0 ? <BookOpen className="w-4 h-4" /> : <Store className="w-4 h-4" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">{owned.length > 0 ? "Jump back in" : "Get started"}</span>
+                    <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{owned.length > 0 ? "My Library" : "Explore subjects"}</span>
                   </span>
                   <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                 </button>
@@ -247,8 +265,12 @@ export default function Dashboard() {
 
       </div>
 
+      {/* Returning students get their own subjects first — what they came back
+          for shouldn't sit below the promo tiles. New users, with nothing
+          unlocked yet, see the tiles first and the store CTA after. */}
+      <div className="flex flex-col">
       {/* ── Quick access carousel ── */}
-      <div className="mt-8">
+      <div className="mt-8" style={{ order: owned.length > 0 ? 2 : 1 }}>
           <div className="flex items-center justify-between mb-3 px-0.5">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
             <div className="flex items-center gap-1.5">
@@ -325,7 +347,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── My subjects (reference: "My Courses" rows) ── */}
-      <section className="mt-8">
+      <section className="mt-8" style={{ order: owned.length > 0 ? 1 : 2 }}>
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-white font-bold">My subjects</h2>
           {owned.length > 0 && (
@@ -357,6 +379,7 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+      </div>
 
       <Footer />
     </AppShell>
