@@ -71,7 +71,10 @@ export default function HelpNudge({
   const ask = (question: string) => { dismiss(); onAsk(question); };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[70] w-[min(22rem,calc(100vw-2rem))] td-in">
+    /* Bottom-LEFT: the cart's order summary (total + Unlock button) is sticky on
+       the right, and anchoring here covered the exact button we want tapped. The
+       xl offset clears the side rail. */
+    <div className="fixed bottom-4 left-4 xl:left-[23rem] z-[70] w-[min(21rem,calc(100vw-2rem))] td-in">
       <div className="td-glass rounded-[22px] p-4 shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85)] border border-white/10">
         <div className="flex items-start gap-3">
           <span className="w-9 h-9 rounded-full td-accent-solid flex items-center justify-center shrink-0">
