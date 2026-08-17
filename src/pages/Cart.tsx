@@ -317,7 +317,7 @@ export default function Cart() {
                 {checkoutLabel[state]}
               </button>
               <p className="text-center text-[11px] text-zinc-500 mt-3">
-                {validityDays > 0 ? `Access valid for ${validityDays} days` : "Lifetime access"} · Secure payment via Razorpay
+                {validityDays > 0 && <>Access valid for {validityDays} days · </>}Secure payment via Razorpay
               </p>
             </div>
           </div>

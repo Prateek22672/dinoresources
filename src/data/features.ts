@@ -91,7 +91,7 @@ export const FEATURES: Feature[] = [
   // ── Unlock & access ──
   { category: "Unlock & access", roles: ["student"], isNew: true,
     name: "Subjects & full-year packs",
-    desc: "Unlock a single subject, or open your whole year at once — one payment, permanent access.",
+    desc: "Unlock a single subject, or open your whole year at once — one payment, no subscription.",
     how: "Rail → Subjects. Add to cart, then unlock. Owned subjects live in My Library." },
   { category: "Unlock & access", roles: ["student"], isNew: true,
     name: "Smart checkout",

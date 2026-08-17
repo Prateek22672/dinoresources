@@ -114,7 +114,7 @@ export default function Store() {
         eyebrowIcon={Sparkles}
         book={{ cover: "#0F9D9A", spine: "#0B7A78", title: "COA" }}
         title={studentYear ? <>Everything for <span className="td-accent-text">{studentYear.name}</span>.</> : "Unlock exactly what you need."}
-        subtitle="Unlock one subject, or open your whole year at once. One payment, permanent access — notes, PYQs and Study-With-AI included."
+        subtitle="Unlock one subject, or open your whole year at once. One payment — notes, PYQs and Study-With-AI included."
         stats={loading ? undefined : heroStats}
         actions={
           loading ? undefined : (

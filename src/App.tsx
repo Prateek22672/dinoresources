@@ -70,7 +70,7 @@ const ROUTE_META: Record<string, { title: string; desc: string }> = {
   },
   "/store": {
     title: "Store — Unlock Subjects & Year Combos | Team Dino",
-    desc: "Notes, PYQs and Study-With-AI for every subject. Buy a single subject or save with a full-year combo — one payment, permanent access.",
+    desc: "Notes, PYQs and Study-With-AI for every subject. Buy a single subject or save with a full-year combo — one payment, no subscription.",
   },
   "/jobs": {
     title: "Placement Prep — Company Patterns, Materials & Questions | Team Dino",
