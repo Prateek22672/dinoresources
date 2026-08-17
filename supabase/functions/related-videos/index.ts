@@ -15,9 +15,9 @@ async function groqQuery(topic: string): Promise<string> {
       method: "POST",
       headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", temperature: 0.3,
+        model: "llama-3.3-70b-versatile", temperature: 0.2,
         messages: [
-          { role: "system", content: "Return ONLY a single concise YouTube search query (no quotes) that finds the best student tutorial videos for the topic. Max 8 words." },
+          { role: "system", content: "Return ONLY a single concise YouTube search query (no quotes, no explanation) that finds the best real lecture/tutorial videos explaining this EXACT engineering-course topic for exam prep. Use the most specific concept name mentioned, not just the broad subject — a query that's too generic returns unrelated results. Prefer adding a word like 'explained', 'tutorial' or 'lecture'. Max 10 words." },
           { role: "user", content: topic },
         ],
       }),
@@ -38,7 +38,7 @@ async function groqSuggestions(topic: string) {
         model: "llama-3.3-70b-versatile", temperature: 0.4,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "Reply ONLY JSON {\"videos\":[{\"title\":\"...\",\"channel\":\"...\",\"query\":\"youtube search query\"}]} with 6 real-sounding educational videos." },
+          { role: "system", content: "Reply ONLY JSON {\"videos\":[{\"title\":\"...\",\"channel\":\"...\",\"query\":\"youtube search query\"}]} with 8 real-sounding educational videos, each with its OWN distinct, specific search query targeting a different sub-concept of the topic (not 8 copies of the same broad query)." },
           { role: "user", content: `Related study videos for: ${topic}` },
         ],
       }),
@@ -46,7 +46,7 @@ async function groqSuggestions(topic: string) {
     if (!res.ok) return [];
     const d = await res.json();
     const parsed = JSON.parse(d.choices?.[0]?.message?.content ?? "{}");
-    return (Array.isArray(parsed.videos) ? parsed.videos : []).slice(0, 6);
+    return (Array.isArray(parsed.videos) ? parsed.videos : []).slice(0, 8);
   } catch { return []; }
 }
 
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const query = await groqQuery(t);
 
     if (YT_KEY) {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&safeSearch=moderate&videoEmbeddable=true&q=${encodeURIComponent(query)}&key=${YT_KEY}`;
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&safeSearch=moderate&videoEmbeddable=true&relevanceLanguage=en&q=${encodeURIComponent(query)}&key=${YT_KEY}`;
       const r = await fetch(url);
       if (r.ok) {
         const d = await r.json();

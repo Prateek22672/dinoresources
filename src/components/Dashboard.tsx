@@ -220,7 +220,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* combo strip */}
+          {/* combo strip — only ever the student's OWN year (see comboYear above) */}
           {comboYear && (
             <div className="td-hero rounded-3xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
               <div className="relative z-10 flex items-center gap-3">
@@ -228,6 +228,10 @@ export default function Dashboard() {
                 <div>
                   <p className="text-white font-semibold">{comboYear.name} — Complete Access</p>
                   <p className="text-zinc-400 text-sm">Unlock every {comboYear.name} subject at once.</p>
+                  <button onClick={() => navigate("/setup?edit=true")}
+                    className="text-zinc-500 hover:text-white text-xs font-medium mt-1 inline-flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3" /> Not your year? Change here
+                  </button>
                 </div>
               </div>
               <div className="relative z-10 flex items-center gap-3">

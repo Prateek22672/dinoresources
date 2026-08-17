@@ -5,7 +5,7 @@
  * question nothing else does: "how ready am I, right now, for this exam?"
  *
  * Engagement is tracked honestly on the device (no backend, no payment coupling):
- * opening a unit's Q&A, viewing a material, or watching an editorial marks that
+ * opening a unit's Q&A, viewing a material, or watching a video marks that
  * unit as "touched" for that subject. Readiness = touched sections / total.
  */
 

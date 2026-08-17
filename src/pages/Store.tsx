@@ -193,6 +193,8 @@ export default function Store() {
             const comboOwned = ownedYears.has(year.id);
             const comboInCart = isInCart("combo", year.id);
             const hasCombo = year.id !== "__none__" && year.combo_price_paise > 0;
+            // Only pitch the combo upsell for the student's own opted year — never a year they haven't chosen.
+            const isMyYearCombo = hasCombo && studentYear?.id === year.id;
             const individualTotal = subjects.reduce((sum, s) => sum + s.price_paise, 0);
             const savings = Math.max(0, individualTotal - year.combo_price_paise);
             const savingsPct = individualTotal > 0 ? Math.round((savings / individualTotal) * 100) : 0;
@@ -204,8 +206,8 @@ export default function Store() {
                   <p className="text-zinc-500 text-sm mt-0.5">{subjects.length} subjects</p>
                 </div>
 
-                {/* ── Prominent combo highlight ── */}
-                {hasCombo && !comboOwned && (
+                {/* ── Prominent combo highlight — only for the student's own opted year ── */}
+                {isMyYearCombo && !comboOwned && (
                   <div className="td-banner-bw rounded-3xl p-5 sm:p-6 mb-5 relative overflow-hidden">
                     <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                       <div className="min-w-0">
@@ -216,6 +218,10 @@ export default function Store() {
                         <p className="td-bw-soft text-sm mt-1">
                           All {subjects.length} subjects · notes, PYQs &amp; Study-With-AI, one payment.
                         </p>
+                        <button onClick={() => navigate("/setup?edit=true")}
+                          className="td-bw-soft hover:opacity-80 text-xs font-medium mt-2 inline-flex items-center gap-1">
+                          <GraduationCap className="w-3 h-3" /> Not your year? Change here
+                        </button>
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
                         <div className="text-right">

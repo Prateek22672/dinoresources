@@ -15,7 +15,7 @@ interface ResourceRow {
 }
 
 type Section = "syllabus" | "pyq" | number;
-type UnitTab = "ai" | "editorial" | "resources";
+type UnitTab = "ai" | "videos" | "resources";
 
 interface UnitViewProps {
   subjectId: string;
@@ -100,11 +100,16 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
   const loadRelated = useCallback(async () => {
     setRelatedLoading(true); setRelatedTried(true); setPlayingId(null);
-    const topic = `${subjectName ?? "this subject"}${isUnit ? ` — Unit ${section}` : ""}`;
+    // Narrow the search to the topic the student is actually focused on (or the
+    // unit's own topic titles) instead of just "Subject — Unit N" — a sharper
+    // topic gets sharper, more relevant video matches.
+    const focusTopic = activeTopic !== "all" ? topics.find((t) => t.id === activeTopic)?.title : null;
+    const unitTopics = !focusTopic && topics.length > 0 ? topics.map((t) => t.title).slice(0, 4).join(", ") : null;
+    const topic = `${subjectName ?? "this subject"}${isUnit ? ` — Unit ${section}` : ""}${focusTopic ? ` — ${focusTopic}` : unitTopics ? ` (${unitTopics})` : ""}`;
     const { data } = await invokeFn<{ videos: any[] }>("related-videos", { topic });
     setRelated((data?.videos ?? []) as any[]);
     setRelatedLoading(false);
-  }, [subjectName, section, isUnit]);
+  }, [subjectName, section, isUnit, activeTopic, topics]);
 
   const sectionTitle = section === "syllabus" ? "Syllabus" : section === "pyq" ? "Previous Year Questions" : `Unit ${section}`;
 
@@ -124,6 +129,14 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   const qaFree = (id: string) => !preview || freeQaIds.has(id);
   const edFree = (id: string) => !preview || id === freeEdId;
   const resFree = (id: string) => !preview || id === freeResId;
+
+  // Study-With-AI, topic-grouped — computed once and shared by the quick-jump
+  // bar and the accordion list below, so numbering always matches between them.
+  const aiGroups = [...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
+    .filter((g) => activeTopic === "all" || g.gid === activeTopic)
+    .map((g) => ({ ...g, items: qa.filter((x) => ((x as any).topic_id ?? null) === g.gid) }))
+    .filter((g) => g.items.length > 0 || g.gid !== null);
+  const aiFlatItems = aiGroups.flatMap((g) => g.items);
 
   // reusable unlock button for the preview banner / locked teasers
   const UnlockBtn = ({ small }: { small?: boolean }) =>
@@ -212,7 +225,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
   const tabs: { id: UnitTab; label: string; icon: any }[] = [
     { id: "ai", label: "Study With AI", icon: AiIcon },
-    { id: "editorial", label: "Editorial", icon: Clapperboard },
+    { id: "videos", label: "Videos", icon: Clapperboard },
     { id: "resources", label: "Resources", icon: Layers },
   ];
 
@@ -289,12 +302,35 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No Q&amp;A added for this unit yet.</div>
         ) : (
           <div className="space-y-5">
-            {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
-              .filter((g) => activeTopic === "all" || g.gid === activeTopic)
-              .map((group) => {
-              const items = qa.filter((x) => ((x as any).topic_id ?? null) === group.gid);
+            {/* Quick-jump — switch straight to any question instead of scrolling the whole list */}
+            {aiFlatItems.length > 4 && (
+              <div className="sticky top-16 z-10 -mx-1 px-1">
+                <div className="td-glass rounded-2xl px-2.5 py-2 flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+                  <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-zinc-500 shrink-0 pl-1">Jump</span>
+                  {aiFlatItems.map((item, i) => {
+                    const jumpOpen = openId === item.id;
+                    const locked = !qaFree(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => { setOpenId(item.id); document.getElementById(`qa-${item.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                        aria-label={`Jump to question ${i + 1}`}
+                        title={item.question}
+                        className={`shrink-0 w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center transition-colors ${
+                          jumpOpen ? "td-accent-bg text-white" : locked ? "td-surface-2 text-zinc-600" : "td-surface-2 text-zinc-300 hover:text-white"
+                        }`}
+                      >
+                        {locked ? <Lock className="w-3 h-3" /> : i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {aiGroups.map((group) => {
+              const items = group.items;
               // topic headings always show (with a placeholder); General only when it has content
-              if (items.length === 0 && group.gid === null) return null;
               if (items.length === 0) {
                 return (
                   <div key={group.gid} className="space-y-2.5">
@@ -316,7 +352,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                     // locked in preview → enticing teaser (question shown, answer sealed)
                     if (!qaFree(item.id)) {
                       return (
-                        <div key={item.id} className="td-surface rounded-2xl overflow-hidden">
+                        <div key={item.id} id={`qa-${item.id}`} className="td-surface rounded-2xl overflow-hidden scroll-mt-24">
                           <div className="w-full flex items-center gap-3 px-4 sm:px-5 py-4">
                             <span className="shrink-0 w-7 h-7 rounded-lg td-surface-2 flex items-center justify-center"><Lock className="w-3.5 h-3.5 text-zinc-500" /></span>
                             <span className="flex-1 font-medium text-zinc-400 truncate">{item.question}</span>
@@ -327,11 +363,12 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                     }
                     const open = openId === item.id;
                     const free = preview && freeQaIds.has(item.id);
+                    const next = aiFlatItems[aiFlatItems.findIndex((x) => x.id === item.id) + 1];
                     return (
-                      <div key={item.id} className={`td-surface rounded-2xl overflow-hidden transition-shadow ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
+                      <div key={item.id} id={`qa-${item.id}`} className={`td-surface rounded-2xl overflow-hidden transition-shadow scroll-mt-24 ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
                         <button onClick={() => { setOpenId(open ? null : item.id); markStudied(subjectId, readinessKey); }} className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left">
                           <span
-                            className="shrink-0 w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center"
+                            className="shrink-0 w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors"
                             style={open
                               ? { background: "var(--td-accent)", color: "#fff" }
                               : { background: "rgb(var(--td-accent-rgb) / 0.12)", color: "var(--td-accent)" }}
@@ -344,11 +381,25 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                           </span>
                           <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
                         </button>
-                        {open && (
-                          <div className="px-4 sm:px-5 pb-5 pt-3 border-t border-white/5">
-                            <MarkdownRenderer content={item.answer_md || "_No answer yet._"} />
+                        {/* smooth height + fade-in reveal, and a small "AI answer" beat instead of an abrupt pop-in */}
+                        <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                          <div className="overflow-hidden">
+                            <div className={`px-4 sm:px-5 pb-5 pt-3 border-t border-white/5 transition-all duration-300 ${open ? "opacity-100 translate-y-0 delay-100" : "opacity-0 -translate-y-1"}`}>
+                              <p className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold tracking-wider uppercase text-zinc-500">
+                                <AiIcon className="w-3 h-3 td-accent-text" /> AI answer
+                              </p>
+                              <MarkdownRenderer content={item.answer_md || "_No answer yet._"} />
+                              {next && (
+                                <button
+                                  onClick={() => { setOpenId(next.id); document.getElementById(`qa-${next.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                                  className="td-btn-ghost mt-4 px-3.5 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"
+                                >
+                                  Next question <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })}
@@ -359,8 +410,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
         )
       )}
 
-      {/* Editorial — topic-grouped mini-YT cards; one compact in-site player */}
-      {tab === "editorial" && (
+      {/* Videos — topic-grouped mini-YT cards; one compact in-site player */}
+      {tab === "videos" && (
         <div className="space-y-6">
           {/* compact player — plays whichever mini card was tapped */}
           {edPlaying && (() => {
@@ -368,12 +419,12 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
             const em = e ? toEmbedUrl(e.youtube_url) : null;
             if (!e || !em) return null;
             return (
-              <div className="td-surface rounded-2xl overflow-hidden max-w-2xl">
+              <div key={edPlaying} className="td-in td-surface rounded-2xl overflow-hidden max-w-2xl">
                 <div className="aspect-video bg-black">
-                  <iframe src={`${em}${em.includes("?") ? "&" : "?"}autoplay=1`} title={e.title ?? "Editorial"} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+                  <iframe src={`${em}${em.includes("?") ? "&" : "?"}autoplay=1`} title={e.title ?? "Video"} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
                 </div>
                 <div className="px-4 py-3 flex items-center justify-between gap-3">
-                  <p className="text-white text-sm font-semibold truncate">{e.title || "Editorial video"}</p>
+                  <p className="text-white text-sm font-semibold truncate">{e.title || "Video"}</p>
                   <button onClick={() => setEdPlaying(null)} className="td-btn-ghost px-3 py-1.5 text-xs shrink-0">Close</button>
                 </div>
               </div>
@@ -381,7 +432,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           })()}
 
           {editorial.length === 0 && topics.length === 0 ? (
-            <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No editorial video added for this unit yet.</div>
+            <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No video added for this unit yet.</div>
           ) : (
             <div className="space-y-5">
               {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
@@ -421,7 +472,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                                   {free && <span className="absolute top-2 left-2 td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full">FREE</span>}
                                 </div>
                                 <div className="px-3 py-2.5">
-                                  <p className={`text-[13px] font-medium line-clamp-2 ${locked ? "text-zinc-400" : "text-white"}`}>{locked ? "Unlock to watch" : (e.title || "Editorial video")}</p>
+                                  <p className={`text-[13px] font-medium line-clamp-2 ${locked ? "text-zinc-400" : "text-white"}`}>{locked ? "Unlock to watch" : (e.title || "Video")}</p>
                                 </div>
                               </button>
                             );
@@ -444,7 +495,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
             </div>
             {/* in-site player when a real video is picked */}
             {playingId && (
-              <div className="td-surface rounded-2xl overflow-hidden mb-3">
+              <div key={playingId} className="td-in td-surface rounded-2xl overflow-hidden mb-3">
                 <div className="aspect-video bg-black"><iframe src={`https://www.youtube.com/embed/${playingId}?autoplay=1`} title="Now playing" className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen /></div>
               </div>
             )}

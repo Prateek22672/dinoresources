@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone, MailCheck } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
 export default function AuthPage() {
@@ -16,6 +16,8 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [signupEmail, setSignupEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,7 +38,16 @@ export default function AuthPage() {
     });
     setIsLoading(false);
     if (error) toast.error(error.message);
-    else toast.success("Account created! Please check your email to verify.");
+    else setSignupEmail(email);
+  };
+
+  const handleResend = async () => {
+    if (!signupEmail) return;
+    setIsResending(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email: signupEmail });
+    setIsResending(false);
+    if (error) toast.error(error.message);
+    else toast.success("Verification email resent.");
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -162,15 +173,37 @@ export default function AuthPage() {
                 {["A", "R", "S", "K"].map((l) => (
                   <span key={l} className="w-8 h-8 rounded-full bg-white/[0.07] border-2 border-[#0b0b0e] flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
                 ))}
-                <span className="w-8 h-8 rounded-full td-accent-solid border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black text-white">1.4k</span>
+                <span className="w-8 h-8 rounded-full td-accent-solid border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black text-white">1.5k</span>
               </div>
-              <span className="text-sm text-zinc-500 font-medium">1200+ students already inside</span>
+              <span className="text-sm text-zinc-500 font-medium">1500+ signups already inside</span>
             </div>
           </div>
 
           {/* Right — form card */}
           <div className="td-auth-in2 w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end">
             <div className="rounded-[28px] bg-[#121216] border border-white/10 p-6 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
+              {signupEmail ? (
+                /* Post-signup — a real screen to check, not just a toast that vanishes */
+                <div className="td-auth-in flex flex-col items-center text-center py-4">
+                  <div className="w-16 h-16 rounded-2xl td-accent-bg flex items-center justify-center mb-4">
+                    <MailCheck className="w-7 h-7" />
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">Check your inbox</h2>
+                  <p className="text-zinc-400 text-sm mt-2 max-w-xs">
+                    We've sent a verification link to <span className="text-white font-medium">{signupEmail}</span>. Open it to activate your account, then come back and log in.
+                  </p>
+                  <p className="text-zinc-600 text-xs mt-3">Not there yet? Check spam or promotions too.</p>
+                  <div className="flex flex-col gap-2.5 w-full mt-6">
+                    <button onClick={handleResend} disabled={isResending} className="td-btn-ghost h-11 rounded-full text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60">
+                      {isResending ? "Resending…" : "Resend email"}
+                    </button>
+                    <button type="button" onClick={() => setSignupEmail(null)} className="text-xs font-medium text-zinc-500 hover:text-white transition-colors">
+                      Wrong email? Go back
+                    </button>
+                  </div>
+                </div>
+              ) : (
+              <>
               {/* Mobile brand */}
               <div className="lg:hidden flex flex-col items-center text-center mb-6">
                 <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-3">
@@ -238,7 +271,7 @@ export default function AuthPage() {
                     <button type="submit" disabled={isLoading} className="td-btn-primary h-12 mt-1 flex items-center justify-center gap-2 text-sm disabled:opacity-60">
                       {isLoading ? "Authenticating…" : <>Log In <ArrowRight className="w-4 h-4" /></>}
                     </button>
-                    <p className="text-center text-[11px] uppercase tracking-wider text-zinc-600 font-medium">Trusted by 1200+ students</p>
+                    <p className="text-center text-[11px] uppercase tracking-wider text-zinc-600 font-medium">Trusted by 1500+ signups</p>
                   </form>
                 </TabsContent>
 
@@ -280,6 +313,8 @@ export default function AuthPage() {
                   </form>
                 </TabsContent>
               </Tabs>
+              </>
+              )}
 
               <div className="h-px bg-white/[0.06] my-4" />
               <p className="text-center text-[11px] text-zinc-600 flex items-center justify-center gap-1.5">

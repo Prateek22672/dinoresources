@@ -321,7 +321,7 @@ export default function Contributor() {
       return;
     }
 
-    toast.success("Editorial added");
+    toast.success("Video added");
     setEdTitle("");
     setEdUrl("");
     setEdTopic("");
@@ -329,7 +329,7 @@ export default function Contributor() {
   };
 
   const deleteEditorial = async (id: string) => {
-    if (!confirm("Remove this editorial video?")) return;
+    if (!confirm("Remove this video?")) return;
 
     const { error } = await tbl("subject_editorial").delete().eq("id", id);
 
@@ -439,7 +439,7 @@ export default function Contributor() {
         eyebrowIcon={PenSquare}
         book={{ cover: "#7c6cf0", spine: "#5b4fc4", title: "FLAT" }}
         title="Contributor Studio"
-        subtitle="Add Study-With-AI Q&A, upload materials and drop editorial videos - unit by unit."
+        subtitle="Add Study-With-AI Q&A, upload materials and drop videos - unit by unit."
         actions={
           <Link to="/contributor/jobs" className="td-btn-ghost px-5 py-3 rounded-full text-sm font-medium flex items-center gap-1.5">
             <Briefcase className="w-4 h-4" /> Jobs content
@@ -791,7 +791,7 @@ export default function Contributor() {
 
           <div className="td-surface rounded-3xl p-5">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Clapperboard className="w-4 h-4 td-accent-text" /> Editorial video
+              <Clapperboard className="w-4 h-4 td-accent-text" /> Video
             </h3>
 
             <input
@@ -825,7 +825,7 @@ export default function Contributor() {
               </select>
             )}
 
-            <p className="text-zinc-600 text-xs mt-2">Plays embedded on the subject's Editorial tab - grouped under the topic you pick.</p>
+            <p className="text-zinc-600 text-xs mt-2">Plays embedded on the subject's Videos tab - grouped under the topic you pick.</p>
 
             {editorials.length > 0 && (
               <div className="space-y-2 mt-3">
@@ -834,7 +834,7 @@ export default function Contributor() {
                     <Clapperboard className="w-4 h-4 text-zinc-400 shrink-0" />
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-zinc-200 text-sm font-medium truncate">{e.title || "Editorial"}</p>
+                      <p className="text-zinc-200 text-sm font-medium truncate">{e.title || "Video"}</p>
                       <p className="text-zinc-600 text-xs truncate">{e.youtube_url}</p>
                     </div>
 
