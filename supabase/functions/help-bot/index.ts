@@ -8,7 +8,10 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient, getAuthUser } from "../_shared/razorpay.ts";
 
 const GROQ_KEY = Deno.env.get("GROQ_API_KEY_HELP") ?? Deno.env.get("GROQ_API_KEY") ?? "";
-const MODEL = "llama-3.3-70b-versatile";
+// Groq retires models on a rolling basis, and a decommissioned one fails
+// exactly like a bad key. Overridable via the GROQ_MODEL secret so a swap is a
+// dashboard edit, not a code change + redeploy.
+const MODEL = Deno.env.get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
 
 const TICKET_CATEGORIES = [
   "paid_not_granted", "payment_deducted_failed", "subject_not_opening",

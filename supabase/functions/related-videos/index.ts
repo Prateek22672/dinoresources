@@ -7,6 +7,8 @@ import { getAuthUser, adminClient } from "../_shared/razorpay.ts";
 
 const GROQ_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
 const YT_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? "";
+// Overridable so a retired Groq model can be swapped from the dashboard.
+const MODEL = Deno.env.get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
 
 // A YouTube search costs 100 of the default 10,000 daily quota units, so ~100
 // clicks/day for ALL users. Suggestions for a topic barely change, so serve
@@ -55,7 +57,7 @@ async function groqQuery(topic: string): Promise<string> {
       method: "POST",
       headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", temperature: 0.2,
+        model: MODEL, temperature: 0.2,
         messages: [
           { role: "system", content: "Return ONLY a single concise YouTube search query (no quotes, no explanation) that finds the best real lecture/tutorial videos explaining this EXACT engineering-course topic for exam prep. Use the most specific concept name mentioned, not just the broad subject — a query that's too generic returns unrelated results. Prefer adding a word like 'explained', 'tutorial' or 'lecture'. Max 10 words." },
           { role: "user", content: topic },
@@ -75,7 +77,7 @@ async function groqSuggestions(topic: string) {
       method: "POST",
       headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", temperature: 0.4,
+        model: MODEL, temperature: 0.4,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: "Reply ONLY JSON {\"videos\":[{\"title\":\"...\",\"channel\":\"...\",\"query\":\"youtube search query\"}]} with 8 real-sounding educational videos, each with its OWN distinct, specific search query targeting a different sub-concept of the topic (not 8 copies of the same broad query)." },
