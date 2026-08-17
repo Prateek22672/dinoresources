@@ -55,6 +55,13 @@ export interface CartItemRow {
   added_at: string;
 }
 
+export interface OrderChargeDetail {
+  id: string;
+  label: string;
+  amount_paise: number;
+  kind: string;
+}
+
 export interface OrderRow {
   id: string;
   user_id: string;
@@ -63,6 +70,11 @@ export interface OrderRow {
   amount_paise: number;
   currency: string;
   status: OrderStatus;
+  discount_paise: number;
+  coupon_code: string | null;
+  charges_paise: number;
+  charges_detail: OrderChargeDetail[] | null;
+  gateway: string;
   created_at: string;
   updated_at: string;
 }
@@ -75,6 +87,12 @@ export interface OrderItemRow {
   year_id: string | null;
   price_paise: number;
   label: string | null;
+}
+
+/** Line items for one order — fetched on demand (e.g. when opening a receipt). */
+export async function fetchOrderItems(orderId: string): Promise<OrderItemRow[]> {
+  const { data } = await tbl("order_items").select("*").eq("order_id", orderId);
+  return (data ?? []) as OrderItemRow[];
 }
 
 export interface SubjectAccessRow {
@@ -267,10 +285,20 @@ export async function invokeFn<T = unknown>(
 ): Promise<{ data: T | null; error: string | null }> {
   const res = await supabase.functions.invoke(name, { body: body ?? {} });
   if (res.error) {
-    // Surface the function's JSON error message when present
+    // Surface the function's JSON error message when present. On a non-2xx,
+    // supabase-js leaves `data` null and reports the useless "Edge Function
+    // returned a non-2xx status code" — the real reason is in the unread
+    // Response hanging off the error, so read it back.
     // deno-lint-ignore no-explicit-any
-    const msg = (res.data as any)?.error ?? res.error.message ?? "Request failed";
-    return { data: (res.data as T) ?? null, error: msg };
+    let msg: string | null = (res.data as any)?.error ?? null;
+    const ctx: unknown = (res.error as { context?: unknown }).context;
+    if (!msg && ctx instanceof Response) {
+      try {
+        const text = await ctx.clone().text();
+        try { msg = JSON.parse(text)?.error ?? null; } catch { msg = text?.trim() || null; }
+      } catch { /* body already consumed or unreadable */ }
+    }
+    return { data: (res.data as T) ?? null, error: msg ?? res.error.message ?? "Request failed" };
   }
   // deno-lint-ignore no-explicit-any
   const data = res.data as any;
