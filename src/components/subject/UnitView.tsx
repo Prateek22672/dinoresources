@@ -77,7 +77,10 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     setActiveTopic("all");
     if (isUnit) {
       const [qaRes, edRes, tpRes] = await Promise.all([
-        tbl("subject_qa").select("*").eq("subject_id", subjectId).eq("unit_number", section).order("order_index", { ascending: true }),
+        // Questions are always visible; the RPC nulls out `answer_md` server-side
+        // unless the question is free or the caller owns the subject — a plain
+        // `select("*")` would hide the whole row via RLS instead of just the answer.
+        (supabase as any).rpc("get_subject_qa", { _subject_id: subjectId, _unit_number: section }),
         tbl("subject_editorial").select("*").eq("subject_id", subjectId).or(`unit_number.eq.${section},unit_number.is.null`).order("created_at", { ascending: false }),
         tbl("unit_topics").select("*").eq("subject_id", subjectId).eq("unit_number", section).order("order_index", { ascending: true }),
       ]);
@@ -115,14 +118,13 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
   if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 rounded-2xl td-surface animate-pulse" />)}</div>;
 
-  // ── Free preview: give non-owners a real taste (first Q&A, first video,
-  //    first resource + anything a contributor marked free) so they experience
-  //    the quality and want to unlock — instead of hitting a wall of locks. ──
+  // ── Free preview: give non-owners a real taste (Study-With-AI questions
+  //    marked free by a contributor, plus the first video/resource) so they
+  //    experience the quality and want to unlock — instead of a wall of locks. ──
   const preview = !hasAccess;
   const freeQaIds = new Set<string>();
   if (preview) {
     qa.forEach((x) => { if ((x as any).is_free) freeQaIds.add(x.id); });
-    if (qa[0]) freeQaIds.add(qa[0].id);
   }
   const freeEdId = preview ? editorial[0]?.id ?? null : null;
   const freeResId = preview ? resources[0]?.id ?? null : null;
