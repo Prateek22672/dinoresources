@@ -103,9 +103,22 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     // Materials are always listed; the RPC nulls out `url` unless the row is the
     // free preview or the caller owns the subject — a plain select would hide the
     // whole row via RLS and read as "nothing here" (see the matching QA RPC).
-    const { data: allRes, error: resErr } = await (supabase as any).rpc("get_subject_resources", { _subject_id: subjectId });
-    if (resErr) console.error("[UnitView] materials failed to load:", resErr.message);
-    const all = (allRes ?? []) as ResourceRow[];
+    const rpcRes = await (supabase as any).rpc("get_subject_resources", { _subject_id: subjectId });
+    let all: ResourceRow[];
+    if (rpcRes.error) {
+      // The RPC ships in a migration; until that has been applied it simply does
+      // not exist. Fall back to reading the table directly so materials still
+      // load for whoever RLS already allows (owners, admins, contributors)
+      // rather than the page going blank for everyone.
+      console.error("[UnitView] get_subject_resources unavailable, falling back:", rpcRes.error.message);
+      const direct = await (supabase.from("resources") as any)
+        .select("id, title, type, url, category, unit_number, topic_id")
+        .eq("subject_id", subjectId);
+      if (direct.error) console.error("[UnitView] materials failed to load:", direct.error.message);
+      all = (direct.data ?? []) as ResourceRow[];
+    } else {
+      all = (rpcRes.data ?? []) as ResourceRow[];
+    }
     setResources(all.filter((r) => {
       if (section === "syllabus") return r.category === "Syllabus";
       if (section === "pyq") return r.category === "Previous Papers" || r.category === "PYQs";
