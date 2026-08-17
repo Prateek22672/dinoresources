@@ -122,6 +122,21 @@ const SEO = () => {
   return null;
 };
 
+/**
+ * Start every route at the top. The browser keeps the previous page's scroll
+ * offset across a client-side navigation, so opening a subject from a
+ * scrolled-down Store dropped you into the middle of the new page. Anchor
+ * links (#hash) are left alone so they can still jump to their target.
+ */
+const ScrollToTop = () => {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname, hash]);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="td-theme">
@@ -130,6 +145,7 @@ const App = () => (
       <Sonner position="top-center" theme="dark" closeButton />
       <BrowserRouter>
         <SEO />
+        <ScrollToTop />
         <CartProvider>
           <SecurityGuard />
           <LoginTracker />

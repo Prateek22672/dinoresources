@@ -59,12 +59,19 @@ export default function SubjectPage() {
     );
   }
 
+  // Switching unit/section doesn't change the URL, so the page keeps whatever
+  // scroll offset the previous section left behind — start each one at the top.
+  const goToSection = (id: Section) => {
+    setSection(id);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
+
   const navButton = (id: Section, label: string, Icon: any) => {
     const active = section === id;
     return (
       <button
         key={String(id)}
-        onClick={() => setSection(id)}
+        onClick={() => goToSection(id)}
         className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-left ${
           active ? "bg-white text-black" : "text-zinc-400 hover:text-white hover:bg-white/5"
         }`}
@@ -114,7 +121,7 @@ export default function SubjectPage() {
             subjectId={subject.id}
             subjectName={subject.name}
             section={section}
-            onSection={setSection}
+            onSection={goToSection}
             hasAccess={hasAccess}
             onUnlock={refreshAccess}
             priceLabel={formatPaise(subject.price_paise)}
