@@ -3,10 +3,50 @@
 // YOUTUBE_API_KEY secret is set) the YouTube Data API returns REAL videos that
 // play in-site. Without the YT key it falls back to Groq title suggestions.
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { getAuthUser } from "../_shared/razorpay.ts";
+import { getAuthUser, adminClient } from "../_shared/razorpay.ts";
 
 const GROQ_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
 const YT_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? "";
+
+// A YouTube search costs 100 of the default 10,000 daily quota units, so ~100
+// clicks/day for ALL users. Suggestions for a topic barely change, so serve
+// them from cache and spend the quota only on genuinely new topics.
+const CACHE_TTL_DAYS = 30;
+const cacheKeyOf = (topic: string) => topic.toLowerCase().replace(/\s+/g, " ").trim();
+
+/** @param ignoreTtl serve an expired entry anyway (used when YouTube refuses). */
+async function readCache(key: string, ignoreTtl = false) {
+  try {
+    const { data } = await adminClient()
+      .from("video_suggestion_cache")
+      .select("videos, query, source, updated_at")
+      .eq("cache_key", key)
+      .maybeSingle();
+    if (!data) return null;
+    const ageMs = Date.now() - new Date((data as any).updated_at).getTime();
+    if (!ignoreTtl && ageMs > CACHE_TTL_DAYS * 86400_000) return null;
+    // Never serve an empty result from cache — that would pin a transient
+    // failure (missing key, quota exhausted) in place for the whole TTL.
+    const videos = (data as any).videos;
+    if (!Array.isArray(videos) || videos.length === 0) return null;
+    return data as any;
+  } catch (err) {
+    console.error("cache read failed", err);
+    return null;
+  }
+}
+
+async function writeCache(key: string, query: string, source: string, videos: unknown[]) {
+  if (!Array.isArray(videos) || videos.length === 0) return; // don't cache failures
+  try {
+    await adminClient()
+      .from("video_suggestion_cache")
+      .upsert({ cache_key: key, query, source, videos, updated_at: new Date().toISOString() },
+              { onConflict: "cache_key" });
+  } catch (err) {
+    console.error("cache write failed", err);
+  }
+}
 
 async function groqQuery(topic: string): Promise<string> {
   if (!GROQ_KEY) return topic;
@@ -56,8 +96,16 @@ Deno.serve(async (req) => {
     const user = await getAuthUser(req);
     if (!user) return jsonResponse({ error: "Unauthorized" }, 401);
 
-    const { topic } = await req.json().catch(() => ({ topic: "" }));
+    const { topic, refresh } = await req.json().catch(() => ({ topic: "" }));
     const t = (topic || "study").toString().slice(0, 200);
+
+    // Serve from cache unless the caller explicitly asked to refresh.
+    const key = cacheKeyOf(t);
+    if (!refresh) {
+      const hit = await readCache(key);
+      if (hit) return jsonResponse({ videos: hit.videos, source: hit.source, query: hit.query, cached: true });
+    }
+
     const query = await groqQuery(t);
 
     if (YT_KEY) {
@@ -71,11 +119,16 @@ Deno.serve(async (req) => {
           channel: it.snippet?.channelTitle ?? "",
           thumbnail: it.snippet?.thumbnails?.medium?.url ?? it.snippet?.thumbnails?.default?.url ?? null,
         })).filter((v: any) => v.videoId);
+        await writeCache(key, query, "youtube", videos);
         return jsonResponse({ videos, source: "youtube", query });
       }
       const err = await r.text();
       console.error("YouTube API error", r.status, err.slice(0, 200));
-      // fall through to groq suggestions
+      // Quota exhaustion lands here (403 quotaExceeded). Serve a stale cache
+      // entry if we have one — outdated suggestions beat an empty rail.
+      const stale = await readCache(key, true);
+      if (stale) return jsonResponse({ videos: stale.videos, source: stale.source, query: stale.query, cached: true, stale: true });
+      // otherwise fall through to groq suggestions
     }
 
     const sugg = (await groqSuggestions(t)).map((v: any) => ({
@@ -83,6 +136,7 @@ Deno.serve(async (req) => {
       channel: String(v.channel ?? "").slice(0, 80),
       query: String(v.query ?? v.title ?? t).slice(0, 160),
     }));
+    await writeCache(key, query, "groq", sugg);
     return jsonResponse({ videos: sugg, source: "groq", query });
   } catch (err) {
     console.error("related-videos error", err);

@@ -129,7 +129,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   }, [subjectId, section, isUnit]);
   useEffect(() => { load(); }, [load]);
 
-  const loadRelated = useCallback(async () => {
+  const loadRelated = useCallback(async (refresh = false) => {
     setRelatedLoading(true); setRelatedTried(true); setPlayingId(null);
     // Narrow the search to the topic the student is actually focused on (or the
     // unit's own topic titles) instead of just "Subject — Unit N" — a sharper
@@ -137,7 +137,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     const focusTopic = activeTopic !== "all" ? topics.find((t) => t.id === activeTopic)?.title : null;
     const unitTopics = !focusTopic && topics.length > 0 ? topics.map((t) => t.title).slice(0, 4).join(", ") : null;
     const topic = `${subjectName ?? "this subject"}${isUnit ? ` — Unit ${section}` : ""}${focusTopic ? ` — ${focusTopic}` : unitTopics ? ` (${unitTopics})` : ""}`;
-    const { data } = await invokeFn<{ videos: any[] }>("related-videos", { topic });
+    const { data } = await invokeFn<{ videos: any[] }>("related-videos", { topic, refresh });
     setRelated((data?.videos ?? []) as any[]);
     setRelatedLoading(false);
   }, [subjectName, section, isUnit, activeTopic, topics]);
@@ -533,7 +533,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2"><AiIcon className="w-4 h-4" /> Similar videos</h3>
-              <button onClick={loadRelated} disabled={relatedLoading} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 disabled:opacity-50">
+              <button onClick={() => loadRelated(relatedTried)} disabled={relatedLoading} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 disabled:opacity-50">
                 {relatedLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} {relatedTried ? "Refresh" : "Find with AI"}
               </button>
             </div>
