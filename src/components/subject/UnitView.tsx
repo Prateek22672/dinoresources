@@ -305,8 +305,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
             <span className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Gift className="w-5 h-5" /></span>
             <div className="min-w-0 flex-1">
-              <p className="text-white font-bold">Every video is free 🎁</p>
-              <p className="text-zinc-400 text-[13px] mt-0.5">Watch the full {subjectName ?? "subject"} video library free, plus a taste of the notes and questions. Unlock everything — all units, notes, PYQs &amp; Study-With-AI.</p>
+              <p className="text-white font-bold">Unlock Study-With-AI &amp; more 🎁</p>
+              <p className="text-zinc-400 text-[13px] mt-0.5">Get every unit's Q&amp;A answered, plus notes and PYQs for {subjectName ?? "this subject"}. Videos stay free for everyone.</p>
             </div>
             <div className="shrink-0"><UnlockBtn /></div>
           </div>

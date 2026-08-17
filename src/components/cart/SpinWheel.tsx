@@ -22,7 +22,12 @@ const WHEEL_COLORS = [
  */
 export default function SpinWheel({
   open, onClose, onWin,
-}: { open: boolean; onClose: () => void; onWin: (code: string, percent: number) => void }) {
+}: {
+  open: boolean;
+  /** Receives the prize when one was won but not applied, so it isn't lost. */
+  onClose: (won?: { code: string; percent: number }) => void;
+  onWin: (code: string, percent: number) => void;
+}) {
   const [segs, setSegs] = useState<Seg[]>([]);
   const [rot, setRot] = useState(0);
   const [spinning, setSpinning] = useState(false);
@@ -71,7 +76,11 @@ export default function SpinWheel({
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(6px)" }}>
       <div className="td-surface rounded-[28px] p-6 sm:p-8 w-full max-w-sm text-center relative td-in">
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Close">
+        <button
+          onClick={() => onClose(result ? { code: result.code, percent: result.percent } : undefined)}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full td-btn-ghost flex items-center justify-center"
+          aria-label="Close"
+        >
           <X className="w-4 h-4" />
         </button>
 
@@ -116,6 +125,12 @@ export default function SpinWheel({
             <p className="text-zinc-500 text-xs mt-2">Coupon <span className="font-mono text-zinc-300">{result.code}</span> · valid 48 hours · one use</p>
             <button onClick={() => onWin(result.code, result.percent)} className="td-btn-primary w-full py-3.5 mt-5 text-sm font-bold">
               Apply to my cart
+            </button>
+            <button
+              onClick={() => onClose({ code: result.code, percent: result.percent })}
+              className="w-full py-2.5 mt-2 text-xs font-medium text-zinc-500 hover:text-white transition-colors"
+            >
+              Save for later — it's yours for 48 hours
             </button>
           </div>
         ) : (

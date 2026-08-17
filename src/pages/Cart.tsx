@@ -39,16 +39,28 @@ export default function Cart() {
   const spinOn = isOn("spin");
   const [spinOpen, setSpinOpen] = useState(false);
   const [spinEligible, setSpinEligible] = useState(false);
+  // A prize the user already won but hasn't applied. Spinning burns the one
+  // attempt, so if they close the wheel without applying, the code has to stay
+  // reachable — it's theirs for the full 48 hours, applied whenever they choose.
+  const [wonCoupon, setWonCoupon] = useState<{ code: string; percent: number } | null>(null);
 
   useEffect(() => {
     if (!spinOn) return;
     (async () => {
       const [{ data: st }, { data: last }] = await Promise.all([
         tbl("app_settings").select("spin_cooldown_days").maybeSingle(),
-        tbl("user_spins").select("created_at").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        tbl("user_spins").select("created_at, coupon_code, percent").order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
       const days = st?.spin_cooldown_days ?? 30;
       setSpinEligible(!last?.created_at || Date.now() - new Date(last.created_at).getTime() > days * 86_400_000);
+
+      // Spin coupons live 48 hours (see the spin_wheel RPC) — surface the last
+      // win while it's still redeemable.
+      const wonAt = last?.created_at ? new Date(last.created_at).getTime() : 0;
+      const stillValid = wonAt && Date.now() - wonAt < 48 * 3_600_000;
+      if (stillValid && (last as any)?.coupon_code) {
+        setWonCoupon({ code: (last as any).coupon_code, percent: (last as any).percent ?? 0 });
+      }
     })();
   }, [spinOn]);
   const [validityDays, setValidityDays] = useState(0);
@@ -115,6 +127,12 @@ export default function Cart() {
     applyCoupon(code);
   };
 
+  /** Wheel closed without applying — keep the prize so it can be applied later. */
+  const onSpinClose = (won?: { code: string; percent: number }) => {
+    setSpinOpen(false);
+    if (won) { setSpinEligible(false); setWonCoupon(won); }
+  };
+
   // keep discount accurate if the cart total changes after applying
   useEffect(() => {
     if (!applied) return;
@@ -178,8 +196,32 @@ export default function Cart() {
             <div className="td-surface rounded-3xl p-5 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-white font-semibold mb-4">Order summary</h2>
 
+              {/* An already-won prize that hasn't been applied yet. Shown until
+                  it's used or expires, so a spin is never wasted by closing. */}
+              {spinOn && !applied && wonCoupon && (
+                <div
+                  className="w-full mb-4 rounded-xl p-3 flex items-center gap-3 border"
+                  style={{ background: "rgb(var(--td-accent-rgb) / 0.12)", borderColor: "rgb(var(--td-accent-rgb) / 0.35)" }}
+                >
+                  <span className="w-9 h-9 rounded-full td-accent-solid text-white flex items-center justify-center shrink-0">
+                    <Gift className="w-4.5 h-4.5" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="text-white text-sm font-bold block">{wonCoupon.percent}% OFF won</span>
+                    <span className="text-zinc-400 text-xs font-mono truncate block">{wonCoupon.code}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => applyCoupon(wonCoupon.code)}
+                    className="td-btn-primary px-3.5 py-2 rounded-full text-xs font-bold shrink-0"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+
               {/* Spin & Win entry */}
-              {spinOn && spinEligible && !applied && (
+              {spinOn && spinEligible && !applied && !wonCoupon && (
                 <button
                   type="button" onClick={() => setSpinOpen(true)}
                   className="w-full mb-4 rounded-xl p-3 flex items-center gap-3 text-left border transition-transform hover:scale-[1.01]"
@@ -325,7 +367,7 @@ export default function Cart() {
       )}
 
       {/* Spin & Win wheel */}
-      <SpinWheel open={spinOpen} onClose={() => setSpinOpen(false)} onWin={onSpinWin} />
+      <SpinWheel open={spinOpen} onClose={onSpinClose} onWin={onSpinWin} />
 
       {/* Coupon celebration (Swiggy-style) */}
       {celebrate && (
