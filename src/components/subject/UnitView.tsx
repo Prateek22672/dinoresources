@@ -11,8 +11,11 @@ import { AiIcon } from "@/components/BrandIcons";
 import { markStudied, ReadinessSection } from "@/lib/readiness";
 
 interface ResourceRow {
-  id: string; title: string; type: "pdf" | "youtube" | "link"; url: string;
+  id: string; title: string; type: "pdf" | "youtube" | "link";
+  /** Null when the material is locked — the RPC withholds the link, not the row. */
+  url: string | null;
   category: string; unit_number: number | null; topic_id?: string | null;
+  is_free?: boolean;
 }
 
 type Section = "syllabus" | "pyq" | number;
@@ -91,7 +94,10 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
       setTopics((tpRes.data ?? []) as TopicRow[]);
     } else { setQa([]); setEditorial([]); setTopics([]); }
 
-    const { data: allRes } = await (supabase.from("resources") as any).select("id, title, type, url, category, unit_number, topic_id").eq("subject_id", subjectId);
+    // Materials are always listed; the RPC nulls out `url` unless the row is the
+    // free preview or the caller owns the subject — a plain select would hide the
+    // whole row via RLS and read as "nothing here" (see the matching QA RPC).
+    const { data: allRes } = await (supabase as any).rpc("get_subject_resources", { _subject_id: subjectId });
     const all = (allRes ?? []) as ResourceRow[];
     setResources(all.filter((r) => {
       if (section === "syllabus") return r.category === "Syllabus";
@@ -129,10 +135,11 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     qa.forEach((x) => { if ((x as any).is_free) freeQaIds.add(x.id); });
   }
   const freeEdId = preview ? editorial[0]?.id ?? null : null;
-  const freeResId = preview ? resources[0]?.id ?? null : null;
   const qaFree = (id: string) => !preview || freeQaIds.has(id);
   const edFree = (id: string) => !preview || id === freeEdId;
-  const resFree = (id: string) => !preview || id === freeResId;
+  // The server decides which material is unlocked (it withholds the url), so
+  // trust that rather than guessing client-side.
+  const resFree = (r: ResourceRow) => !!r.url;
 
   // Study-With-AI, topic-grouped — computed once and shared by the quick-jump
   // bar and the accordion list below, so numbering always matches between them.
@@ -175,18 +182,18 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
   // ── Materials — grouped topic-wise inside units, flat elsewhere ──
   const renderResource = (r: ResourceRow) => {
-    if (!resFree(r.id)) return <LockedCard key={r.id} title={r.title} sub={r.type} />;
+    if (!resFree(r)) return <LockedCard key={r.id} title={r.title} sub={r.type} />;
     const Icon = resTypeIcon[r.type] ?? ExternalLink;
-    const embed = toEmbedUrl(r.url);
+    const embed = toEmbedUrl(r.url!);
     const open = openMaterial === r.id;
-    const free = preview && r.id === freeResId;
+    const free = preview && !!r.is_free;
     return (
       <div key={r.id} className="td-surface rounded-2xl overflow-hidden">
         <div className="flex items-center gap-3 p-4">
           <div className="w-10 h-10 rounded-xl td-surface-2 flex items-center justify-center shrink-0"><Icon className="w-4.5 h-4.5 text-zinc-300" /></div>
           <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate flex items-center gap-2">{r.title}{free && <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">FREE</span>}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
           {embed && <button onClick={() => { setOpenMaterial(open ? null : r.id); markStudied(subjectId, readinessKey); }} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
-          <a href={r.url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
+          <a href={r.url!} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
         </div>
         {open && embed && <div className="border-t border-white/5 bg-black/40"><iframe src={embed} title={r.title} className="w-full h-[70vh]" allow="autoplay" allowFullScreen /></div>}
       </div>

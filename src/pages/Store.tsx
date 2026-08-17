@@ -92,8 +92,20 @@ export default function Store() {
     return groups.flatMap((g) => g.subjects).filter((s) => s.name.toLowerCase().includes(q)).slice(0, 6);
   }, [groups, query]);
 
-  const totalSubjectCount = groups.reduce((n, g) => n + g.subjects.length, 0);
-  const comboCount = groups.filter((g) => g.year.id !== "__none__" && g.year.combo_price_paise > 0).length;
+  // Stats describe what this student can actually see. Counting every year's
+  // subjects here would read "19 Subjects" above a page showing 4.
+  const myGroup = groups.find((g) => g.year.id === studentYear?.id);
+  const myYearCount = myGroup?.subjects.length ?? 0;
+  const heroStats = studentYear
+    ? [
+        { label: `Subjects in ${studentYear.name}`, value: myYearCount, icon: BookOpen },
+        ...(studentYear.combo_price_paise > 0
+          ? [{ label: "Full-year pack", value: formatPaise(studentYear.combo_price_paise), icon: Package }]
+          : []),
+      ]
+    : [{ label: "Subjects", value: groups.reduce((n, g) => n + g.subjects.length, 0), icon: BookOpen }];
+
+  const yearLabel = studentYear?.name ?? profileYearLabel;
 
   return (
     <AppShell>
@@ -101,16 +113,29 @@ export default function Store() {
         eyebrow="Subjects"
         eyebrowIcon={Sparkles}
         book={{ cover: "#0F9D9A", spine: "#0B7A78", title: "COA" }}
-        title="Unlock exactly what you need."
+        title={studentYear ? <>Everything for <span className="td-accent-text">{studentYear.name}</span>.</> : "Unlock exactly what you need."}
         subtitle="Unlock one subject, or open your whole year at once. One payment, permanent access — notes, PYQs and Study-With-AI included."
-        stats={[
-          { label: "Subjects", value: totalSubjectCount, icon: BookOpen },
-          { label: "Full-year packs", value: comboCount, icon: Package },
-        ]}
+        stats={loading ? undefined : heroStats}
+        actions={
+          loading ? undefined : (
+            <>
+              {yearLabel && (
+                <span className="td-glass px-3.5 py-2 rounded-full text-[13px] font-semibold text-white flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 td-accent-text" /> {yearLabel}
+                  <span className="text-[10px] font-bold text-zinc-500">· your year</span>
+                </span>
+              )}
+              <button onClick={() => navigate("/setup?edit=true")}
+                className="td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5">
+                {yearLabel ? "Change" : "Set your year"}
+              </button>
+            </>
+          )
+        }
       />
 
       {/* Search */}
-      <div className="relative mb-5 max-w-xl">
+      <div className="relative mb-6 max-w-xl">
         <div className="td-surface rounded-2xl flex items-center px-3 h-12">
           <Search className="w-4 h-4 text-zinc-500 shrink-0" />
           <input
@@ -145,22 +170,8 @@ export default function Store() {
         )}
       </div>
 
-      {/* Only ever the student's opted year — no chips to browse other years.
-          Changing it in Settings is the only way to change what shows here. */}
-      {!loading && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
-          {(studentYear || profileYearLabel) && (
-            <span className="shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-white text-black flex items-center gap-1.5">
-              {studentYear?.name ?? profileYearLabel} <span className="text-[10px] font-bold opacity-70">· your year</span>
-            </span>
-          )}
-          <button onClick={() => navigate("/setup?edit=true")}
-            className="shrink-0 td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
-            <GraduationCap className="w-3.5 h-3.5" /> {studentYear || profileYearLabel ? "Not your year? Change here" : "Set your year"}
-          </button>
-        </div>
-      )}
-
+      {/* The student's year lives in the hero now — this page only ever shows
+          that one year, so there are no chips to browse others. */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-44 rounded-3xl td-surface animate-pulse" />)}
