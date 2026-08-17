@@ -45,12 +45,11 @@ const ReceiptView = forwardRef<HTMLDivElement, { data: ReceiptData }>(({ data },
           </div>
         </div>
 
-        {/* billed to + status */}
+        {/* account + status */}
         <div className="flex items-start justify-between mb-8 gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-zinc-400 font-bold mb-1.5">Billed to</p>
-            <p className="font-bold text-[15px] text-zinc-900">{data.billTo.name}</p>
-            {data.billTo.email && <p className="text-sm text-zinc-500">{data.billTo.email}</p>}
+            <p className="text-[11px] uppercase tracking-wider text-zinc-400 font-bold mb-1.5">Account</p>
+            <p className="font-bold text-[15px] text-zinc-900 font-mono tracking-wide">{data.accountRef}</p>
           </div>
           <span className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold tracking-wide shrink-0 ${status.cls}`}>{status.label}</span>
         </div>

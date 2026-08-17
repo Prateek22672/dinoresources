@@ -129,11 +129,10 @@ export default function AdminUsers() {
   };
 
   const openOrderReceipt = async (order: OrderRow) => {
-    if (!selected) return;
     setReceiptLoadingId(order.id);
     const items = await fetchOrderItems(order.id);
     setReceiptLoadingId(null);
-    setReceipt(orderToReceipt(order, items, { name: selected.full_name ?? selected.username ?? selected.email ?? "User", email: selected.email }));
+    setReceipt(orderToReceipt(order, items));
     setReceiptOpen(true);
     setReceiptEverOpened(true);
   };
@@ -146,7 +145,7 @@ export default function AdminUsers() {
       return;
     }
     setReceipt(manualReceipt({
-      billTo: { name: selected.full_name ?? selected.username ?? selected.email ?? "User", email: selected.email },
+      userId: selected.id,
       description: manualDesc.trim(),
       amount_paise: Math.round(rupees * 100),
       note: manualNote,

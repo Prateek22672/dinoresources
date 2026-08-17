@@ -14,6 +14,7 @@ import SideNav from "@/components/layout/SideNav";
 import WhatsNew from "@/components/layout/WhatsNew";
 import FeatureTour from "@/components/layout/FeatureTour";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
+import HelpNudge from "@/components/HelpNudge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useCart } from "@/context/CartContext";
@@ -34,6 +35,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const { isOn } = useFeatureFlags();
   const [helpOpen, setHelpOpen] = useState(false);   // classic ticket form
   const [botOpen, setBotOpen] = useState(false);     // DinoBot chat (opens first)
+  const [botSeed, setBotSeed] = useState<string | null>(null); // question the nudge pre-asks
   const [botLoaded, setBotLoaded] = useState(false); // chunk fetched on first open, stays mounted
   useEffect(() => { if (botOpen) setBotLoaded(true); }, [botOpen]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -151,10 +153,18 @@ export default function AppShell({ children, hideHeader = false }: { children: R
       <FeatureTour />
       {!botOpen && <WhatsNew />}
 
+      {/* Proactive greeting on the pages where students most often get stuck */}
+      {!botOpen && !helpOpen && isOn("helpbot") && (
+        <HelpNudge
+          onAsk={(q) => { setBotSeed(q); setBotOpen(true); }}
+          onRaiseTicket={() => setHelpOpen(true)}
+        />
+      )}
+
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       {(botOpen || botLoaded) && (
         <Suspense fallback={null}>
-          <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} />
+          <HelpBot open={botOpen} onClose={() => setBotOpen(false)} onRaiseTicket={() => setHelpOpen(true)} seed={botSeed} />
         </Suspense>
       )}
       {issueOpen && (

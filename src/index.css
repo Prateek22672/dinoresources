@@ -231,9 +231,14 @@ All colors MUST be HSL.
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
   }
 
+  /* End on `none`, not a zero-value transform. With animation-fill-mode `both`
+     the final frame is retained, and ANY transform/filter other than `none`
+     makes the element a containing block for `position: fixed` descendants --
+     which traps full-screen modals inside the animated element instead of the
+     viewport. */
   @keyframes td-fade-up {
     from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: none; }
   }
   .td-in { animation: td-fade-up .5s cubic-bezier(.22,1,.36,1) both; }
 
@@ -361,9 +366,12 @@ iframe[src*="razorpay"] {
    ===================================================================== */
 @layer utilities {
   /* Page-open transition — replays on route change (keyed by pathname). */
+  /* Same containing-block trap as td-fade-up: `scale(1)` and `blur(0)` are still
+     a transform and a filter, so every fixed overlay rendered inside <main> was
+     being clipped to the content column. End on `none`. */
   @keyframes td-page-in {
     from { opacity: 0; transform: translateY(10px) scale(0.992); filter: blur(2px); }
-    to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    to   { opacity: 1; transform: none; filter: none; }
   }
   .td-page { animation: td-page-in .42s cubic-bezier(.22,1,.36,1) both; }
 

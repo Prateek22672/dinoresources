@@ -26,7 +26,6 @@ function fmtDate(iso: string) {
 export default function Purchases() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
-  const [billTo, setBillTo] = useState<{ name: string; email: string | null }>({ name: "You", email: null });
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptEverOpened, setReceiptEverOpened] = useState(false);
@@ -35,12 +34,6 @@ export default function Purchases() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
-
-    const { data: profile } = await tbl("profiles").select("full_name, username, email").eq("id", user.id).maybeSingle();
-    setBillTo({
-      name: profile?.full_name ?? profile?.username ?? user.email ?? "You",
-      email: profile?.email ?? user.email ?? null,
-    });
 
     const { data: orderRows } = await tbl("orders")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
@@ -58,7 +51,7 @@ export default function Purchases() {
   useEffect(() => { load(); }, [load]);
 
   const viewReceipt = (o: OrderWithItems) => {
-    setReceipt(orderToReceipt(o, o.items, billTo));
+    setReceipt(orderToReceipt(o, o.items));
     setReceiptOpen(true);
     setReceiptEverOpened(true);
   };

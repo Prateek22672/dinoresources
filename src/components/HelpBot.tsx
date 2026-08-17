@@ -34,8 +34,14 @@ const QUICK = [
  * filed by the server itself once the bot has collected the details.
  */
 export default function HelpBot({
-  open, onClose, onRaiseTicket,
-}: { open: boolean; onClose: () => void; onRaiseTicket: () => void }) {
+  open, onClose, onRaiseTicket, seed,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onRaiseTicket: () => void;
+  /** Question to ask automatically on open (set by the proactive nudge). */
+  seed?: string | null;
+}) {
   const { isOn } = useFeatureFlags();
   const navigate = useNavigate();
   const { setTheme } = useTheme();
@@ -50,6 +56,7 @@ export default function HelpBot({
   const [busy, setBusy] = useState(false);
   const [ran, setRan] = useState<Set<string>>(new Set());
   const endRef = useRef<HTMLDivElement | null>(null);
+  const seedSent = useRef<string | null>(null);
 
   useEffect(() => {
     try { localStorage.setItem(CHAT_KEY, JSON.stringify(messages.slice(-30))); } catch { /* storage full */ }
@@ -71,8 +78,6 @@ export default function HelpBot({
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, [open]);
-
-  if (!open) return null;
 
   const send = async (text?: string) => {
     const content = (text ?? input).trim();
@@ -145,6 +150,18 @@ export default function HelpBot({
       toast.error("Couldn't do that — try from the site directly.");
     }
   };
+
+  // Opened from a proactive nudge with a question already chosen — ask it for
+  // the user instead of making them retype it. Guarded by a ref so re-renders
+  // (and reopening with the same seed) can't fire it twice.
+  useEffect(() => {
+    if (!open || !seed || seedSent.current === seed) return;
+    seedSent.current = seed;
+    void send(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, seed]);
+
+  if (!open) return null;
 
   const actionButton = (a: BotAction, key: string) => {
     if (a.type === "ticket_created") {

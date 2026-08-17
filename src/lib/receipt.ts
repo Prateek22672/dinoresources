@@ -11,7 +11,8 @@ export interface ReceiptData {
   receiptNo: string;
   issuedAt: string;
   status: ReceiptStatus;
-  billTo: { name: string; email: string | null };
+  /** Anonymized account reference — receipts are downloadable and can leave the system, so no name or email goes on them. */
+  accountRef: string;
   items: ReceiptLineItem[];
   subtotal_paise: number;
   discount_paise: number;
@@ -32,6 +33,11 @@ export function receiptNumberFor(orderId: string, createdAt: string): string {
   return `TD-${stamp}-${suffix}`;
 }
 
+/** Deterministic, anonymized account reference from a user id — no name or email involved. */
+export function accountRefFor(userId: string): string {
+  return `ACC-${userId.replace(/-/g, "").slice(0, 10).toUpperCase()}`;
+}
+
 const ORDER_STATUS_MAP: Record<string, ReceiptStatus> = {
   paid: "paid",
   created: "pending",
@@ -40,18 +46,14 @@ const ORDER_STATUS_MAP: Record<string, ReceiptStatus> = {
 };
 
 /** Builds receipt data from a real order + its line items. */
-export function orderToReceipt(
-  order: OrderRow,
-  items: OrderItemRow[],
-  billTo: { name: string; email: string | null },
-): ReceiptData {
+export function orderToReceipt(order: OrderRow, items: OrderItemRow[]): ReceiptData {
   const subtotal = items.reduce((sum, i) => sum + i.price_paise, 0);
   const isFree = order.razorpay_payment_id === "free";
   return {
     receiptNo: receiptNumberFor(order.id, order.created_at),
     issuedAt: order.created_at,
     status: ORDER_STATUS_MAP[order.status] ?? "pending",
-    billTo,
+    accountRef: accountRefFor(order.user_id),
     items: items.map((i) => ({
       label: i.label ?? (i.item_type === "combo" ? "Year — full access" : "Subject"),
       amount_paise: i.price_paise,
@@ -69,7 +71,7 @@ export function orderToReceipt(
 
 /** Ad-hoc receipt an admin can issue without a real order row — e.g. proof of purchase for a manual/offline grant. */
 export function manualReceipt(input: {
-  billTo: { name: string; email: string | null };
+  userId: string;
   description: string;
   amount_paise: number;
   note?: string;
@@ -81,7 +83,7 @@ export function manualReceipt(input: {
     receiptNo: `TD-${stamp}-M${rand}`,
     issuedAt: now,
     status: "manual",
-    billTo: input.billTo,
+    accountRef: accountRefFor(input.userId),
     items: [{ label: input.description, amount_paise: input.amount_paise }],
     subtotal_paise: input.amount_paise,
     discount_paise: 0,

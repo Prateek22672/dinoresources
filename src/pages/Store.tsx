@@ -267,7 +267,16 @@ export default function Store() {
                     const owned = ownedSubjects.has(s.id) || comboOwned;
                     const inCart = isInCart("subject", s.id);
                     return (
-                      <div key={s.id} className="td-surface td-card-click rounded-3xl p-5 flex flex-col justify-between">
+                      /* Whole card opens the subject — it already looks clickable
+                         (td-card-click), so only the CTAs responding was a trap. */
+                      <div
+                        key={s.id}
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
+                        onKeyDown={(e) => { if (e.key === "Enter") navigate(`/subject/${s.slug ?? s.id}`); }}
+                        className="td-surface td-card-click rounded-3xl p-5 flex flex-col justify-between cursor-pointer"
+                      >
                         <div>
                           <div className="flex items-start justify-between">
                             <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center mb-3">
@@ -301,7 +310,7 @@ export default function Store() {
                               </Link>
                               <button
                                 disabled={inCart}
-                                onClick={() => addSubject(s.id, s.name)}
+                                onClick={(e) => { e.stopPropagation(); addSubject(s.id, s.name); }}
                                 className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
                               >
                                 {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add · {formatPaise(s.price_paise)}</>}

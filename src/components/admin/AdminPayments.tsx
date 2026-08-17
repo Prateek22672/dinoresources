@@ -50,7 +50,7 @@ export default function AdminPayments() {
     setReceiptLoadingId(o.id);
     const items = await fetchOrderItems(o.id);
     setReceiptLoadingId(null);
-    setReceipt(orderToReceipt(o, items, { name: o.name ?? o.email ?? "User", email: o.email ?? null }));
+    setReceipt(orderToReceipt(o, items));
     setReceiptOpen(true);
     setReceiptEverOpened(true);
   };
