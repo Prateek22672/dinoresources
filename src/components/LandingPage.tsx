@@ -135,7 +135,7 @@ const MARQUEE = [
 const QUOTES = [
   { text: "Found the exact PYQs at 1AM the night before my DBMS external. Passed with room to spare.", who: "Priya · CSE, 3rd year" },
   { text: "The AI answers actually follow our units. I stopped wrestling with ChatGPT prompts completely.", who: "Rahul · ECE, 2nd year" },
-  { text: "₹29 for the whole year's subjects felt fake. It wasn't. Cheaper than one photocopy run.", who: "Sneha · CSE, 4th year" },
+  { text: "Full year, every subject, for less than one photocopy run. I checked the price twice.", who: "Sneha · CSE, 4th year" },
 ];
 
 const FAQS = [
@@ -150,8 +150,8 @@ const FAQS = [
 const SHOW = [
   {
     eyebrow: "Study With AI",
-    title: "Answers that follow your syllabus",
-    desc: "Unit-wise explanations mapped to your exact units — not generic chatbot rambling. Stuck at 2AM? It's awake.",
+    title: "PYQs and practice questions, answered",
+    desc: "Every question organised unit by unit, each with a clear AI-written answer — so you're revising with what's actually been asked, not guessing at a chatbot prompt.",
     ctas: [{ label: "Get started free", to: "/auth" }],
   },
   {
@@ -179,7 +179,7 @@ const STACK = [
   },
   {
     title: "Walk into exams calm",
-    desc: "PYQs tell you what's coming, Study-With-AI explains what you missed, and the exam countdown keeps you honest.",
+    desc: "PYQs tell you what's coming, Study-With-AI has them answered already, and the exam countdown keeps you honest.",
     icon: Sparkles,
     bg: "#131316",
     dark: true,
@@ -304,11 +304,11 @@ function PinnedShowcase() {
   const mocks = [
     /* AI chat mock */
     <div key="ai" className="space-y-3 w-full">
-      <div className="bg-white text-black rounded-2xl rounded-br-md px-4 py-3 text-sm font-medium ml-auto w-fit max-w-[85%]">Explain normalization like I'm 5 🙏</div>
+      <div className="bg-white text-black rounded-2xl rounded-br-md px-4 py-3 text-sm font-medium ml-auto w-fit max-w-[85%]">Explain normalization with an example.</div>
       <div className="bg-white/[0.07] border border-white/10 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-zinc-200 max-w-[90%] leading-relaxed">
-        Imagine your toy box. 1NF = every toy in its own slot. 2NF = toys grouped by the game they belong to. 3NF = no toy depends on another toy…
+        Normalization removes redundancy by splitting data into related tables. 1NF = atomic values only. 2NF = no partial dependency. 3NF = no transitive dependency…
       </div>
-      <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-semibold"><AiIcon className="w-3.5 h-3.5" /> Unit 3 · DBMS — mapped to your syllabus</div>
+      <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-semibold"><AiIcon className="w-3.5 h-3.5" /> Unit 3 · DBMS — a real PYQ, answered</div>
     </div>,
     /* SGPA mock — ring gauge + graded subjects + goal line */
     <div key="tools" className="w-full">
