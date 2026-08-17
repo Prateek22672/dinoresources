@@ -307,18 +307,18 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
             {/* Quick-jump — switch straight to any question instead of scrolling the whole list */}
             {aiFlatItems.length > 4 && (
               <div className="sticky top-16 z-10 -mx-1 px-1">
-                <div className="td-glass rounded-2xl px-2.5 py-2 flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-                  <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-zinc-500 shrink-0 pl-1">Jump</span>
+                <div className="td-glass rounded-2xl px-2 sm:px-2.5 py-1.5 sm:py-2 flex items-center gap-1 sm:gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+                  <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.16em] uppercase text-zinc-500 shrink-0 pl-1">Jump</span>
                   {aiFlatItems.map((item, i) => {
                     const jumpOpen = openId === item.id;
                     const locked = !qaFree(item.id);
                     return (
                       <button
                         key={item.id}
-                        onClick={() => { setOpenId(item.id); document.getElementById(`qa-${item.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                        onClick={() => { setOpenId(item.id); document.getElementById(`qa-${item.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                         aria-label={`Jump to question ${i + 1}`}
                         title={item.question}
-                        className={`shrink-0 w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center transition-colors ${
+                        className={`shrink-0 w-8 h-8 sm:w-7 sm:h-7 rounded-full text-[11px] font-bold flex items-center justify-center transition-colors ${
                           jumpOpen ? "td-accent-bg text-white" : locked ? "td-surface-2 text-zinc-600" : "td-surface-2 text-zinc-300 hover:text-white"
                         }`}
                       >
@@ -354,7 +354,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                     // locked in preview → enticing teaser (question shown, answer sealed)
                     if (!qaFree(item.id)) {
                       return (
-                        <div key={item.id} id={`qa-${item.id}`} className="td-surface rounded-2xl overflow-hidden scroll-mt-24">
+                        <div key={item.id} id={`qa-${item.id}`} className="td-surface rounded-2xl overflow-hidden scroll-mt-32">
                           <div className="w-full flex items-center gap-3 px-4 sm:px-5 py-4">
                             <span className="shrink-0 w-7 h-7 rounded-lg td-surface-2 flex items-center justify-center"><Lock className="w-3.5 h-3.5 text-zinc-500" /></span>
                             <span className="flex-1 font-medium text-zinc-400 truncate">{item.question}</span>
@@ -367,7 +367,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                     const free = preview && freeQaIds.has(item.id);
                     const next = aiFlatItems[aiFlatItems.findIndex((x) => x.id === item.id) + 1];
                     return (
-                      <div key={item.id} id={`qa-${item.id}`} className={`td-surface rounded-2xl overflow-hidden transition-shadow scroll-mt-24 ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
+                      <div key={item.id} id={`qa-${item.id}`} className={`td-surface rounded-2xl overflow-hidden transition-shadow scroll-mt-32 ${open ? "ring-1 ring-[rgb(var(--td-accent-rgb)/0.35)]" : ""}`}>
                         <button onClick={() => { setOpenId(open ? null : item.id); markStudied(subjectId, readinessKey); }} className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left">
                           <span
                             className="shrink-0 w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors"
@@ -393,7 +393,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                               <MarkdownRenderer content={item.answer_md || "_No answer yet._"} />
                               {next && (
                                 <button
-                                  onClick={() => { setOpenId(next.id); document.getElementById(`qa-${next.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                                  onClick={() => { setOpenId(next.id); document.getElementById(`qa-${next.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                                   className="td-btn-ghost mt-4 px-3.5 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"
                                 >
                                   Next question <ArrowRight className="w-3.5 h-3.5" />

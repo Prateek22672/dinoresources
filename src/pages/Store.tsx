@@ -18,7 +18,6 @@ export default function Store() {
   const [ownedSubjects, setOwnedSubjects] = useState<Set<string>>(new Set());
   const [ownedYears, setOwnedYears] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [activeYear, setActiveYear] = useState<string>("all");
   const [studentYear, setStudentYear] = useState<YearRow | null>(null); // the signed-in student's own year
   const [query, setQuery] = useState("");
   const [searchFocus, setSearchFocus] = useState(false);
@@ -60,28 +59,28 @@ export default function Store() {
     }
     setGroups(grouped);
 
-    // Default the Store to the student's OWN year — they should not see other
-    // years' packs/subjects unless they deliberately switch. Applies even if their
-    // year has no subjects yet (a friendly empty state shows instead of other years).
+    // Strictly the student's OWN opted year — the Store never shows another
+    // year's subjects or pack, even if theirs has no subjects yet (a friendly
+    // empty state shows instead). The only way to see a different year is to
+    // change it in Settings, which changes what "opted year" means.
     const profSem = (profRes.data as any)?.semester ?? null;
     const matchedYear = matchProfileYear(profSem, years);
     const myYear = matchedYear ? years.find((y) => y.id === matchedYear) ?? null : null;
     setStudentYear(myYear);
-    if (myYear) setActiveYear(myYear.id);
 
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  // year filter + search
+  // strictly the student's opted year (+ year-less "Other Subjects"), never another year
   const visibleGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
     return groups
-      .filter((g) => activeYear === "all" || g.year.id === activeYear)
+      .filter((g) => g.year.id === "__none__" || g.year.id === studentYear?.id)
       .map((g) => ({ ...g, subjects: q ? g.subjects.filter((s) => s.name.toLowerCase().includes(q)) : g.subjects }))
       .filter((g) => g.subjects.length > 0);
-  }, [groups, activeYear, query]);
+  }, [groups, studentYear, query]);
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -142,31 +141,21 @@ export default function Store() {
         )}
       </div>
 
-      {/* Year filter chips — the student's own year always shows (even if empty),
-          so their year is the default and other years are opt-in. */}
-      {!loading && (groups.length > 0 || studentYear) && (() => {
-        // dedupe: student's year first, then every year that has subjects
-        const chips: YearRow[] = [];
-        if (studentYear) chips.push(studentYear);
-        groups.forEach((g) => { if (g.year.id !== "__none__" && !chips.some((c) => c.id === g.year.id)) chips.push(g.year); });
-        const otherJunk = groups.find((g) => g.year.id === "__none__");
-        if (otherJunk) chips.push(otherJunk.year);
-        return (
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
-            {chips.map((y) => (
-              <button key={y.id} onClick={() => setActiveYear(y.id)}
-                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center gap-1.5 ${activeYear === y.id ? "bg-white text-black" : "td-btn-ghost"}`}>
-                {y.name}{studentYear && y.id === studentYear.id && <span className="text-[10px] font-bold opacity-70">· your year</span>}
-              </button>
-            ))}
-            {/* Change your year → profile (Store opens on your year by default) */}
-            <button onClick={() => navigate("/setup?edit=true")}
-              className="shrink-0 td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
-              <GraduationCap className="w-3.5 h-3.5" /> Change year
-            </button>
-          </div>
-        );
-      })()}
+      {/* Only ever the student's opted year — no chips to browse other years.
+          Changing it in Settings is the only way to change what shows here. */}
+      {!loading && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
+          {studentYear && (
+            <span className="shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-white text-black flex items-center gap-1.5">
+              {studentYear.name} <span className="text-[10px] font-bold opacity-70">· your year</span>
+            </span>
+          )}
+          <button onClick={() => navigate("/setup?edit=true")}
+            className="shrink-0 td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+            <GraduationCap className="w-3.5 h-3.5" /> {studentYear ? "Not your year? Change here" : "Set your year"}
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -177,14 +166,18 @@ export default function Store() {
           <BookOpen className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
           {query ? (
             <p className="text-zinc-400 font-medium">No subjects match your search.</p>
-          ) : studentYear && activeYear === studentYear.id ? (
+          ) : studentYear ? (
             <>
               <p className="text-white font-semibold">Subjects for {studentYear.name} are coming soon</p>
               <p className="text-zinc-500 text-sm mt-1 mb-4">We're adding content for your year. If your year is wrong, you can change it.</p>
               <button onClick={() => navigate("/setup?edit=true")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5"><GraduationCap className="w-4 h-4" /> Change my year</button>
             </>
           ) : (
-            <p className="text-zinc-400 font-medium">No subjects here yet.</p>
+            <>
+              <p className="text-white font-semibold">Set your academic year to see your subjects</p>
+              <p className="text-zinc-500 text-sm mt-1 mb-4">The Store shows only your opted year's subjects and pack.</p>
+              <button onClick={() => navigate("/setup?edit=true")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5"><GraduationCap className="w-4 h-4" /> Set my year</button>
+            </>
           )}
         </div>
       ) : (
