@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
@@ -48,6 +49,7 @@ function ytId(url: string): string | null {
 }
 
 export default function UnitView({ subjectId, subjectName, section, onSection, hasAccess, priceLabel, inCart, onAddToCart }: UnitViewProps) {
+  const navigate = useNavigate();
   const isUnit = typeof section === "number";
   const [tab, setTab] = useState<UnitTab>("ai");
 
@@ -143,8 +145,13 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   // reusable unlock button for the preview banner / locked teasers
   const UnlockBtn = ({ small }: { small?: boolean }) =>
     inCart ? (
-      <span className={`td-accent-bg rounded-full font-semibold inline-flex items-center gap-1.5 ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}`}>
-        <Check className={small ? "w-3.5 h-3.5" : "w-4 h-4"} /> In cart
+      <span className="inline-flex items-center gap-2 flex-wrap">
+        <span className={`td-surface-2 text-emerald-400 rounded-full font-semibold inline-flex items-center gap-1.5 ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}`}>
+          <Check className={small ? "w-3.5 h-3.5" : "w-4 h-4"} /> In cart
+        </span>
+        <button onClick={() => navigate("/cart")} className={`td-btn-primary rounded-full font-semibold inline-flex items-center gap-1.5 ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}`}>
+          Continue to cart <ArrowRight className={small ? "w-3.5 h-3.5" : "w-4 h-4"} />
+        </button>
       </span>
     ) : (
       <button onClick={onAddToCart} className={`td-btn-primary rounded-full font-semibold inline-flex items-center gap-1.5 ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"}`}>
