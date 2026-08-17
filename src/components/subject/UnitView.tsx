@@ -159,11 +159,19 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   // trust that rather than guessing client-side.
   const resFree = (r: ResourceRow) => !!r.url;
 
+  // Content is grouped by topic. A row whose topic_id points at a topic that
+  // isn't in THIS unit's list (topic moved, renumbered or deleted) used to match
+  // no group at all and silently vanish — it looked like the upload was lost.
+  // Anything unrecognised falls back to "General" so nothing can disappear.
+  const knownTopicIds = new Set(topics.map((t) => t.id));
+  const groupOf = (topicId: string | null | undefined) =>
+    topicId && knownTopicIds.has(topicId) ? topicId : null;
+
   // Study-With-AI, topic-grouped — computed once and shared by the quick-jump
   // bar and the accordion list below, so numbering always matches between them.
   const aiGroups = [...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
     .filter((g) => activeTopic === "all" || g.gid === activeTopic)
-    .map((g) => ({ ...g, items: qa.filter((x) => ((x as any).topic_id ?? null) === g.gid) }))
+    .map((g) => ({ ...g, items: qa.filter((x) => groupOf((x as any).topic_id) === g.gid) }))
     .filter((g) => g.items.length > 0 || g.gid !== null);
   const aiFlatItems = aiGroups.flatMap((g) => g.items);
 
@@ -230,7 +238,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
         {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
           .filter((g) => activeTopic === "all" || g.gid === activeTopic)
           .map((group) => {
-          const items = resources.filter((r) => (r.topic_id ?? null) === group.gid);
+          const items = resources.filter((r) => groupOf(r.topic_id) === group.gid);
           // topic headings stay visible with a placeholder; General only when it has items
           if (items.length === 0 && group.gid === null) return null;
           return (
@@ -475,7 +483,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
               {[...topics.map((t) => ({ gid: t.id as string | null, title: t.title })), { gid: null, title: "General" }]
                 .filter((g) => activeTopic === "all" || g.gid === activeTopic)
                 .map((group) => {
-                  const items = editorial.filter((e) => ((e as any).topic_id ?? null) === group.gid);
+                  const items = editorial.filter((e) => groupOf((e as any).topic_id) === group.gid);
                   // topic headings stay visible with a placeholder; General only when it has videos
                   if (items.length === 0 && group.gid === null) return null;
                   return (
