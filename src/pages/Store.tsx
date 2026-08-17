@@ -19,6 +19,9 @@ export default function Store() {
   const [ownedYears, setOwnedYears] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [studentYear, setStudentYear] = useState<YearRow | null>(null); // the signed-in student's own year
+  // Raw profile value, so we can tell "no year set" apart from "year set but the
+  // matching years row is missing/inactive" — very different messages to show.
+  const [profileYearLabel, setProfileYearLabel] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [searchFocus, setSearchFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +69,7 @@ export default function Store() {
     const profSem = (profRes.data as any)?.semester ?? null;
     const matchedYear = matchProfileYear(profSem, years);
     const myYear = matchedYear ? years.find((y) => y.id === matchedYear) ?? null : null;
+    setProfileYearLabel(profSem);
     setStudentYear(myYear);
 
     setLoading(false);
@@ -145,14 +149,14 @@ export default function Store() {
           Changing it in Settings is the only way to change what shows here. */}
       {!loading && (
         <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 [&::-webkit-scrollbar]:hidden">
-          {studentYear && (
+          {(studentYear || profileYearLabel) && (
             <span className="shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-white text-black flex items-center gap-1.5">
-              {studentYear.name} <span className="text-[10px] font-bold opacity-70">· your year</span>
+              {studentYear?.name ?? profileYearLabel} <span className="text-[10px] font-bold opacity-70">· your year</span>
             </span>
           )}
           <button onClick={() => navigate("/setup?edit=true")}
             className="shrink-0 td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
-            <GraduationCap className="w-3.5 h-3.5" /> {studentYear ? "Not your year? Change here" : "Set your year"}
+            <GraduationCap className="w-3.5 h-3.5" /> {studentYear || profileYearLabel ? "Not your year? Change here" : "Set your year"}
           </button>
         </div>
       )}
@@ -170,6 +174,14 @@ export default function Store() {
             <>
               <p className="text-white font-semibold">Subjects for {studentYear.name} are coming soon</p>
               <p className="text-zinc-500 text-sm mt-1 mb-4">We're adding content for your year. If your year is wrong, you can change it.</p>
+              <button onClick={() => navigate("/setup?edit=true")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5"><GraduationCap className="w-4 h-4" /> Change my year</button>
+            </>
+          ) : profileYearLabel ? (
+            /* Year IS set, but no active `years` row matches it — don't tell the
+               student to "set" a year they already set; this one is on us. */
+            <>
+              <p className="text-white font-semibold">{profileYearLabel} isn't open yet</p>
+              <p className="text-zinc-500 text-sm mt-1 mb-4">Your year is set to {profileYearLabel}, but it isn't available in the Store right now. Hang tight — or pick a different year.</p>
               <button onClick={() => navigate("/setup?edit=true")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5"><GraduationCap className="w-4 h-4" /> Change my year</button>
             </>
           ) : (
