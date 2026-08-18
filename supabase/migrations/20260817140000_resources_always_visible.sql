@@ -15,8 +15,9 @@
 -- returns every row's title/type/section so the student can see what they'd
 -- get, and returns `url` only when they may actually open it.
 --
--- Free preview: the first material in each section (subject + category), which
--- mirrors the "first resource is on us" rule the UI already promises.
+-- No free material: every file stays locked until the subject is owned. The
+-- free preview is carried by Study-With-AI questions and the (now entirely
+-- free) video library instead.
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION public.get_subject_resources(_subject_id uuid)
@@ -58,9 +59,11 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     ranked.r_subject_id,
     ranked.r_title,
     ranked.r_type,
+    -- Materials are paid content start to finish: no free-preview file. Titles
+    -- and types are still returned so a student can see what a subject contains
+    -- before buying; only the link is withheld.
     CASE
-      WHEN ranked.first_in_section
-        OR public.has_subject_access(auth.uid(), ranked.r_subject_id)
+      WHEN public.has_subject_access(auth.uid(), ranked.r_subject_id)
         OR public.has_role(auth.uid(), 'admin')
         OR public.has_role(auth.uid(), 'contributor')
       THEN ranked.r_url
@@ -69,7 +72,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     ranked.r_category,
     ranked.r_unit_number,
     ranked.r_topic_id,
-    ranked.first_in_section
+    false
   FROM ranked;
 $$;
 
