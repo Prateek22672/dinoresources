@@ -21,10 +21,20 @@ import {
   Youtube,
   Link2,
   ImagePlus,
+  ChevronDown,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
 
 const UNITS = [1, 2, 3, 4, 5];
+
+/** Contributor tasks. "syllabus" is subject-wide; the rest are per-unit. */
+type CTab = "qa" | "materials" | "videos" | "syllabus";
+const TABS: { id: CTab; label: string; unitScoped: boolean }[] = [
+  { id: "qa", label: "Study-With-AI", unitScoped: true },
+  { id: "materials", label: "Materials", unitScoped: true },
+  { id: "videos", label: "Videos", unitScoped: true },
+  { id: "syllabus", label: "Syllabus & PYQs", unitScoped: false },
+];
 const RES_CATEGORIES = ["Syllabus", "Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Previous Papers", "Additional Resources"];
 
 function appendMarkdownBlock(current: string, block: string) {
@@ -108,6 +118,12 @@ export default function Contributor() {
   const [qa, setQa] = useState<SubjectQARow[]>([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  // One task at a time. Everything used to render at once — six cards and two
+  // lists, mixing subject-wide scope (syllabus/PYQs) with unit-wide scope
+  // (Q&A, materials, videos), so it was never clear what you were editing.
+  const [tab, setTab] = useState<CTab>("qa");
+  const [topicsOpen, setTopicsOpen] = useState(false);
+  const unitScoped = TABS.find((t) => t.id === tab)?.unitScoped ?? true;
 
   const [q, setQ] = useState("");
   const [a, setA] = useState("");
@@ -451,39 +467,71 @@ export default function Contributor() {
         ]}
       />
 
-      <div className="flex flex-wrap items-center gap-2.5 mb-6">
-        <select
-          value={subjectId}
-          onChange={(e) => setSubjectId(e.target.value)}
-          className="td-surface-2 rounded-full px-4 h-11 text-sm text-white outline-none min-w-[200px] max-w-full"
-        >
-          {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
+      {/* Context — what you're editing. Sticky so it stays put while you work
+          down a long list, and the unit picker hides on subject-wide tasks so
+          it can't imply a scope that doesn't apply. */}
+      <div className="sticky top-16 z-20 -mx-1 px-1 py-2 mb-4 td-base">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <select
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
+            className="td-surface-2 rounded-full px-4 h-11 text-sm text-white outline-none min-w-[200px] max-w-full font-medium"
+          >
+            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mb-1 [&::-webkit-scrollbar]:hidden">
-          {UNITS.map((u) => (
+          {unitScoped && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mb-1 [&::-webkit-scrollbar]:hidden">
+              {UNITS.map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setUnit(u)}
+                  className={`shrink-0 px-3.5 h-11 rounded-full text-sm font-medium flex items-center gap-1.5 ${unit === u ? "bg-white text-black" : "td-btn-ghost"}`}
+                >
+                  Unit {u}
+                  {unitCounts[u] ? (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${unit === u ? "bg-black/10 text-black" : "td-surface-2 text-zinc-400"}`}>
+                      {unitCounts[u]}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Task tabs — one job on screen at a time */}
+        <div className="flex gap-1.5 td-surface rounded-full p-1 mt-2.5 w-fit max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          {TABS.map((t) => (
             <button
-              key={u}
-              onClick={() => setUnit(u)}
-              className={`shrink-0 px-3.5 h-11 rounded-full text-sm font-medium flex items-center gap-1.5 ${unit === u ? "bg-white text-black" : "td-btn-ghost"}`}
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${tab === t.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}
             >
-              Unit {u}
-              {unitCounts[u] ? (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${unit === u ? "bg-black/10 text-black" : "td-surface-2 text-zinc-400"}`}>
-                  {unitCounts[u]}
-                </span>
-              ) : null}
+              {t.label}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="td-surface rounded-2xl p-4 mb-6">
-        <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 mb-2.5">
-          Topics in Unit {unit} <span className="normal-case tracking-normal text-zinc-600">- divide the unit; Q&amp;A and materials can attach to a topic</span>
-        </p>
+      {/* Topics are context for the unit-scoped tasks, not a task themselves —
+          collapsed by default so they stop competing with the actual work. */}
+      {unitScoped && (
+      <div className="td-surface rounded-2xl px-4 py-3 mb-5">
+        <button
+          onClick={() => setTopicsOpen((o) => !o)}
+          className="w-full flex items-center gap-2 text-left"
+        >
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 flex-1">
+            Topics in Unit {unit}
+            <span className="normal-case tracking-normal text-zinc-600"> — {topics.length || "none"} {topics.length === 1 ? "topic" : "topics"}</span>
+          </p>
+          <span className="text-zinc-500 text-xs font-medium">{topicsOpen ? "Hide" : "Manage"}</span>
+          <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
+        </button>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {topicsOpen && (
+        <div className="flex flex-wrap items-center gap-2 mt-3">
           {topics.map((t) => (
             <span key={t.id} className="td-surface-2 rounded-full pl-3.5 pr-1.5 py-1.5 text-[13px] text-zinc-200 font-medium flex items-center gap-1.5">
               {t.title}
@@ -507,8 +555,11 @@ export default function Contributor() {
             </button>
           </div>
         </div>
+        )}
       </div>
+      )}
 
+      {tab === "syllabus" && (
       <div className="td-surface rounded-3xl p-5 mb-6">
         <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
           <FileText className="w-4 h-4 td-accent-text" /> Syllabus &amp; PYQs <span className="text-zinc-600 text-xs font-normal">- whole subject</span>
@@ -575,8 +626,12 @@ export default function Contributor() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
+      )}
+
+      {/* ── Study-With-AI ── */}
+      {tab === "qa" && (
+      <div className="space-y-5">
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
           <div className="td-surface rounded-3xl p-5">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
               <AiIcon className="w-4 h-4" /> Add Study-With-AI Q&amp;A
@@ -626,6 +681,18 @@ export default function Contributor() {
               </div>
             </div>
           </div>
+
+          {/* Preview sits beside the editor rather than far down the page */}
+          {preview !== null && (
+            <div className="td-surface rounded-3xl p-5 lg:sticky lg:top-52">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-white font-semibold">Answer preview</h3>
+                <button onClick={() => setPreview(null)} className="text-zinc-500 hover:text-white text-sm">Close</button>
+              </div>
+              <MarkdownRenderer content={preview || "_Nothing to preview_"} />
+            </div>
+          )}
+        </div>
 
           <div className="space-y-4">
             {loading ? <div className="h-20 rounded-2xl td-surface animate-pulse" /> :
@@ -706,9 +773,11 @@ export default function Contributor() {
                 );
               })}
           </div>
-        </div>
+      </div>
+      )}
 
-        <div className="space-y-4">
+      {/* ── Materials ── */}
+      {tab === "materials" && (
           <div className="td-surface rounded-3xl p-5">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
               <FileUp className="w-4 h-4 td-accent-text" /> Add material
@@ -788,7 +857,10 @@ export default function Contributor() {
               </div>
             )}
           </div>
+      )}
 
+      {/* ── Videos ── */}
+      {tab === "videos" && (
           <div className="td-surface rounded-3xl p-5">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
               <Clapperboard className="w-4 h-4 td-accent-text" /> Video
@@ -867,19 +939,7 @@ export default function Contributor() {
               </div>
             )}
           </div>
-
-          {preview !== null && (
-            <div className="td-surface rounded-3xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-semibold">Answer preview</h3>
-                <button onClick={() => setPreview(null)} className="text-zinc-500 hover:text-white text-sm">Close</button>
-              </div>
-
-              <MarkdownRenderer content={preview || "_Nothing to preview_"} />
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </AppShell>
   );
 }
