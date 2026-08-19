@@ -103,7 +103,10 @@ export default function Store() {
           ? [{ label: "Full-year pack", value: formatPaise(studentYear.combo_price_paise), icon: Package }]
           : []),
       ]
-    : [{ label: "Subjects", value: groups.reduce((n, g) => n + g.subjects.length, 0), icon: BookOpen }];
+    // No matched year: every subject on the page is hidden, so a total here
+    // would advertise a count the student cannot reach ("4 Subjects" above an
+    // empty list). Show nothing and let the empty state do the talking.
+    : undefined;
 
   const yearLabel = studentYear?.name ?? profileYearLabel;
 
