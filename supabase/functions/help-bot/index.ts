@@ -6,8 +6,10 @@
 // bad model output degrades to plain text, never a crash.
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient, getAuthUser } from "../_shared/razorpay.ts";
+import { groqChat as groqCall, groqKeyCount } from "../_shared/groq.ts";
 
-const GROQ_KEY = Deno.env.get("GROQ_API_KEY_HELP") ?? Deno.env.get("GROQ_API_KEY") ?? "";
+// Key material never leaves the function runtime — see _shared/groq.ts.
+const GROQ_KEYS = groqKeyCount("GROQ_API_KEY_HELP");
 // Groq retires models on a rolling basis, and a decommissioned one fails
 // exactly like a bad key. Overridable via the GROQ_MODEL secret so a swap is a
 // dashboard edit, not a code change + redeploy.
@@ -37,43 +39,8 @@ function rateLimited(uid: string): boolean {
   return arr.length > 10;
 }
 
-async function groqChat(payload: unknown): Promise<any | null> {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let waitMs = 0;
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 20_000);
-    try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: ctl.signal,
-      });
-      clearTimeout(timer);
-      if (res.ok) return await res.json();
-
-      const body = await res.text();
-      console.error("groq", res.status, body.slice(0, 300));
-      // 429 is a rate limit, not a dead end — the free tier's tokens-per-minute
-      // ceiling is easy to touch with a long system prompt, and bailing on the
-      // first one is what made the bot answer every other message. Back off and
-      // retry those; only a genuine 4xx (bad key, bad model) is worth giving up on.
-      if (res.status !== 429 && res.status < 500) return null;
-      const retryAfter = Number(res.headers.get("retry-after"));
-      waitMs = Math.min(
-        Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 700 * (attempt + 1),
-        3000,
-      );
-    } catch (e) {
-      console.error("groq attempt failed", e);
-      waitMs = 500 * (attempt + 1);
-    } finally {
-      clearTimeout(timer);
-    }
-    if (waitMs) await new Promise((r) => setTimeout(r, waitMs));
-  }
-  return null;
-}
+/** Rotates across every configured key; see _shared/groq.ts. */
+const groqChat = (payload: unknown) => groqCall(payload, { preferredEnv: "GROQ_API_KEY_HELP" });
 
 function parseEnvelope(text: string): { reply: string; actions: any[] } {
   try { const j = JSON.parse(text); if (j && typeof j.reply === "string") return { reply: j.reply, actions: Array.isArray(j.actions) ? j.actions : [] }; } catch { /* fall through */ }
@@ -90,7 +57,7 @@ Deno.serve(async (req) => {
   try {
     const user = await getAuthUser(req);
     if (!user) return jsonResponse({ error: "Unauthorized" }, 401);
-    if (!GROQ_KEY) return jsonResponse({ reply: "The assistant isn't configured yet — please raise a ticket instead.", actions: [] });
+    if (!GROQ_KEYS) return jsonResponse({ reply: "The assistant isn't configured yet — please raise a ticket instead.", actions: [] });
 
     const body = await req.json().catch(() => ({}));
 

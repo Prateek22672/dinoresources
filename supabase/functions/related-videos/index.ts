@@ -4,8 +4,10 @@
 // play in-site. Without the YT key it falls back to Groq title suggestions.
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { getAuthUser, adminClient } from "../_shared/razorpay.ts";
+import { groqChat, groqKeyCount } from "../_shared/groq.ts";
 
-const GROQ_KEY = Deno.env.get("GROQ_API_KEY") ?? "";
+// Key material never leaves the function runtime — see _shared/groq.ts.
+const GROQ_KEYS = groqKeyCount();
 const YT_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? "";
 // Overridable so a retired Groq model can be swapped from the dashboard.
 const MODEL = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b";
@@ -51,42 +53,30 @@ async function writeCache(key: string, query: string, source: string, videos: un
 }
 
 async function groqQuery(topic: string): Promise<string> {
-  if (!GROQ_KEY) return topic;
-  try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL, temperature: 0.2,
-        messages: [
-          { role: "system", content: "Return ONLY a single concise YouTube search query (no quotes, no explanation) that finds the best real lecture/tutorial videos explaining this EXACT engineering-course topic for exam prep. Use the most specific concept name mentioned, not just the broad subject — a query that's too generic returns unrelated results. Prefer adding a word like 'explained', 'tutorial' or 'lecture'. Max 10 words." },
-          { role: "user", content: topic },
-        ],
-      }),
-    });
-    if (!res.ok) return topic;
-    const d = await res.json();
-    return (d.choices?.[0]?.message?.content ?? topic).trim().replace(/^["']|["']$/g, "").slice(0, 120) || topic;
-  } catch { return topic; }
+  if (!GROQ_KEYS) return topic;
+  const d = await groqChat({
+    model: MODEL, temperature: 0.2,
+    messages: [
+      { role: "system", content: "Return ONLY a single concise YouTube search query (no quotes, no explanation) that finds the best real lecture/tutorial videos explaining this EXACT engineering-course topic for exam prep. Use the most specific concept name mentioned, not just the broad subject — a query that's too generic returns unrelated results. Prefer adding a word like 'explained', 'tutorial' or 'lecture'. Max 10 words." },
+      { role: "user", content: topic },
+    ],
+  });
+  if (!d) return topic;
+  return (d.choices?.[0]?.message?.content ?? topic).trim().replace(/^["']|["']$/g, "").slice(0, 120) || topic;
 }
 
 async function groqSuggestions(topic: string) {
-  if (!GROQ_KEY) return [];
+  if (!GROQ_KEYS) return [];
+  const d = await groqChat({
+    model: MODEL, temperature: 0.4,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "Reply ONLY JSON {\"videos\":[{\"title\":\"...\",\"channel\":\"...\",\"query\":\"youtube search query\"}]} with 8 real-sounding educational videos, each with its OWN distinct, specific search query targeting a different sub-concept of the topic (not 8 copies of the same broad query)." },
+      { role: "user", content: `Related study videos for: ${topic}` },
+    ],
+  });
+  if (!d) return [];
   try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL, temperature: 0.4,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: "Reply ONLY JSON {\"videos\":[{\"title\":\"...\",\"channel\":\"...\",\"query\":\"youtube search query\"}]} with 8 real-sounding educational videos, each with its OWN distinct, specific search query targeting a different sub-concept of the topic (not 8 copies of the same broad query)." },
-          { role: "user", content: `Related study videos for: ${topic}` },
-        ],
-      }),
-    });
-    if (!res.ok) return [];
-    const d = await res.json();
     const parsed = JSON.parse(d.choices?.[0]?.message?.content ?? "{}");
     return (Array.isArray(parsed.videos) ? parsed.videos : []).slice(0, 8);
   } catch { return []; }
