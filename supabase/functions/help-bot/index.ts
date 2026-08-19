@@ -32,7 +32,8 @@ function rateLimited(uid: string): boolean {
 }
 
 async function groqChat(payload: unknown): Promise<any | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let waitMs = 0;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 20_000);
     try {
@@ -42,13 +43,28 @@ async function groqChat(payload: unknown): Promise<any | null> {
         body: JSON.stringify(payload),
         signal: ctl.signal,
       });
+      clearTimeout(timer);
       if (res.ok) return await res.json();
-      if (res.status < 500) { console.error("groq", res.status, await res.text()); return null; }
+
+      const body = await res.text();
+      console.error("groq", res.status, body.slice(0, 300));
+      // 429 is a rate limit, not a dead end — the free tier's tokens-per-minute
+      // ceiling is easy to touch with a long system prompt, and bailing on the
+      // first one is what made the bot answer every other message. Back off and
+      // retry those; only a genuine 4xx (bad key, bad model) is worth giving up on.
+      if (res.status !== 429 && res.status < 500) return null;
+      const retryAfter = Number(res.headers.get("retry-after"));
+      waitMs = Math.min(
+        Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 700 * (attempt + 1),
+        3000,
+      );
     } catch (e) {
       console.error("groq attempt failed", e);
+      waitMs = 500 * (attempt + 1);
     } finally {
       clearTimeout(timer);
     }
+    if (waitMs) await new Promise((r) => setTimeout(r, waitMs));
   }
   return null;
 }
