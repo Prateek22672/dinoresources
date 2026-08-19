@@ -43,6 +43,27 @@ function collectKeys(preferredEnv?: string): string[] {
 // separate instances so they don't all hammer the same key first.
 let cursor = Math.floor(Math.random() * 1000);
 
+// Keys added through Admin live encrypted in Vault. Only the service role can
+// decrypt them, and they are cached briefly so rotation doesn't cost a DB round
+// trip per message. Cached in memory only — never written to disk or logged.
+let dbKeys: string[] = [];
+let dbKeysAt = 0;
+const DB_KEY_TTL_MS = 60_000;
+
+async function loadDbKeys(): Promise<string[]> {
+  if (Date.now() - dbKeysAt < DB_KEY_TTL_MS) return dbKeys;
+  try {
+    const { data, error } = await adminClient().rpc("ai_keys_values", { _provider: "groq" });
+    if (error) throw error;
+    dbKeys = (data ?? []).map((r: any) => String(r.value ?? "").trim()).filter(Boolean);
+  } catch {
+    // Migration not applied, or Vault unavailable — secrets alone still work.
+    dbKeys = [];
+  }
+  dbKeysAt = Date.now();
+  return dbKeys;
+}
+
 export interface GroqOpts {
   /** Secret name checked before the shared pool (e.g. "GROQ_API_KEY_HELP"). */
   preferredEnv?: string;
@@ -90,7 +111,9 @@ export const groqKeyCount = (preferredEnv?: string) => collectKeys(preferredEnv)
  * Returns the parsed response, or null once every key has been tried.
  */
 export async function groqChat(payload: unknown, opts: GroqOpts = {}): Promise<any | null> {
+  // Secrets first (they're free to read), then anything added through Admin.
   const keys = collectKeys(opts.preferredEnv);
+  for (const k of await loadDbKeys()) if (!keys.includes(k)) keys.push(k);
   if (keys.length === 0) {
     console.error("groq: no API key configured");
     return null;

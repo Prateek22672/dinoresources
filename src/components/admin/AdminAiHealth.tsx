@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { tbl, invokeFn } from "@/integrations/supabase/revamp";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw, KeyRound, CheckCircle2, AlertTriangle, XCircle, Clock, Bot } from "lucide-react";
+import { RefreshCw, KeyRound, CheckCircle2, AlertTriangle, XCircle, Clock, Bot, ShieldCheck, Plus, Trash2 } from "lucide-react";
 
 interface KeyStatus {
   index: number; secret: string; ok: boolean; status: number;
@@ -10,6 +10,7 @@ interface KeyStatus {
 }
 interface Health { model: string; total: number; healthy: number; keys: KeyStatus[] }
 interface ErrRow { id: string; fn: string; status: number | null; code: string | null; message: string | null; key_index: number | null; key_count: number | null; created_at: string }
+interface ManagedKey { id: string; label: string; hint: string | null; active: boolean; created_at: string }
 interface StatRow { fn: string; key_index: number | null; code: string | null; status: number | null; failures: number; last_seen: string }
 
 const STATE_UI: Record<KeyStatus["state"], { label: string; cls: string; Icon: any }> = {
@@ -34,6 +35,39 @@ export default function AdminAiHealth() {
   const [stats, setStats] = useState<StatRow[]>([]);
   const [hours, setHours] = useState(24);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [managed, setManaged] = useState<ManagedKey[]>([]);
+  const [newLabel, setNewLabel] = useState("");
+  const [newKey, setNewKey] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [keyMsg, setKeyMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const callKeys = useCallback(async (payload: Record<string, unknown>) => {
+    const { data, error } = await invokeFn<{ keys?: ManagedKey[]; error?: string }>("ai-keys", payload);
+    if (error || data?.error) {
+      setKeyMsg({ ok: false, text: (data?.error ?? (error as any)?.message ?? "Request failed") as string });
+      return false;
+    }
+    setManaged(data?.keys ?? []);
+    return true;
+  }, []);
+
+  const addKey = async () => {
+    setSaving(true); setKeyMsg(null);
+    const ok = await callKeys({ action: "add", label: newLabel.trim(), value: newKey.trim() });
+    setSaving(false);
+    if (ok) {
+      // Clear immediately — the value should not linger in the DOM.
+      setNewKey(""); setNewLabel("");
+      setKeyMsg({ ok: true, text: "Key saved and in rotation." });
+      check();
+    }
+  };
+  const removeKey = async (k: ManagedKey) => {
+    if (!confirm(`Remove "${k.label}"? This cannot be undone.`)) return;
+    await callKeys({ action: "remove", id: k.id });
+    check();
+  };
+  const toggleKey = async (k: ManagedKey) => { await callKeys({ action: "toggle", id: k.id, active: !k.active }); check(); };
 
   const check = useCallback(async () => {
     setChecking(true); setLoadErr(null);
@@ -53,6 +87,7 @@ export default function AdminAiHealth() {
   }, [hours]);
 
   useEffect(() => { check(); }, [check]);
+  useEffect(() => { callKeys({ action: "list" }); }, [callKeys]);
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
   const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
@@ -112,9 +147,61 @@ export default function AdminAiHealth() {
               </div>
             )}
             <p className="text-zinc-600 text-[11px] mt-3">
-              Add capacity with <span className="font-mono">GROQ_API_KEY_2</span> … <span className="font-mono">_10</span>; requests rotate across every key, so more keys means more per-minute budget.
+              Requests rotate across every key, so more keys means more per-minute budget.
             </p>
           </>
+        )}
+      </div>
+
+      {/* ── Managed keys (encrypted in Vault, added here) ── */}
+      <div className="td-surface rounded-3xl p-5">
+        <h3 className="text-white font-semibold flex items-center gap-2 mb-1">
+          <ShieldCheck className="w-4 h-4 td-accent-text" /> Add a key
+        </h3>
+        <p className="text-zinc-500 text-xs mb-4">
+          Stored encrypted in Supabase Vault, outside any REST-exposed table. Once saved a key can be
+          used and removed but <span className="text-zinc-300 font-medium">never read back</span> — not here, not by anyone.
+          Keep a copy with your provider.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            value={newLabel} onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Name (e.g. account-2)"
+            className="sm:w-44 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600"
+          />
+          <input
+            value={newKey} onChange={(e) => setNewKey(e.target.value)}
+            type="password" autoComplete="off" spellCheck={false}
+            placeholder="Paste the API key"
+            className="flex-1 min-w-0 td-surface-2 rounded-xl px-3 h-10 text-sm text-white outline-none placeholder:text-zinc-600 font-mono"
+          />
+          <button onClick={addKey} disabled={saving || !newKey.trim() || !newLabel.trim()}
+            className="td-btn-primary px-4 h-10 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50">
+            <Plus className="w-3.5 h-3.5" /> {saving ? "Saving…" : "Add"}
+          </button>
+        </div>
+        {keyMsg && <p className={`text-xs mt-2 ${keyMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{keyMsg.text}</p>}
+
+        {managed.length > 0 && (
+          <div className="mt-4 space-y-1.5">
+            <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-600">Managed keys ({managed.length})</p>
+            {managed.map((k) => (
+              <div key={k.id} className="td-surface-2 rounded-xl px-3 py-2.5 flex items-center gap-3">
+                <KeyRound className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-zinc-200 text-[13px] font-medium truncate">{k.label}</p>
+                  <p className="text-zinc-600 text-[11px] font-mono">••••{k.hint ?? "____"}</p>
+                </div>
+                <button onClick={() => toggleKey(k)} className="td-btn-ghost px-2.5 py-1 rounded-full text-[11px] shrink-0">
+                  {k.active ? "Disable" : "Enable"}
+                </button>
+                <button onClick={() => removeKey(k)} className="w-7 h-7 rounded-full hover:bg-red-500/20 flex items-center justify-center shrink-0" title="Remove">
+                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
