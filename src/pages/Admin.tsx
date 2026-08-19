@@ -8,6 +8,7 @@ import AdminAudit from "@/components/admin/AdminAudit";
 import AdminTickets from "@/components/admin/AdminTickets";
 import AdminTeam from "@/components/admin/AdminTeam";
 import AdminSecurity from "@/components/admin/AdminSecurity";
+import AdminAiHealth from "@/components/admin/AdminAiHealth";
 import AdminAccessAudit from "@/components/admin/AdminAccessAudit";
 import AdminCoupons from "@/components/admin/AdminCoupons";
 import AdminSharing from "@/components/admin/AdminSharing";
@@ -15,9 +16,9 @@ import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminFeatures from "@/components/admin/AdminFeatures";
 import AdminCharges from "@/components/admin/AdminCharges";
 import AdminNotices from "@/components/admin/AdminNotices";
-import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Search, X } from "lucide-react";
+import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Search, X, Bot } from "lucide-react";
 
-type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database";
+type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -31,6 +32,7 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "team", label: "Team", icon: UsersRound },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "audit", label: "Audit Log", icon: ScrollText },
+  { id: "aihealth", label: "AI Health", icon: Bot },
   { id: "security", label: "Security", icon: Lock },
   { id: "access", label: "Access Audit", icon: ShieldAlert },
   { id: "sharing", label: "Account Sharing", icon: UserX },
@@ -189,6 +191,7 @@ export default function Admin() {
       {tab === "charges" && <AdminCharges />}
       {tab === "notices" && <AdminNotices />}
       {tab === "features" && <AdminFeatures />}
+      {tab === "aihealth" && <AdminAiHealth />}
       {tab === "security" && <AdminSecurity />}
       {tab === "access" && <AdminAccessAudit />}
       {tab === "sharing" && <AdminSharing />}

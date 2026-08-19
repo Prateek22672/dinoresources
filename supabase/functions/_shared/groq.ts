@@ -16,6 +16,8 @@
 // per-minute budget, and one exhausted or revoked key degrades instead of
 // breaking the feature.
 
+import { adminClient } from "./razorpay.ts";
+
 const MAX_KEYS = 10;
 
 /** Redact anything key-shaped before it reaches a log line. */
@@ -47,6 +49,37 @@ export interface GroqOpts {
   timeoutMs?: number;
   /** Passes over the whole key set before giving up. */
   rounds?: number;
+  /** Function name recorded against failures (e.g. "help-bot"). */
+  label?: string;
+  /** Attributed on failure rows so support can trace a stuck student. */
+  userId?: string;
+}
+
+/**
+ * Record a provider failure for the admin dashboard. Fire-and-forget: logging
+ * must never be able to break a request. Stores the key's POSITION only —
+ * the value is never written anywhere.
+ */
+async function logFailure(
+  opts: GroqOpts,
+  row: { status?: number; code?: string; message?: string; keyIndex: number; keyCount: number },
+) {
+  try {
+    await adminClient().from("bot_error_log").insert({
+      fn: opts.label ?? "groq",
+      status: row.status ?? null,
+      code: row.code ?? null,
+      message: row.message ? redact(row.message).slice(0, 500) : null,
+      key_index: row.keyIndex,
+      key_count: row.keyCount,
+      user_id: opts.userId ?? null,
+    });
+  } catch { /* never let telemetry break the call */ }
+}
+
+/** Pull a provider error code out of Groq's JSON body, if present. */
+function errorCode(body: string): string | undefined {
+  try { return JSON.parse(body)?.error?.code ?? JSON.parse(body)?.error?.type; } catch { return undefined; }
 }
 
 /** How many keys are configured — for health checks. Never exposes values. */
@@ -83,8 +116,13 @@ export async function groqChat(payload: unknown, opts: GroqOpts = {}): Promise<a
         clearTimeout(timer);
         if (res.ok) return await res.json();
 
-        const body = redact(await res.text()).slice(0, 200);
+        const raw = await res.text();
+        const body = redact(raw).slice(0, 200);
         console.error(`groq key#${idx + 1}/${keys.length} ${res.status} ${body}`);
+        void logFailure(opts, {
+          status: res.status, code: errorCode(raw), message: body,
+          keyIndex: idx + 1, keyCount: keys.length,
+        });
 
         // Bad credential: stop using this one for the rest of the call.
         if (res.status === 401 || res.status === 403) { dead.add(idx); continue; }
@@ -95,7 +133,9 @@ export async function groqChat(payload: unknown, opts: GroqOpts = {}): Promise<a
         return null;
       } catch (e) {
         clearTimeout(timer);
-        console.error(`groq key#${idx + 1}/${keys.length} failed:`, e instanceof Error ? redact(e.message) : "error");
+        const msg = e instanceof Error ? redact(e.message) : "error";
+        console.error(`groq key#${idx + 1}/${keys.length} failed:`, msg);
+        void logFailure(opts, { code: "network_or_timeout", message: msg, keyIndex: idx + 1, keyCount: keys.length });
       }
     }
     // Every key was busy — brief pause before one more pass.

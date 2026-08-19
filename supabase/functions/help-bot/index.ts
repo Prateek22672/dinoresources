@@ -40,7 +40,42 @@ function rateLimited(uid: string): boolean {
 }
 
 /** Rotates across every configured key; see _shared/groq.ts. */
-const groqChat = (payload: unknown) => groqCall(payload, { preferredEnv: "GROQ_API_KEY_HELP" });
+const groqChat = (payload: unknown, extra: { userId?: string } = {}) =>
+  groqCall(payload, { preferredEnv: "GROQ_API_KEY_HELP", label: "help-bot", ...extra });
+
+/**
+ * Auto-file a ticket when a student keeps hitting AI failures.
+ *
+ * Threshold + dedupe on purpose: a single 429 is noise and must not spam the
+ * support queue, but three failures inside ten minutes means the person is
+ * stuck in a loop with no way through. Returns true when a ticket was filed.
+ */
+async function autoEscalate(db: any, user: any, history: any[]): Promise<boolean> {
+  try {
+    const tenMinAgo = new Date(Date.now() - 600_000).toISOString();
+    const { count } = await db.from("bot_error_log")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).eq("fn", "help-bot").gte("created_at", tenMinAgo);
+    if ((count ?? 0) < 3) return false;
+
+    // Don't re-file while an auto ticket for this user is already fresh.
+    const { data: dup } = await db.from("support_tickets").select("id")
+      .eq("user_id", user.id).eq("category", "website_not_working")
+      .gte("created_at", tenMinAgo).limit(1);
+    if (dup?.length) return true;
+
+    const lastAsk = [...history].reverse().find((m) => m.role === "user")?.content ?? "(no message)";
+    const { error } = await db.from("support_tickets").insert({
+      user_id: user.id,
+      category: "website_not_working",
+      message: `[auto] DinoBot could not answer after repeated AI failures.\nLast question: ${String(lastAsk).slice(0, 500)}`,
+      contact: user.email ?? null,
+    });
+    return !error;
+  } catch {
+    return false; // escalation must never break the reply
+  }
+}
 
 function parseEnvelope(text: string): { reply: string; actions: any[] } {
   try { const j = JSON.parse(text); if (j && typeof j.reply === "string") return { reply: j.reply, actions: Array.isArray(j.actions) ? j.actions : [] }; } catch { /* fall through */ }
@@ -162,9 +197,18 @@ ${ticketLines}`;
       temperature: 0.3,
       max_tokens: 500,
       response_format: { type: "json_object" },
-    });
+    }, { userId: user.id });
     if (!out) {
-      return jsonResponse({ reply: "I'm a bit overloaded right now 🥲 — try again in a few seconds, or tap **Raise a ticket** and the team will handle it.", actions: [] });
+      // Every key failed. One bad minute is noise, but a student hitting this
+      // repeatedly is genuinely stuck — escalate for them instead of leaving
+      // them to keep retrying a bot that cannot answer.
+      const escalated = await autoEscalate(db, user, history);
+      return jsonResponse({
+        reply: escalated
+          ? "I still can't reach my brain 🥲 — I've flagged this to the team for you, and they'll follow up within 24 hours."
+          : "I'm a bit overloaded right now 🥲 — try again in a few seconds, or tap **Raise a ticket** and the team will handle it.",
+        actions: [],
+      });
     }
 
     const raw = out?.choices?.[0]?.message?.content ?? "";
