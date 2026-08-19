@@ -11,7 +11,13 @@ const GROQ_KEY = Deno.env.get("GROQ_API_KEY_HELP") ?? Deno.env.get("GROQ_API_KEY
 // Groq retires models on a rolling basis, and a decommissioned one fails
 // exactly like a bad key. Overridable via the GROQ_MODEL secret so a swap is a
 // dashboard edit, not a code change + redeploy.
-const MODEL = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b";
+// gpt-oss-20b over the 120b: the free tier's tokens-per-minute allowance is the
+// binding constraint here, not model capability. Every message carries a large
+// system prompt (subject list, ticket categories, action schema), so the 120b
+// burned the minute's budget in a few turns and users saw "overloaded" half the
+// time. A bot that always answers beats a smarter one that answers every other
+// message. Override with GROQ_MODEL if you move to a paid tier.
+const MODEL = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b";
 
 const TICKET_CATEGORIES = [
   "paid_not_granted", "payment_deducted_failed", "subject_not_opening",
