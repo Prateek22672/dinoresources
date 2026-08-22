@@ -7,11 +7,12 @@ import type { TutorMode, TutorNudge } from "./shared";
 const DOCK_KEY = "td:tutor-dock";
 const EDGE = 12;
 /**
- * How much of the collapsed tab sits off-screen. Kept deliberately small: the
- * tab must stay comfortably larger than a 44px touch target once hidden, or it
- * becomes decorative rather than tappable.
+ * The collapsed tab sits fully on screen, flush to the edge margin. Hiding part
+ * of it off-screen was tried and looked broken rather than tucked: against a
+ * translucent surface a clipped control reads as a rendering fault, and the
+ * remaining sliver was too small to hit — especially beside a scrollbar.
  */
-const PEEK_HIDDEN = 4;
+const COLLAPSED_SIZE = 46;
 
 type Side = "left" | "right";
 interface Dock { y: number; side: Side; collapsed: boolean }
@@ -140,8 +141,8 @@ export default function TutorLauncher({
   const style: React.CSSProperties = dragging
     ? { left: dragPos.x, top: dragPos.y }
     : side === "left"
-      ? { left: collapsed ? -PEEK_HIDDEN : EDGE, top: dock.y }
-      : { right: collapsed ? -PEEK_HIDDEN : EDGE, top: dock.y };
+      ? { left: EDGE, top: dock.y }
+      : { right: EDGE, top: dock.y };
 
   // The bubble opens away from whichever edge the launcher is parked against.
   const above = dock.y > window.innerHeight / 2;
@@ -200,19 +201,14 @@ export default function TutorLauncher({
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); update({ collapsed: false }); } }}
           aria-label="Show Ask Rex"
           title="Show Rex"
-          className={`td-glass flex items-center justify-center select-none cursor-pointer
-            shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] transition-transform duration-200
-            ${side === "right" ? "rounded-l-2xl hover:-translate-x-1.5" : "rounded-r-2xl hover:translate-x-1.5"}`}
-          /* Sized so the visible portion still clears a 44px touch target once
-             PEEK_HIDDEN is taken off the docked edge. */
-          style={{
-            minWidth: 48 + PEEK_HIDDEN,
-            minHeight: 52,
-            paddingLeft: side === "right" ? 10 : 10 + PEEK_HIDDEN,
-            paddingRight: side === "right" ? 10 + PEEK_HIDDEN : 10,
-          }}
+          /* td-surface, not td-glass: a translucent circle over arbitrary page
+             content has no readable silhouette. A solid surface with a hairline
+             border reads as a deliberate control at any scroll position. */
+          className="td-surface rounded-full flex items-center justify-center select-none cursor-pointer
+            shadow-[0_10px_30px_-8px_rgba(0,0,0,0.8)] transition-transform duration-200 hover:scale-110"
+          style={{ width: COLLAPSED_SIZE, height: COLLAPSED_SIZE }}
         >
-          <TutorOrb size={30} busy={!!nudge} />
+          <TutorOrb size={28} busy={!!nudge} />
         </div>
       ) : (
         <div className="flex items-center gap-1">
