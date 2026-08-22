@@ -341,10 +341,12 @@ Deno.serve(async (req) => {
       const written = String(body?.answer ?? "").trim().slice(0, 4000);
       if (!question || written.length < 2) return jsonResponse({ error: "Nothing to grade" }, 400);
 
-      // Grade against the card's own answer when we know which one it was;
-      // retrieval by question text is the fallback for free-typed practice.
+      // Retrieve on the QUESTION alone. Folding the student's own answer into
+      // the query skewed retrieval toward whatever they happened to write, so a
+      // wrong answer pulled up the wrong reference and was then graded against
+      // it — worst feedback exactly when they needed it to be right.
       const sourceId = body?.source_id ? String(body.source_id) : null;
-      const r = await retrieve(db, subjectId, `${question} ${written}`, unit, 3);
+      const r = await retrieve(db, subjectId, question, unit, 6);
       const exact = sourceId ? r.passages.filter((p) => p.qaId === sourceId) : [];
       const reference = (exact.length ? exact : r.passages)
         .slice(0, 4).map((p) => p.text).join("\n\n").slice(0, 5000);

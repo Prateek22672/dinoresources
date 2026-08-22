@@ -48,7 +48,11 @@ export default function TutorRecall({ ctx }: { ctx: TutorContext }) {
 
   useEffect(() => { reshuffle(); }, [reshuffle]);
 
-  const card = pool[order[seat]];
+  // `order` is filled by an effect, which does not run until after the first
+  // render — so on that pass order[seat] is undefined and the lookup misses.
+  // Fall back to the first card until the shuffle lands; without this the whole
+  // mode threw on `card.id` the moment it opened.
+  const card: TutorQa | undefined = pool[order[seat]] ?? pool[0];
 
   const check = async () => {
     if (!card || busy || written.trim().length < 2) return;
@@ -87,7 +91,7 @@ export default function TutorRecall({ ctx }: { ctx: TutorContext }) {
     setSeat((s) => (s + 1) % Math.max(pool.length, 1));
   };
 
-  if (!pool.length) {
+  if (!pool.length || !card) {
     return (
       <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-8">
         <div className="td-surface rounded-3xl p-6 text-center">
