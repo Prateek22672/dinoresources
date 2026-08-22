@@ -213,8 +213,8 @@ export default function Dashboard() {
                   whenever there was nothing to resume. */}
               {resume ? (
                 <button onClick={() => navigate(`/subject/${resume.slug}`)}
-                  className="group td-glass td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
-                  <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                  className="group td-glass td-card-click rounded-full pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
                     <Play className="w-4 h-4" fill="currentColor" />
                   </span>
                   <span className="min-w-0">
@@ -225,8 +225,8 @@ export default function Dashboard() {
                 </button>
               ) : (
                 <button onClick={() => navigate(owned.length > 0 ? "/library" : "/store")}
-                  className="group td-glass td-card-click rounded-2xl pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
-                  <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
+                  className="group td-glass td-card-click rounded-full pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
                     {owned.length > 0 ? <BookOpen className="w-4 h-4" /> : <Store className="w-4 h-4" />}
                   </span>
                   <span className="min-w-0">
