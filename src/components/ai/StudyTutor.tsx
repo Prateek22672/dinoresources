@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Maximize2, Minimize2, MessageSquare, Target, PenLine, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
@@ -17,11 +18,11 @@ const MODES: { id: TutorMode; label: string; icon: typeof MessageSquare; hint: s
 ];
 
 /**
- * The Study-With-AI tutor panel.
+ * The Study-With-AI tutor.
  *
- * It docks beside the unit the student is reading rather than floating over it,
- * because the two are meant to be used together: the tutor cites the answer,
- * the student taps the citation, the page behind scrolls to it.
+ * A full modal rather than a side dock: a worked answer, a four-option drill and
+ * a marked recall attempt all need room to breathe. Citations close it and jump
+ * the page underneath to the real answer, so the two still work together.
  */
 export default function StudyTutor({
   open, onClose, ctx, initialMode = "chat",
@@ -48,8 +49,8 @@ export default function StudyTutor({
         if (!user || !alive) return;
         const { data: p } = await tbl("profiles")
           .select("full_name, username, email").eq("id", user.id).maybeSingle();
-        const full = p?.full_name || p?.username || p?.email?.split("@")[0] || "there";
-        if (alive) setName(String(full).trim().split(/\s+/)[0].slice(0, 20));
+        const who = p?.full_name || p?.username || p?.email?.split("@")[0] || "there";
+        if (alive) setName(String(who).trim().split(/\s+/)[0].slice(0, 20));
 
         const { data: raw } = await callRpc("study_mastery", { _subject_id: ctx.subjectId });
         const m = (Array.isArray(raw) ? raw : []) as MasteryRow[];
@@ -94,33 +95,37 @@ export default function StudyTutor({
     : ctx.subjectName;
   const readable = ctx.qa.filter((q) => q.answer_md).length;
 
-  return (
+  // Portalled to <body> on purpose. UnitView renders inside <main class="td-page">,
+  // which animates transform/filter and sits inside .td-app (overflow-x: clip).
+  // Either is enough to make an ancestor the containing block for a fixed child,
+  // which had this modal sizing itself against the whole scrollable page instead
+  // of the viewport. On <body> it inherits none of that.
+  return createPortal(
     <>
-      {/* Full backdrop — tap anywhere outside to close. */}
-      <div
-        className="fixed inset-0 z-[96] bg-black/65 backdrop-blur-[3px]"
-        onClick={onClose}
-        aria-hidden
-      />
+      {/* One fixed, viewport-sized layer that owns both the backdrop and the
+          modal, centred with flex rather than top/left + translate — nothing
+          to mis-measure, and no transform of its own. */}
+      <div className="fixed inset-0 z-[96] flex items-center justify-center">
+        <div
+          className="absolute inset-0 bg-black/65 backdrop-blur-[3px]"
+          onClick={onClose}
+          aria-hidden
+        />
 
-      {/* Centred modal. Full-bleed on phones, a comfortable sheet everywhere
-          else — the old right-hand dock was too narrow to read a worked answer
-          in, and left the page scrolling behind it. */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Study tutor"
-        className={
-          full
-            ? "fixed z-[97] inset-0 sm:inset-4"
-            : "fixed z-[97] inset-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[min(54rem,94vw)] sm:h-[min(90dvh,50rem)]"
-        }
-      >
-        <div className="td-surface h-full flex flex-col overflow-hidden td-in border border-white/10 rounded-none sm:rounded-[28px] shadow-[0_40px_120px_-24px_rgba(0,0,0,0.85)]">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Study tutor"
+          className={`relative z-[1] td-surface flex flex-col overflow-hidden td-in border border-white/10 shadow-[0_40px_120px_-24px_rgba(0,0,0,0.85)] ${
+            full
+              ? "w-full h-full rounded-none"
+              : "w-full h-full rounded-none sm:w-[94vw] sm:h-[92dvh] sm:rounded-[28px]"
+          }`}
+        >
           {/* ── Head ─────────────────────────────────────────────── */}
           <div className="relative shrink-0 overflow-hidden border-b border-white/8">
             <div className="td-aurora" aria-hidden><i /><i /><i /></div>
-            <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3.5">
+            <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3.5">
               <div className="flex items-center gap-3">
                 <TutorOrb size={38} />
                 <div className="min-w-0 flex-1">
@@ -179,13 +184,14 @@ export default function StudyTutor({
           {/* ── Body ─────────────────────────────────────────────────
               Capped to a reading width and centred: the modal can be 860px
               wide, but a line of explanation shouldn't be. */}
-          <div className="flex-1 min-h-0 flex flex-col w-full max-w-3xl mx-auto">
+          <div className="flex-1 min-h-0 flex flex-col w-full max-w-5xl mx-auto">
             {mode === "chat" && <TutorChat ctx={ctx} name={name} mastery={mastery} onDrill={() => setMode("drill")} />}
             {mode === "drill" && <TutorDrill ctx={ctx} />}
             {mode === "recall" && <TutorRecall ctx={ctx} />}
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }

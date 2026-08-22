@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
@@ -683,8 +684,12 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
       {tab === "resources" && <Materials />}
 
       {/* Tutor launcher — stays reachable while the student scrolls the unit,
-          so a question never costs them their place in the page. */}
-      {tutorOn && !tutorOpen && qa.length > 0 && (
+          so a question never costs them their place in the page.
+          Portalled for the same reason as the modal: this subtree sits inside
+          <main class="td-page">, whose animated transform makes it the
+          containing block for fixed children, which pins the pill to the page
+          instead of the viewport. */}
+      {tutorOn && !tutorOpen && qa.length > 0 && createPortal(
         <button
           onClick={() => openTutor("chat")}
           aria-label="Ask Rex, your study tutor"
@@ -692,7 +697,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
         >
           <TutorOrb size={30} />
           <span className="text-[13px] font-bold text-white whitespace-nowrap">Ask Rex</span>
-        </button>
+        </button>,
+        document.body,
       )}
 
       {tutorOn && tutorOpen && (
