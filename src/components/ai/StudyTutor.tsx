@@ -32,7 +32,7 @@ export default function StudyTutor({
   initialMode?: TutorMode;
 }) {
   const [mode, setMode] = useState<TutorMode>(initialMode);
-  const [wide, setWide] = useState(false);
+  const [full, setFull] = useState(false);
   const [name, setName] = useState("there");
   const [mastery, setMastery] = useState<number | null>(null);
 
@@ -64,18 +64,27 @@ export default function StudyTutor({
     return () => { alive = false; };
   }, [open, ctx.subjectId, ctx.unit]);
 
-  // Esc closes; mobile locks the page behind so the sheet scrolls alone.
+  // Esc closes, and the page behind is locked at every size — it's a modal now,
+  // so scrolling the page under it only ever felt like a bug.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
-    const small = window.matchMedia("(max-width: 767px)").matches;
     const prev = document.body.style.overflow;
-    if (small) document.body.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
-      if (small) document.body.style.overflow = prev;
+      document.body.style.overflow = prev;
     };
+  }, [open, onClose]);
+
+  // Tapping a citation is a request to go read it — get out of the way so the
+  // student actually lands on the answer instead of staring at the backdrop.
+  useEffect(() => {
+    if (!open) return;
+    const onJump = () => onClose();
+    window.addEventListener("td:tutor-jump", onJump);
+    return () => window.removeEventListener("td:tutor-jump", onJump);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -87,29 +96,31 @@ export default function StudyTutor({
 
   return (
     <>
-      {/* Dim only where the panel overlays content the student might tap. */}
+      {/* Full backdrop — tap anywhere outside to close. */}
       <div
-        className={`fixed inset-0 z-[96] bg-black/50 md:bg-black/30 ${wide ? "" : "md:hidden"}`}
+        className="fixed inset-0 z-[96] bg-black/65 backdrop-blur-[3px]"
         onClick={onClose}
         aria-hidden
       />
 
-      <aside
+      {/* Centred modal. Full-bleed on phones, a comfortable sheet everywhere
+          else — the old right-hand dock was too narrow to read a worked answer
+          in, and left the page scrolling behind it. */}
+      <div
         role="dialog"
+        aria-modal="true"
         aria-label="Study tutor"
         className={
-          wide
-            ? "fixed z-[97] inset-2 sm:inset-6 lg:inset-x-[max(2rem,calc(50vw-32rem))] lg:inset-y-8"
-            : "fixed z-[97] inset-0 md:inset-y-0 md:left-auto md:right-0 md:w-[min(27rem,50vw)]"
+          full
+            ? "fixed z-[97] inset-0 sm:inset-4"
+            : "fixed z-[97] inset-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-[min(54rem,94vw)] sm:h-[min(90dvh,50rem)]"
         }
       >
-        <div className={`td-surface h-full flex flex-col overflow-hidden td-in border border-white/10 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.7)] ${
-          wide ? "rounded-[28px]" : "rounded-none md:rounded-l-[28px]"
-        }`}>
+        <div className="td-surface h-full flex flex-col overflow-hidden td-in border border-white/10 rounded-none sm:rounded-[28px] shadow-[0_40px_120px_-24px_rgba(0,0,0,0.85)]">
           {/* ── Head ─────────────────────────────────────────────── */}
           <div className="relative shrink-0 overflow-hidden border-b border-white/8">
             <div className="td-aurora" aria-hidden><i /><i /><i /></div>
-            <div className="relative z-10 px-4 sm:px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3.5">
+            <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3.5">
               <div className="flex items-center gap-3">
                 <TutorOrb size={38} />
                 <div className="min-w-0 flex-1">
@@ -122,15 +133,21 @@ export default function StudyTutor({
                   </p>
                 </div>
                 <button
-                  onClick={() => setWide((w) => !w)}
-                  className="hidden md:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center shrink-0"
-                  aria-label={wide ? "Dock to the side" : "Expand"}
-                  title={wide ? "Dock to the side" : "Expand"}
+                  onClick={() => setFull((f) => !f)}
+                  className="hidden sm:flex w-10 h-10 rounded-full td-btn-ghost items-center justify-center shrink-0"
+                  aria-label={full ? "Shrink" : "Full screen"}
+                  title={full ? "Shrink" : "Full screen"}
                 >
-                  {wide ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  {full ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
-                <button onClick={onClose} className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Close tutor">
-                  <X className="w-4 h-4" />
+                <button
+                  onClick={onClose}
+                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-zinc-300 hover:text-white transition-colors"
+                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)" }}
+                  aria-label="Close tutor"
+                  title="Close (Esc)"
+                >
+                  <X className="w-[18px] h-[18px]" />
                 </button>
               </div>
 
@@ -159,14 +176,16 @@ export default function StudyTutor({
             </div>
           </div>
 
-          {/* ── Body ─────────────────────────────────────────────── */}
-          <div className="flex-1 min-h-0 flex flex-col">
+          {/* ── Body ─────────────────────────────────────────────────
+              Capped to a reading width and centred: the modal can be 860px
+              wide, but a line of explanation shouldn't be. */}
+          <div className="flex-1 min-h-0 flex flex-col w-full max-w-3xl mx-auto">
             {mode === "chat" && <TutorChat ctx={ctx} name={name} mastery={mastery} onDrill={() => setMode("drill")} />}
             {mode === "drill" && <TutorDrill ctx={ctx} />}
             {mode === "recall" && <TutorRecall ctx={ctx} />}
           </div>
         </div>
-      </aside>
+      </div>
     </>
   );
 }

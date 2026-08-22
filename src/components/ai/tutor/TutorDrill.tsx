@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  Check, X, ArrowRight, RefreshCw, Sparkles, BookOpen, Flame, RotateCcw, AlertCircle,
+  Check, X, ArrowRight, RefreshCw, Sparkles, BookOpen, Flame, RotateCcw, AlertCircle, ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
+import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import TutorOrb from "./TutorOrb";
 import { buildDrill, jumpToSource, scoreBand, type DrillQuestion, type TutorContext } from "./shared";
 
@@ -52,6 +53,7 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
   const [at, setAt] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
+  const [showSource, setShowSource] = useState(false);
   const [streak, setStreak] = useState(0);
   const [best, setBest] = useState(0);
 
@@ -60,7 +62,7 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
 
   const start = useCallback(async (opts?: { only?: DrillQuestion[] }) => {
     setError(null);
-    setPicked(null); setAt(0); setStreak(0); setBest(0);
+    setPicked(null); setAt(0); setStreak(0); setBest(0); setShowSource(false);
 
     if (opts?.only) {
       setQuestions(opts.only);
@@ -99,7 +101,7 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
 
   const next = () => {
     if (picked === null) return;
-    if (at + 1 < questions.length) { setAt(at + 1); setPicked(null); }
+    if (at + 1 < questions.length) { setAt(at + 1); setPicked(null); setShowSource(false); }
     else setPhase("done");
   };
 
@@ -320,6 +322,12 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
   // ── Running ─────────────────────────────────────────────────────
   if (!current) return null;
   const right = picked !== null && picked === current.answer;
+  // Present when the cited answer belongs to the unit this page already loaded
+  // (the usual case). Whole-subject drills can cite another unit — those still
+  // fall back to jumping.
+  const sourceAnswer = current.source_id
+    ? ctx.qa.find((q) => q.id === current.source_id)?.answer_md ?? null
+    : null;
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -400,16 +408,37 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
               {right ? "Correct" : "Not quite"}
             </p>
             {current.why && <p className="text-[13px] text-zinc-300 leading-relaxed">{current.why}</p>}
-            {current.source_id && (
+
+            {/* Reveal the source answer in place. Jumping to it would close the
+                modal and throw away a half-finished drill. */}
+            {sourceAnswer ? (
+              <>
+                <button
+                  onClick={() => setShowSource((s) => !s)}
+                  className="td-btn-ghost mt-3 px-2.5 py-1.5 rounded-full text-[11px] font-medium inline-flex items-center gap-1.5 max-w-full"
+                >
+                  <BookOpen className="w-3 h-3 td-accent-text shrink-0" />
+                  <span className="truncate">{showSource ? "Hide the full answer" : (current.source_q ?? "Read the full answer")}</span>
+                  <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showSource ? "rotate-180" : ""}`} />
+                </button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${showSource ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                  <div className="overflow-hidden">
+                    <div className="pt-3 mt-3 border-t border-white/8">
+                      <MarkdownRenderer content={sourceAnswer} />
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : current.source_id ? (
               <button
                 onClick={() => jumpToSource(current.source_id!)}
                 title={current.source_q ?? undefined}
                 className="td-btn-ghost mt-3 px-2.5 py-1.5 rounded-full text-[11px] font-medium inline-flex items-center gap-1.5 max-w-full"
               >
                 <BookOpen className="w-3 h-3 td-accent-text shrink-0" />
-                <span className="truncate">{current.source_q ?? "Read the full answer"}</span>
+                <span className="truncate">{current.source_q ?? "Open it in the unit"}</span>
               </button>
-            )}
+            ) : null}
           </div>
         )}
       </div>
