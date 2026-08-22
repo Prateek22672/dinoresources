@@ -11,9 +11,12 @@
 DO $do$
 DECLARE sid uuid;
 BEGIN
-  SELECT id INTO sid FROM public.subjects WHERE name ILIKE 'Ad Hoc and Sensor Networks' LIMIT 1;
+  -- Matches "Adhoc and Sensor Networks" as well as "Ad Hoc / Ad-Hoc" spellings,
+  -- so a rename doesn't silently stop the seed from finding the subject.
+  SELECT id INTO sid FROM public.subjects
+   WHERE name ILIKE 'Ad%hoc and Sensor Networks' AND active LIMIT 1;
   IF sid IS NULL THEN
-    RAISE EXCEPTION 'Subject "Ad Hoc and Sensor Networks" not found — create it in Admin first.';
+    RAISE EXCEPTION 'Subject "Adhoc and Sensor Networks" not found — check the exact name in Admin.';
   END IF;
 
   DELETE FROM public.subject_qa WHERE subject_id = sid AND unit_number = 1 AND question IN (
