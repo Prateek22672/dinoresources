@@ -1,14 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
   Sparkles, FileText, FileQuestion, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
-  Lock, Gift, Check, Plus, ArrowRight,
+  Lock, Gift, Check, Plus, ArrowRight, MessageSquare, Target, PenLine,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
 import { markStudied, ReadinessSection } from "@/lib/readiness";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import TutorOrb from "@/components/ai/tutor/TutorOrb";
+import type { TutorContext } from "@/components/ai/tutor/shared";
+import type { TutorMode } from "@/components/ai/StudyTutor";
+
+// The tutor is a sizeable chunk (chat + drill + recall) and most sessions never
+// open it — load it the moment it's first needed, not on every unit view.
+const StudyTutor = lazy(() => import("@/components/ai/StudyTutor"));
 
 interface ResourceRow {
   id: string; title: string; type: "pdf" | "youtube" | "link";
@@ -53,8 +61,15 @@ function ytId(url: string): string | null {
 
 export default function UnitView({ subjectId, subjectName, section, onSection, hasAccess, priceLabel, inCart, onAddToCart }: UnitViewProps) {
   const navigate = useNavigate();
+  const { isOn } = useFeatureFlags();
   const isUnit = typeof section === "number";
   const [tab, setTab] = useState<UnitTab>("ai");
+
+  // ── AI tutor ──
+  const [tutorOpen, setTutorOpen] = useState(false);
+  const [tutorMode, setTutorMode] = useState<TutorMode>("chat");
+  const tutorOn = isOn("studyai") && isUnit;
+  const openTutor = (m: TutorMode) => { setTutorMode(m); setTutorOpen(true); };
 
   // readiness section key for this view
   const readinessKey: ReadinessSection =
@@ -129,6 +144,45 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   }, [subjectId, section, isUnit]);
   useEffect(() => { load(); }, [load]);
 
+  // What the tutor is allowed to see is exactly what this page received. Locked
+  // answers arrive with `answer_md` withheld by the RPC, so the tutor is blind
+  // to them too and can never quote material the student hasn't unlocked.
+  const tutorCtx: TutorContext = useMemo(() => ({
+    subjectId,
+    subjectName: subjectName ?? "this subject",
+    unit: isUnit ? (section as number) : null,
+    topic: activeTopic === "all" ? null : topics.find((t) => t.id === activeTopic)?.title ?? null,
+    hasAccess,
+    qa: qa.map((q) => ({
+      id: q.id,
+      question: q.question,
+      unit_number: q.unit_number,
+      answer_md: q.answer_md || null,
+      is_free: !!q.is_free,
+      topic_id: q.topic_id ?? null,
+    })),
+    topics: topics.map((t) => ({ id: t.id, title: t.title })),
+  }), [subjectId, subjectName, isUnit, section, activeTopic, topics, hasAccess, qa]);
+
+  // Citing a source is only half of it — tapping the citation has to land the
+  // student on the real answer in the page behind the panel.
+  useEffect(() => {
+    const onJump = (e: Event) => {
+      const id = (e as CustomEvent<{ qaId?: string }>).detail?.qaId;
+      if (!id || !qa.some((q) => q.id === id)) return;
+      setTab("ai");
+      setActiveTopic("all");
+      setOpenId(id);
+      markStudied(subjectId, readinessKey);
+      // let the accordion open before scrolling to it
+      requestAnimationFrame(() => {
+        document.getElementById(`qa-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    };
+    window.addEventListener("td:tutor-jump", onJump);
+    return () => window.removeEventListener("td:tutor-jump", onJump);
+  }, [qa, subjectId, readinessKey]);
+
   const loadRelated = useCallback(async (refresh = false) => {
     setRelatedLoading(true); setRelatedTried(true); setPlayingId(null);
     // Narrow the search to the topic the student is actually focused on (or the
@@ -155,6 +209,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     qa.forEach((x) => { if ((x as any).is_free) freeQaIds.add(x.id); });
   }
   const qaFree = (id: string) => !preview || freeQaIds.has(id);
+  // How many answers the tutor can actually read — the RPC withholds the rest.
+  const tutorReadable = qa.filter((x) => !!x.answer_md).length;
   // The server decides which material is unlocked (it withholds the url), so
   // trust that rather than guessing client-side.
   const resFree = (r: ResourceRow) => !!r.url;
@@ -347,6 +403,52 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No Q&amp;A added for this unit yet.</div>
         ) : (
           <div className="space-y-5">
+            {/* ── The tutor — the unit's answers, but conversational ──
+                Sits above the list because talking a unit through, being
+                drilled on it and writing it out are what turn reading into
+                marks; the accordion below is the reference it works from. */}
+            {tutorOn && (
+              <div className="td-hero rounded-3xl p-5 sm:p-6 relative overflow-hidden">
+                <div className="td-aurora" aria-hidden><i /><i /><i /></div>
+                <div className="relative z-10">
+                  <div className="flex items-start gap-4">
+                    <TutorOrb size={52} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500">Study with AI</p>
+                      <p className="text-white font-bold text-lg leading-tight mt-1">Talk this unit through with Rex</p>
+                      <p className="text-zinc-400 text-[13px] mt-1.5 leading-relaxed max-w-[46ch]">
+                        {tutorReadable > 0 ? (
+                          <>He&apos;s read <span className="text-white font-semibold">{tutorReadable}</span> of this unit&apos;s answers and explains from them — not from the internet.</>
+                        ) : (
+                          <>Unlock this subject and Rex will read every answer in it with you.</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mt-5">
+                    {([
+                      { m: "chat" as const, icon: MessageSquare, label: "Explain", sub: "Ask anything" },
+                      { m: "drill" as const, icon: Target, label: "Drill", sub: "Quiz me" },
+                      { m: "recall" as const, icon: PenLine, label: "Recall", sub: "Mark my answer" },
+                    ]).map((b) => (
+                      <button
+                        key={b.m}
+                        onClick={() => openTutor(b.m)}
+                        className="td-surface td-card-click rounded-2xl px-2 py-3.5 flex flex-col items-center gap-1.5 text-center"
+                      >
+                        <span className="w-8 h-8 rounded-xl td-accent-bg flex items-center justify-center">
+                          <b.icon className="w-4 h-4" />
+                        </span>
+                        <span className="text-[12.5px] font-bold text-white leading-none">{b.label}</span>
+                        <span className="text-[10.5px] text-zinc-500 leading-none">{b.sub}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Quick-jump — switch straight to any question instead of scrolling the whole list */}
             {aiFlatItems.length > 4 && (
               <div className="sticky top-16 z-10 -mx-1 px-1">
@@ -579,6 +681,30 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
       {/* Resources */}
       {tab === "resources" && <Materials />}
+
+      {/* Tutor launcher — stays reachable while the student scrolls the unit,
+          so a question never costs them their place in the page. */}
+      {tutorOn && !tutorOpen && qa.length > 0 && (
+        <button
+          onClick={() => openTutor("chat")}
+          aria-label="Ask Rex, your study tutor"
+          className="fixed z-[80] bottom-5 right-4 sm:bottom-6 sm:right-6 td-glass rounded-full pl-2 pr-4 py-2 flex items-center gap-2.5 shadow-[0_18px_45px_-12px_rgba(0,0,0,0.6)] transition-transform hover:scale-[1.04] active:scale-95"
+        >
+          <TutorOrb size={30} />
+          <span className="text-[13px] font-bold text-white whitespace-nowrap">Ask Rex</span>
+        </button>
+      )}
+
+      {tutorOn && tutorOpen && (
+        <Suspense fallback={null}>
+          <StudyTutor
+            open
+            onClose={() => setTutorOpen(false)}
+            ctx={tutorCtx}
+            initialMode={tutorMode}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

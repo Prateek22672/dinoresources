@@ -37,6 +37,8 @@ export interface SubjectQARow {
   id: string;
   subject_id: string;
   unit_number: number;
+  /** Topic within the unit this question belongs to (null = "General"). */
+  topic_id?: string | null;
   question: string;
   answer_md: string;
   order_index: number;

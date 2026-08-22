@@ -490,8 +490,92 @@ iframe[src*="razorpay"] {
   }
   @keyframes td-anniv-sweep { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(100%); } }
 
+  /* ── AI Tutor (Study-With-AI) ──────────────────────────────────────
+     Depth here comes from motion, blur and layering rather than gradients:
+     solid accent blobs drifting behind a blurred surface, a morphing orb,
+     and staggered entrances. Same palette rules as everything else. */
+
+  /* Morphing orb — the tutor's face. Idle it breathes; thinking it churns. */
+  .td-orb {
+    background: var(--td-accent);
+    border-radius: 54% 46% 58% 42% / 52% 58% 42% 48%;
+    animation: td-orb-morph 9s ease-in-out infinite;
+  }
+  .td-orb-busy { animation-duration: 2.6s; }
+  @keyframes td-orb-morph {
+    0%, 100% { border-radius: 54% 46% 58% 42% / 52% 58% 42% 48%; transform: rotate(0deg) scale(1); }
+    33%      { border-radius: 42% 58% 44% 56% / 58% 42% 58% 42%; transform: rotate(60deg) scale(1.04); }
+    66%      { border-radius: 60% 40% 52% 48% / 44% 56% 44% 56%; transform: rotate(-40deg) scale(0.97); }
+  }
+
+  /* Expanding ring emitted while the tutor is working. */
+  .td-orb-ring {
+    border: 1px solid rgb(var(--td-accent-rgb) / 0.55);
+    animation: td-orb-ring 1.8s cubic-bezier(.22,1,.36,1) infinite;
+  }
+  @keyframes td-orb-ring {
+    0%   { transform: scale(.7); opacity: .75; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
+  /* Drifting accent blobs behind the panel head. Blurred solids, no gradient. */
+  .td-aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .td-aurora > i {
+    position: absolute; display: block; border-radius: 50%;
+    background: rgb(var(--td-accent-rgb) / 0.30);
+    filter: blur(34px);
+    animation: td-drift 16s ease-in-out infinite;
+  }
+  .td-aurora > i:nth-child(1) { width: 190px; height: 190px; top: -70px; left: -40px; }
+  .td-aurora > i:nth-child(2) { width: 150px; height: 150px; top: -50px; right: -30px; animation-delay: -6s; background: rgb(var(--td-accent-rgb) / 0.20); }
+  .td-aurora > i:nth-child(3) { width: 120px; height: 120px; bottom: -70px; left: 40%; animation-delay: -11s; background: rgb(var(--td-accent-rgb) / 0.16); }
+  @keyframes td-drift {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50%      { transform: translate3d(26px,18px,0) scale(1.16); }
+  }
+
+  /* Message entrance — settles rather than pops. */
+  @keyframes td-msg-in {
+    from { opacity: 0; transform: translateY(10px) scale(.985); }
+    to   { opacity: 1; transform: none; }
+  }
+  .td-msg { animation: td-msg-in .42s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Source chips appear one after another as "found in your notes". */
+  @keyframes td-pop-in {
+    from { opacity: 0; transform: translateY(6px) scale(.9); }
+    to   { opacity: 1; transform: none; }
+  }
+  .td-pop { animation: td-pop-in .34s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Retrieval indicator — a line sweeping the notes being searched. */
+  .td-scan { position: relative; overflow: hidden; }
+  .td-scan::after {
+    content: ""; position: absolute; inset: 0;
+    background: rgb(var(--td-accent-rgb) / 0.16);
+    transform: translateX(-100%);
+    animation: td-scan-sweep 1.25s ease-in-out infinite;
+  }
+  @keyframes td-scan-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+  /* Correct / wrong answer feedback on a drill option. */
+  @keyframes td-nudge {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+  .td-wrong { animation: td-nudge .34s ease-in-out both; }
+  @keyframes td-pop-score {
+    0%   { transform: scale(.86); opacity: 0; }
+    60%  { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .td-score-in { animation: td-pop-score .5s cubic-bezier(.22,1,.36,1) both; }
+
   @media (prefers-reduced-motion: reduce) {
     .td-page, .td-banner, .td-banner-icon, .td-banner-cta, .td-card-click, .td-anniv-shine { animation: none !important; transition: none !important; }
     .td-banner:hover, .td-card-click:hover { transform: none !important; }
+    .td-orb, .td-orb-ring, .td-aurora > i, .td-msg, .td-pop, .td-wrong, .td-score-in { animation: none !important; }
+    .td-scan::after { animation: none !important; opacity: 0; }
   }
 }
