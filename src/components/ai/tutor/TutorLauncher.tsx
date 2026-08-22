@@ -6,8 +6,12 @@ import type { TutorMode, TutorNudge } from "./shared";
 
 const DOCK_KEY = "td:tutor-dock";
 const EDGE = 12;
-/** How much of the collapsed tab stays off-screen. */
-const PEEK_HIDDEN = 20;
+/**
+ * How much of the collapsed tab sits off-screen. Kept deliberately small: the
+ * tab must stay comfortably larger than a 44px touch target once hidden, or it
+ * becomes decorative rather than tappable.
+ */
+const PEEK_HIDDEN = 4;
 
 type Side = "left" | "right";
 interface Dock { y: number; side: Side; collapsed: boolean }
@@ -198,10 +202,17 @@ export default function TutorLauncher({
           title="Show Rex"
           className={`td-glass flex items-center justify-center select-none cursor-pointer
             shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] transition-transform duration-200
-            ${side === "right" ? "rounded-l-full pl-2 pr-1 hover:-translate-x-2" : "rounded-r-full pr-2 pl-1 hover:translate-x-2"}`}
-          style={{ paddingTop: 6, paddingBottom: 6 }}
+            ${side === "right" ? "rounded-l-2xl hover:-translate-x-1.5" : "rounded-r-2xl hover:translate-x-1.5"}`}
+          /* Sized so the visible portion still clears a 44px touch target once
+             PEEK_HIDDEN is taken off the docked edge. */
+          style={{
+            minWidth: 48 + PEEK_HIDDEN,
+            minHeight: 52,
+            paddingLeft: side === "right" ? 10 : 10 + PEEK_HIDDEN,
+            paddingRight: side === "right" ? 10 + PEEK_HIDDEN : 10,
+          }}
         >
-          <TutorOrb size={26} busy={!!nudge} />
+          <TutorOrb size={30} busy={!!nudge} />
         </div>
       ) : (
         <div className="flex items-center gap-1">

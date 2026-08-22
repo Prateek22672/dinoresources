@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, SubjectRow } from "@/integrations/supabase/revamp";
 import { useAccess } from "@/hooks/useAccess";
@@ -59,6 +59,18 @@ export default function SubjectPage() {
     );
   }
 
+  // "Back" used to be hardcoded to /library, which was wrong for everyone who
+  // arrived from Subjects, the dashboard, a resume card or DinoBot. Step back
+  // through real history instead, so it returns wherever they actually came
+  // from. React Router keeps an index in history.state; idx > 0 means there is
+  // an in-app entry behind us. A deep link or a fresh tab has none, and only
+  // then does the library make sense as a destination.
+  const goBack = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    else navigate("/library");
+  };
+
   // Switching unit/section doesn't change the URL, so the page keeps whatever
   // scroll offset the previous section left behind — start each one at the top.
   const goToSection = (id: Section) => {
@@ -85,9 +97,9 @@ export default function SubjectPage() {
   return (
     <AppShell hideHeader={focus}>
       <div className="flex items-center justify-between gap-3 mb-5">
-        <Link to="/library" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white">
+        <button onClick={goBack} className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-white transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back
-        </Link>
+        </button>
         <button
           onClick={() => setFocus((f) => !f)}
           className="td-btn-ghost px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5"

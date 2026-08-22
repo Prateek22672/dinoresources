@@ -20,9 +20,10 @@ import Footer from "./Footer";
 import {
   BookOpen, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
   CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
-  Play, TrendingUp, ChevronLeft, ChevronRight,
+  Play, TrendingUp, ChevronLeft, ChevronRight, Eye, MessageSquare, Target, PenLine,
 } from "lucide-react";
 import { GenAiIcon } from "@/components/BrandIcons";
+import TutorOrb from "@/components/ai/tutor/TutorOrb";
 import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
 
@@ -238,6 +239,49 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* ── Study-With-AI tutor ──
+              Given its own band directly under the greeting because it lives
+              two clicks deep (subject → unit → Study With AI) and nobody finds
+              a feature they don't know to look for. Lands them on the subject
+              they were last reading, where the tutor actually is. */}
+          {isOn("studyai") && (
+            <button
+              onClick={() => navigate(resume ? `/subject/${resume.slug}` : owned.length > 0 ? "/library" : "/store")}
+              className="td-hero td-card-click rounded-[28px] p-5 sm:p-6 mb-8 w-full text-left relative overflow-hidden"
+            >
+              <div className="td-aurora" aria-hidden><i /><i /><i /></div>
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+                <TutorOrb size={56} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 flex items-center gap-2">
+                    Study with AI
+                    <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-normal">NEW</span>
+                  </p>
+                  <p className="text-white font-bold text-lg sm:text-xl leading-tight mt-1">Meet Rex, your study tutor</p>
+                  <p className="text-zinc-400 text-[13px] mt-1.5 leading-relaxed max-w-[54ch]">
+                    He reads the real answers inside your units and explains from those — not from the internet — then drills you until they stick.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-3.5">
+                    {[
+                      { label: "Explain", icon: MessageSquare, sub: "Ask anything" },
+                      { label: "Drill", icon: Target, sub: "Quiz me" },
+                      { label: "Recall", icon: PenLine, sub: "Mark my answer" },
+                    ].map((m) => (
+                      <span key={m.label} className="td-surface-2 rounded-full pl-2.5 pr-3 py-1.5 flex items-center gap-1.5">
+                        <m.icon className="w-3.5 h-3.5 td-accent-text" />
+                        <span className="text-[11.5px] font-semibold text-zinc-200">{m.label}</span>
+                        <span className="text-[11px] text-zinc-600 hidden sm:inline">· {m.sub}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <span className="td-btn-primary px-5 py-2.5 rounded-full text-[13px] font-bold inline-flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+                  Try it <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </button>
+          )}
+
           {/* combo strip — only ever the student's OWN year (see comboYear above) */}
           {comboYear && (
             <div className="td-hero rounded-3xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
@@ -261,6 +305,83 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* ── A slice of the Store, right here ──
+              Same cards as Explore Subjects (preview + add to cart) rather than
+              a different-looking summary, so the action is identical wherever a
+              student meets a subject. Three, then a door to the rest. */}
+          {available.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-baseline justify-between mb-3">
+                <h2 className="text-white font-bold">Unlock more subjects</h2>
+                <button onClick={() => navigate("/store")} className="text-xs text-zinc-500 hover:text-white flex items-center gap-1">
+                  View all <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {available.slice(0, 3).map((s) => {
+                  const inCart = isInCart("subject", s.id);
+                  return (
+                    <div
+                      key={s.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
+                      onKeyDown={(e) => { if (e.key === "Enter") navigate(`/subject/${s.slug ?? s.id}`); }}
+                      className="td-surface td-card-click rounded-3xl p-5 flex flex-col justify-between cursor-pointer"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center mb-3">
+                            <BookOpen className="w-4.5 h-4.5 text-black" />
+                          </div>
+                          <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
+                        </div>
+                        <h3 className="text-white font-semibold leading-snug line-clamp-2">{s.name}</h3>
+                        {s.description
+                          ? <p className="text-zinc-500 text-xs mt-1.5 line-clamp-2">{s.description}</p>
+                          : <p className="text-zinc-500 text-xs mt-1.5">Syllabus, 5 units, PYQs &amp; Study-With-AI.</p>}
+                        <span className="inline-flex items-center gap-1.5 mt-2.5 td-accent-bg text-[10px] font-bold px-2 py-1 rounded-full">
+                          <Eye className="w-3 h-3" /> Free preview inside
+                        </span>
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/subject/${s.slug ?? s.id}`); }}
+                          className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Preview free
+                        </button>
+                        <button
+                          disabled={inCart}
+                          onClick={(e) => { e.stopPropagation(); addSubject(s.id, s.name); }}
+                          className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
+                        >
+                          {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add · {formatPaise(s.price_paise)}</>}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* the door to the rest */}
+                <button
+                  onClick={() => navigate("/store")}
+                  className="td-surface td-card-click rounded-3xl p-5 flex flex-col items-center justify-center text-center gap-2.5 min-h-[240px]"
+                >
+                  <span className="w-12 h-12 rounded-2xl td-accent-bg flex items-center justify-center"><Store className="w-5 h-5" /></span>
+                  <span className="text-white font-semibold">View all subjects</span>
+                  <span className="text-zinc-500 text-xs">
+                    {available.length} more to unlock{comboYear ? " · or take the full-year pack" : ""}
+                  </span>
+                  <span className="td-btn-ghost px-4 py-2 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 mt-1">
+                    Explore <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </button>
+              </div>
+            </section>
           )}
 
       </div>
