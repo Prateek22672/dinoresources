@@ -7,9 +7,9 @@ import TutorOrb from "./tutor/TutorOrb";
 import TutorChat from "./tutor/TutorChat";
 import TutorDrill from "./tutor/TutorDrill";
 import TutorRecall from "./tutor/TutorRecall";
-import { callRpc, type MasteryRow, type TutorContext } from "./tutor/shared";
+import { callRpc, type MasteryRow, type TutorContext, type TutorMode } from "./tutor/shared";
 
-export type TutorMode = "chat" | "drill" | "recall";
+export type { TutorMode };
 
 const MODES: { id: TutorMode; label: string; icon: typeof MessageSquare; hint: string }[] = [
   { id: "chat", label: "Explain", icon: MessageSquare, hint: "Ask anything from this unit" },
@@ -25,12 +25,14 @@ const MODES: { id: TutorMode; label: string; icon: typeof MessageSquare; hint: s
  * the page underneath to the real answer, so the two still work together.
  */
 export default function StudyTutor({
-  open, onClose, ctx, initialMode = "chat",
+  open, onClose, ctx, initialMode = "chat", seed = null,
 }: {
   open: boolean;
   onClose: () => void;
   ctx: TutorContext;
   initialMode?: TutorMode;
+  /** Question to ask automatically on open — set when a nudge was accepted. */
+  seed?: string | null;
 }) {
   const [mode, setMode] = useState<TutorMode>(initialMode);
   const [full, setFull] = useState(false);
@@ -185,7 +187,7 @@ export default function StudyTutor({
               Capped to a reading width and centred: the modal can be 860px
               wide, but a line of explanation shouldn't be. */}
           <div className="flex-1 min-h-0 flex flex-col w-full max-w-5xl mx-auto">
-            {mode === "chat" && <TutorChat ctx={ctx} name={name} mastery={mastery} onDrill={() => setMode("drill")} />}
+            {mode === "chat" && <TutorChat ctx={ctx} name={name} mastery={mastery} seed={seed} onDrill={() => setMode("drill")} />}
             {mode === "drill" && <TutorDrill ctx={ctx} />}
             {mode === "recall" && <TutorRecall ctx={ctx} />}
           </div>

@@ -76,12 +76,14 @@ function Answer({ text, animate }: { text: string; animate: boolean }) {
 }
 
 export default function TutorChat({
-  ctx, name, mastery, onDrill,
+  ctx, name, mastery, onDrill, seed = null,
 }: {
   ctx: TutorContext;
   name: string;
   mastery: number | null;
   onDrill: () => void;
+  /** Asked automatically on mount — set when the student accepted a nudge. */
+  seed?: string | null;
 }) {
   const storeKey = `td:tutor:${ctx.subjectId}:${ctx.unit ?? "all"}`;
   const [messages, setMessages] = useState<TutorMessage[]>(() => {
@@ -92,6 +94,7 @@ export default function TutorChat({
   const [copied, setCopied] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLTextAreaElement | null>(null);
+  const seedSent = useRef<string | null>(null);
 
   // Switching unit switches conversation — the tutor is scoped to what's open.
   useEffect(() => {
@@ -180,6 +183,16 @@ export default function TutorChat({
       setTimeout(() => setCopied((c) => (c === i ? null : c)), 1600);
     } catch { /* clipboard blocked — nothing useful to say */ }
   };
+
+  // Opened from a nudge with the question already chosen — ask it for them
+  // rather than making them retype it. Ref-guarded so a re-render cannot fire
+  // the same seed twice.
+  useEffect(() => {
+    if (!seed || seedSent.current === seed) return;
+    seedSent.current = seed;
+    void send(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed]);
 
   const scopeLine = ctx.unit
     ? `Unit ${ctx.unit}${ctx.topic ? ` · ${ctx.topic}` : ""} of ${ctx.subjectName}`

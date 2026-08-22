@@ -10,6 +10,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFn } from "@/integrations/supabase/revamp";
 
+/** Which face of the tutor is showing. */
+export type TutorMode = "chat" | "drill" | "recall";
+
+/**
+ * A proactive offer from Rex, shown next to the launcher.
+ *
+ * Deliberately small and easy to ignore: it appears when a student has just
+ * opened a long answer (the moment help is actually wanted), never interrupts,
+ * and dismissing it buys silence rather than just hiding one bubble.
+ */
+export interface TutorNudge {
+  /** Stable per trigger, so the same prompt is never queued twice. */
+  id: string;
+  text: string;
+  actions: { label: string; seed?: string; mode?: TutorMode }[];
+}
+
 /** Where the answer's facts came from. */
 export type Grounding = "notes" | "mixed" | "beyond" | "locked";
 

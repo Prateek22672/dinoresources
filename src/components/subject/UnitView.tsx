@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
@@ -12,8 +11,8 @@ import { AiIcon } from "@/components/BrandIcons";
 import { markStudied, ReadinessSection } from "@/lib/readiness";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import TutorOrb from "@/components/ai/tutor/TutorOrb";
-import type { TutorContext } from "@/components/ai/tutor/shared";
-import type { TutorMode } from "@/components/ai/StudyTutor";
+import TutorLauncher from "@/components/ai/tutor/TutorLauncher";
+import type { TutorContext, TutorMode, TutorNudge } from "@/components/ai/tutor/shared";
 
 // The tutor is a sizeable chunk (chat + drill + recall) and most sessions never
 // open it — load it the moment it's first needed, not on every unit view.
@@ -55,6 +54,17 @@ function toEmbedUrl(url: string): string | null {
 
 const resTypeIcon = { pdf: FileIcon, youtube: Youtube, link: ExternalLink };
 
+/** Dismissing one of Rex's offers quietens him for a while, site-wide. */
+const NUDGE_QUIET_KEY = "td:tutor-quiet";
+const nudgesQuiet = () => {
+  try { return Date.now() < Number(localStorage.getItem(NUDGE_QUIET_KEY) || 0); } catch { return false; }
+};
+
+/** Rotate wording deterministically, so a given prompt keeps the same phrasing
+ *  across re-renders instead of flickering between variants. */
+const phrase = (key: string, options: string[]) =>
+  options[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % options.length];
+
 /** Extract a YouTube video id (for thumbnails). */
 function ytId(url: string): string | null {
   return url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/)?.[1] ?? null;
@@ -69,8 +79,23 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   // ── AI tutor ──
   const [tutorOpen, setTutorOpen] = useState(false);
   const [tutorMode, setTutorMode] = useState<TutorMode>("chat");
+  const [tutorSeed, setTutorSeed] = useState<string | null>(null);
+  const [nudge, setNudge] = useState<TutorNudge | null>(null);
+  const nudged = useRef<Set<string>>(new Set());
   const tutorOn = isOn("studyai") && isUnit;
-  const openTutor = (m: TutorMode) => { setTutorMode(m); setTutorOpen(true); };
+
+  const openTutor = (m: TutorMode, seed?: string) => {
+    setNudge(null);
+    setTutorMode(m);
+    setTutorSeed(seed ?? null);
+    setTutorOpen(true);
+  };
+  const closeTutor = () => { setTutorOpen(false); setTutorSeed(null); };
+  // Dismissing a nudge buys real silence, not just one hidden bubble.
+  const dismissNudge = () => {
+    setNudge(null);
+    try { localStorage.setItem(NUDGE_QUIET_KEY, String(Date.now() + 10 * 60_000)); } catch { /* quota */ }
+  };
 
   // readiness section key for this view
   const readinessKey: ReadinessSection =
@@ -183,6 +208,59 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     window.addEventListener("td:tutor-jump", onJump);
     return () => window.removeEventListener("td:tutor-jump", onJump);
   }, [qa, subjectId, readinessKey]);
+
+  // Rex offers help where it is actually wanted: a few seconds after a student
+  // opens a long answer, which is exactly when "this is dense" sets in.
+  useEffect(() => {
+    if (!tutorOn || tutorOpen || !openId || nudgesQuiet()) return;
+    const item = qa.find((x) => x.id === openId);
+    if (!item?.answer_md) return;
+    const key = `q:${openId}`;
+    if (nudged.current.has(key)) return;
+    const t = setTimeout(() => {
+      nudged.current.add(key);
+      setNudge({
+        id: key,
+        text: phrase(openId, [
+          "Want this one in simpler words?",
+          "Shall I break this one down for you?",
+          "Want a quick example that makes this click?",
+        ]),
+        actions: [
+          { label: "Make it simpler", seed: `Explain "${item.question}" in simpler words — assume I'm hearing it for the first time.` },
+          { label: "Give an example", seed: `Give me one concrete example that makes "${item.question}" click.` },
+        ],
+      });
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [openId, tutorOn, tutorOpen, qa]);
+
+  // And once per unit per session, an opening offer — before they have started
+  // reading, when a walkthrough is worth more than an explanation.
+  useEffect(() => {
+    if (!tutorOn || tutorOpen || loading || openId || nudgesQuiet()) return;
+    const readable = qa.filter((x) => !!x.answer_md).length;
+    if (readable === 0) return;
+    const key = `u:${subjectId}:${section}`;
+    if (nudged.current.has(key)) return;
+    try { if (sessionStorage.getItem(`td:tutor-hi:${key}`) === "1") return; } catch { /* private mode */ }
+    const t = setTimeout(() => {
+      nudged.current.add(key);
+      try { sessionStorage.setItem(`td:tutor-hi:${key}`, "1"); } catch { /* private mode */ }
+      setNudge({
+        id: key,
+        text: `Unit ${section} has ${readable} answers in it. Want me to walk you through them?`,
+        actions: [
+          { label: "Walk me through", seed: `Give me a quick walkthrough of Unit ${section} — the big ideas, and what matters most for the exam.` },
+          { label: "Quiz me instead", mode: "drill" },
+        ],
+      });
+    }, 3200);
+    return () => clearTimeout(t);
+  }, [tutorOn, tutorOpen, loading, openId, qa, subjectId, section]);
+
+  // A nudge is about the unit on screen — moving off it makes the offer stale.
+  useEffect(() => { setNudge(null); }, [section, subjectId]);
 
   const loadRelated = useCallback(async (refresh = false) => {
     setRelatedLoading(true); setRelatedTried(true); setPlayingId(null);
@@ -683,31 +761,19 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
       {/* Resources */}
       {tab === "resources" && <Materials />}
 
-      {/* Tutor launcher — stays reachable while the student scrolls the unit,
-          so a question never costs them their place in the page.
-          Portalled for the same reason as the modal: this subtree sits inside
-          <main class="td-page">, whose animated transform makes it the
-          containing block for fixed children, which pins the pill to the page
-          instead of the viewport. */}
-      {tutorOn && !tutorOpen && qa.length > 0 && createPortal(
-        <button
-          onClick={() => openTutor("chat")}
-          aria-label="Ask Rex, your study tutor"
-          className="fixed z-[80] bottom-5 right-4 sm:bottom-6 sm:right-6 td-glass rounded-full pl-2 pr-4 py-2 flex items-center gap-2.5 shadow-[0_18px_45px_-12px_rgba(0,0,0,0.6)] transition-transform hover:scale-[1.04] active:scale-95"
-        >
-          <TutorOrb size={30} />
-          <span className="text-[13px] font-bold text-white whitespace-nowrap">Ask Rex</span>
-        </button>,
-        document.body,
+      {/* Tutor launcher — draggable, and the surface Rex makes offers from. */}
+      {tutorOn && !tutorOpen && qa.length > 0 && (
+        <TutorLauncher nudge={nudge} onOpen={openTutor} onDismissNudge={dismissNudge} />
       )}
 
       {tutorOn && tutorOpen && (
         <Suspense fallback={null}>
           <StudyTutor
             open
-            onClose={() => setTutorOpen(false)}
+            onClose={closeTutor}
             ctx={tutorCtx}
             initialMode={tutorMode}
+            seed={tutorSeed}
           />
         </Suspense>
       )}
