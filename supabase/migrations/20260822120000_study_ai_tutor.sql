@@ -133,6 +133,12 @@ BEGIN
 END
 $fn$;
 
+-- Postgres grants EXECUTE to PUBLIC on every new function, and `anon` is a
+-- member of PUBLIC — so granting to `authenticated` alone would not have
+-- restricted anything. This function is SECURITY DEFINER and therefore reads
+-- past the `TO authenticated` policy on subject_qa, so the default grant has to
+-- be revoked or a signed-out caller could pull free-preview answers.
+REVOKE ALL ON FUNCTION public.search_subject_qa(uuid, text, integer, integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.search_subject_qa(uuid, text, integer, integer) TO authenticated;
 
 -- ── 3. Drill history ────────────────────────────────────────────────
@@ -197,6 +203,9 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
    ORDER BY a.unit_number;
 $$;
 
+-- Same reasoning as above. This one filters on auth.uid() so a signed-out
+-- caller gets nothing anyway, but it should not be reachable at all.
+REVOKE ALL ON FUNCTION public.study_mastery(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.study_mastery(uuid) TO authenticated;
 
 -- ── 5. Feature flag ─────────────────────────────────────────────────
