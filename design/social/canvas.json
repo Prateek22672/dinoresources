@@ -1,0 +1,34 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "The poster" },
+    { "id": "page-2", "name": "Full set" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1080, "h": 1350, "title": "Share this one — 1080x1350", "page": "page-1" },
+
+    { "file": "HeroPost.dc.html", "x": 0,    "y": 0,    "w": 1080, "h": 1080, "title": "Post 1 — Meet Rex",      "page": "page-2" },
+    { "file": "Modes.dc.html",    "x": 1200, "y": 0,    "w": 1080, "h": 1080, "title": "Post 2 — Three modes",   "page": "page-2" },
+    { "file": "Compare.dc.html",  "x": 2400, "y": 0,    "w": 1080, "h": 1080, "title": "Post 3 — vs ChatGPT",    "page": "page-2" },
+    { "file": "StoryHero.dc.html","x": 0,    "y": 1280, "w": 1080, "h": 1920, "title": "Story 1 — Meet Rex",     "page": "page-2" },
+    { "file": "StoryQuiz.dc.html","x": 1200, "y": 1280, "w": 1080, "h": 1920, "title": "Story 2 — Drill",        "page": "page-2" }
+  ],
+  "annotations": [
+    {
+      "id": "poster-note",
+      "x": 1200,
+      "y": 0,
+      "w": 500,
+      "text": "The one to share.\n\n1080x1350 is Instagram's 4:5 portrait — the largest feed size that is never cropped, and it shares cleanly on WhatsApp as an image too.\n\nIt carries the whole feature in one view: who Rex is, a real answer showing the green FROM YOUR NOTES badge and its citation, the three modes, and where to find him.\n\nExport it as PNG from the toolbar. Headlines fall back from Bricolage Grotesque on export — worth one look before posting.",
+      "page": "page-1"
+    },
+    {
+      "id": "set-note",
+      "x": 2400,
+      "y": 1280,
+      "w": 520,
+      "text": "The original five, kept for a carousel or a story sequence.\n\nPosts are 1080x1080. Stories are 1080x1920, with content clear of the top ~250px and bottom ~300px where Instagram and WhatsApp put their own chrome.",
+      "page": "page-2"
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

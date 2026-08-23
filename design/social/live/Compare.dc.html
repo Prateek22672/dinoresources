@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #a9a0f5; } a:hover { color: #7c6cf0; }
+  </style>
+</helmet>
+
+<div style="width: 1080px; height: 1080px; position: relative; overflow: hidden; background: #0e0e11; font-family: Inter, ui-sans-serif, system-ui, sans-serif;">
+
+  <div style="position: absolute; bottom: -220px; right: -140px; width: 640px; height: 580px; background: rgba(124,108,240,0.16); border-radius: 48% 52% 42% 58% / 50% 58% 42% 50%; filter: blur(85px);"></div>
+  <div style="position: absolute; inset: 0; opacity: 0.5; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E&quot;);"></div>
+
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 80px 72px; display: flex; flex-direction: column; justify-content: space-between;">
+
+    <h1 style="margin: 0; padding: 0 12px; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 78px; line-height: 1; letter-spacing: -2.6px; color: #ffffff;">
+      Why not just<br>ask ChatGPT?
+    </h1>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px;">
+
+      <!-- the generic option, deliberately muted -->
+      <div style="background: #141417; border: 1px solid #26262b; border-radius: 30px; padding: 44px 36px; display: flex; flex-direction: column; gap: 26px;">
+        <span style="font-size: 21px; font-weight: 800; letter-spacing: 2.6px; text-transform: uppercase; color: #71717a;">ChatGPT</span>
+        <p style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; line-height: 1.14; letter-spacing: -1.3px; font-weight: 700; color: #a1a1aa;">
+          Answers from the internet.
+        </p>
+        <p style="margin: 0; font-size: 25px; line-height: 1.5; font-weight: 500; color: #71717a;">
+          Confident, general, and not written for your paper.
+        </p>
+      </div>
+
+      <!-- ours, carrying the accent and the product's real badge -->
+      <div style="background: #1a1a1e; border: 1px solid rgba(124,108,240,0.42); border-radius: 30px; padding: 44px 36px; display: flex; flex-direction: column; gap: 26px;">
+        <span style="font-size: 21px; font-weight: 800; letter-spacing: 2.6px; text-transform: uppercase; color: #a9a0f5;">Rex</span>
+        <p style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; line-height: 1.14; letter-spacing: -1.3px; font-weight: 700; color: #ffffff;">
+          Answers from your seniors' notes.
+        </p>
+        <p style="margin: 0; font-size: 25px; line-height: 1.5; font-weight: 500; color: #a1a1aa;">
+          Vetted answers for your exact GITAM paper — and he shows you the source.
+        </p>
+        <!-- the same grounding pill the product renders on every answer -->
+        <span style="align-self: flex-start; display: flex; align-items: center; gap: 12px; background: rgba(52,211,153,0.14); border-radius: 999px; padding: 12px 22px;">
+          <span style="width: 12px; height: 12px; border-radius: 50%; background: #34d399;"></span>
+          <span style="font-size: 20px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: #6ee7b7;">From your notes</span>
+        </span>
+      </div>
+
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 12px;">
+      <span style="font-size: 28px; font-weight: 600; color: #71717a;">One of them sat your syllabus.</span>
+      <span style="font-size: 26px; font-weight: 600; color: #52525b;">teamdino.in</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

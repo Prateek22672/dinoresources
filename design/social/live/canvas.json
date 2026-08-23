@@ -1,0 +1,56 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1080,
+      "h": 1080,
+      "title": "Post 1 — Meet Rex"
+    },
+    {
+      "file": "Modes.dc.html",
+      "x": 1200,
+      "y": 0,
+      "w": 1080,
+      "h": 1080,
+      "title": "Post 2 — Three modes"
+    },
+    {
+      "file": "Compare.dc.html",
+      "x": 2400,
+      "y": 0,
+      "w": 1080,
+      "h": 1080,
+      "title": "Post 3 — vs ChatGPT"
+    },
+    {
+      "file": "StoryHero.dc.html",
+      "x": 0,
+      "y": 1280,
+      "w": 1080,
+      "h": 1920,
+      "title": "Story 1 — Meet Rex"
+    },
+    {
+      "file": "StoryQuiz.dc.html",
+      "x": 1200,
+      "y": 1280,
+      "w": 1080,
+      "h": 1920,
+      "title": "Story 2 — Drill"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "export-note",
+      "x": 2400,
+      "y": 1280,
+      "w": 520,
+      "text": "Export each artboard as PNG from the toolbar.\n\nPosts are 1080x1080 (Instagram feed).\nStories are 1080x1920 — content is kept clear of the top ~250px and bottom ~300px, where Instagram and WhatsApp put their own chrome.\n\nExported text falls back from Bricolage Grotesque, so check the headlines after export."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

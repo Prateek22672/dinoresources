@@ -16,9 +16,10 @@ import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminFeatures from "@/components/admin/AdminFeatures";
 import AdminCharges from "@/components/admin/AdminCharges";
 import AdminNotices from "@/components/admin/AdminNotices";
-import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Search, X, Bot } from "lucide-react";
+import AdminSocial from "@/components/admin/AdminSocial";
+import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Search, X, Bot, Sparkles } from "lucide-react";
 
-type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth";
+type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth" | "social";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -33,6 +34,7 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "audit", label: "Audit Log", icon: ScrollText },
   { id: "aihealth", label: "AI Health", icon: Bot },
+  { id: "social", label: "Launch Graphics", icon: Sparkles },
   { id: "security", label: "Security", icon: Lock },
   { id: "access", label: "Access Audit", icon: ShieldAlert },
   { id: "sharing", label: "Account Sharing", icon: UserX },
@@ -56,6 +58,7 @@ const TAB_KEYWORDS: Record<string, string> = {
   access: "access audit ownership",
   sharing: "account sharing multiple devices",
   database: "storage cleanup delete space size",
+  social: "poster instagram whatsapp story marketing png export launch graphics rex",
 };
 
 export default function Admin() {
@@ -192,6 +195,7 @@ export default function Admin() {
       {tab === "notices" && <AdminNotices />}
       {tab === "features" && <AdminFeatures />}
       {tab === "aihealth" && <AdminAiHealth />}
+      {tab === "social" && <AdminSocial />}
       {tab === "security" && <AdminSecurity />}
       {tab === "access" && <AdminAccessAudit />}
       {tab === "sharing" && <AdminSharing />}
