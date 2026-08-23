@@ -17,6 +17,8 @@ export default function AuthPage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [signupEmail, setSignupEmail] = useState<string | null>(null);
+  /** Set when signup was for an address that already has an account. */
+  const [alreadyRegistered, setAlreadyRegistered] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,7 +30,7 @@ export default function AuthPage() {
     const fullName = ((formData.get("fullName") as string) || "").trim();
     const phone = ((formData.get("phone") as string) || "").trim();
     if (!fullName) { setIsLoading(false); toast.error("Please enter your full name"); return; }
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
@@ -37,8 +39,18 @@ export default function AuthPage() {
       },
     });
     setIsLoading(false);
-    if (error) toast.error(error.message);
-    else setSignupEmail(email);
+    if (error) { toast.error(error.message); return; }
+
+    // Supabase deliberately reports success when the email is already
+    // registered, so it can't be used to discover who has an account. It sends
+    // no email in that case, which is indistinguishable from a delivery failure
+    // unless we check: an existing user comes back with an empty `identities`.
+    // Telling them to check an inbox that will stay empty is the worst answer.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setAlreadyRegistered(email);
+      return;
+    }
+    setSignupEmail(email);
   };
 
   const handleResend = async () => {
@@ -83,7 +95,9 @@ export default function AuthPage() {
     });
     setIsResettingPassword(false);
     if (error) toast.error(error.message);
-    else { toast.success("Password reset email sent! Check your inbox."); setIsForgotPasswordOpen(false); }
+    // Supabase reports success whether or not that address has an account, so
+    // promising an email that may never come is a promise we can't keep.
+    else { toast.success("If that email has an account, a reset link is on its way."); setIsForgotPasswordOpen(false); }
   };
 
   const field =
@@ -182,7 +196,31 @@ export default function AuthPage() {
           {/* Right — form card */}
           <div className="td-auth-in2 w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end">
             <div className="rounded-[28px] bg-[#121216] border border-white/10 p-6 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
-              {signupEmail ? (
+              {alreadyRegistered ? (
+                /* No email is on its way for this address, so don't send them to
+                   wait at an empty inbox — give them the two routes that work. */
+                <div className="td-auth-in flex flex-col items-center text-center py-4">
+                  <div className="w-16 h-16 rounded-2xl td-accent-bg flex items-center justify-center mb-4">
+                    <MailCheck className="w-7 h-7" />
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">You already have an account</h2>
+                  <p className="text-zinc-400 text-sm mt-2 max-w-xs">
+                    <span className="text-white font-medium">{alreadyRegistered}</span> is already registered, so we haven&apos;t sent a new verification email. Log in instead — or reset your password if you&apos;ve forgotten it.
+                  </p>
+                  <div className="flex flex-col gap-2.5 w-full mt-6">
+                    <button
+                      type="button"
+                      onClick={() => { setAlreadyRegistered(null); setIsForgotPasswordOpen(true); }}
+                      className="td-btn-ghost h-11 rounded-full text-sm font-semibold flex items-center justify-center gap-2"
+                    >
+                      Reset my password
+                    </button>
+                    <button type="button" onClick={() => setAlreadyRegistered(null)} className="text-xs font-medium text-zinc-500 hover:text-white transition-colors">
+                      Back to log in
+                    </button>
+                  </div>
+                </div>
+              ) : signupEmail ? (
                 /* Post-signup — a real screen to check, not just a toast that vanishes */
                 <div className="td-auth-in flex flex-col items-center text-center py-4">
                   <div className="w-16 h-16 rounded-2xl td-accent-bg flex items-center justify-center mb-4">
