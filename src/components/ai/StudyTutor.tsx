@@ -7,7 +7,7 @@ import TutorOrb from "./tutor/TutorOrb";
 import TutorChat from "./tutor/TutorChat";
 import TutorDrill from "./tutor/TutorDrill";
 import TutorRecall from "./tutor/TutorRecall";
-import { callRpc, type MasteryRow, type TutorContext, type TutorMode } from "./tutor/shared";
+import { callRpc, hasUsableAnswer, type MasteryRow, type TutorContext, type TutorMode } from "./tutor/shared";
 
 export type { TutorMode };
 
@@ -95,7 +95,7 @@ export default function StudyTutor({
   const scope = ctx.unit
     ? `Unit ${ctx.unit}${ctx.topic ? ` · ${ctx.topic}` : ""}`
     : ctx.subjectName;
-  const readable = ctx.qa.filter((q) => q.answer_md).length;
+  const readable = ctx.qa.filter(hasUsableAnswer).length;
 
   // Portalled to <body> on purpose. UnitView renders inside <main class="td-page">,
   // which animates transform/filter and sits inside .td-app (overflow-x: clip).

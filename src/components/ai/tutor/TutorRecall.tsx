@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import TutorOrb from "./TutorOrb";
-import { gradeAnswer, jumpToSource, scoreBand, type GradeResult, type TutorContext, type TutorQa } from "./shared";
+import { gradeAnswer, hasUsableAnswer, jumpToSource, scoreBand, type GradeResult, type TutorContext, type TutorQa } from "./shared";
 
 /**
  * Active recall — the drill that actually moves marks. The student writes the
@@ -20,10 +20,15 @@ import { gradeAnswer, jumpToSource, scoreBand, type GradeResult, type TutorConte
 export default function TutorRecall({ ctx }: { ctx: TutorContext }) {
   // Only questions whose answer the student can actually see can be graded.
   const pool = useMemo<TutorQa[]>(
-    () => ctx.qa.filter((q) => q.answer_md && (ctx.unit === null || q.unit_number === ctx.unit)),
+    () => ctx.qa.filter((q) => hasUsableAnswer(q) && (ctx.unit === null || q.unit_number === ctx.unit)),
     [ctx.qa, ctx.unit],
   );
-  const lockedCount = ctx.qa.length - pool.length;
+  // Locked (the RPC withheld the answer) and unwritten (a placeholder question
+  // with no real body) both leave nothing to drill, but they are the student's
+  // problem and ours respectively — so don't tell them to buy something that
+  // wouldn't help.
+  const inUnit = ctx.qa.filter((q) => ctx.unit === null || q.unit_number === ctx.unit);
+  const lockedCount = inUnit.filter((q) => q.answer_md === null).length;
 
   const [order, setOrder] = useState<number[]>([]);
   const [seat, setSeat] = useState(0);
@@ -101,8 +106,10 @@ export default function TutorRecall({ ctx }: { ctx: TutorContext }) {
           <p className="text-white font-bold">Nothing to drill yet</p>
           <p className="text-zinc-500 text-[13px] mt-1.5 leading-relaxed">
             {lockedCount > 0
-              ? `This unit's ${lockedCount} answers are still locked. Unlock the subject and I'll turn every one of them into a recall drill.`
-              : "No Study-With-AI answers have been added to this unit yet."}
+              ? `This unit's ${lockedCount} answer${lockedCount === 1 ? " is" : "s are"} still locked. Unlock the subject and I'll turn every one of them into a recall drill.`
+              : inUnit.length > 0
+                ? "This unit has questions listed, but no answers written up yet — so there's nothing for me to mark you against. Try another unit, or the Resources tab."
+                : "No Study-With-AI answers have been added to this unit yet."}
           </p>
         </div>
       </div>

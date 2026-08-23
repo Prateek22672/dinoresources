@@ -6,7 +6,7 @@ import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import TutorOrb from "./TutorOrb";
 import {
-  askTutor, jumpToSource, GROUNDING_LABEL,
+  askTutor, jumpToSource, GROUNDING_LABEL, hasUsableAnswer,
   type Grounding, type TutorContext, type TutorMessage, type TutorSource,
 } from "./shared";
 
@@ -107,7 +107,7 @@ export default function TutorChat({
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy]);
 
-  const readable = ctx.qa.filter((q) => q.answer_md);
+  const readable = ctx.qa.filter(hasUsableAnswer);
   const locked = ctx.qa.length - readable.length;
 
   // Openers come from the unit's real questions, so the first tap is already a

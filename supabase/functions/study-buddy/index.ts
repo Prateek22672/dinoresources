@@ -32,6 +32,25 @@ const MODEL = Deno.env.get("GROQ_MODEL_STUDY") ?? Deno.env.get("GROQ_MODEL") ?? 
 const groq = (payload: unknown, extra: { userId?: string } = {}) =>
   groqCall(payload, { preferredEnv: "GROQ_API_KEY_STUDY", label: "study-buddy", timeoutMs: 30_000, ...extra });
 
+/**
+ * Record a fault that is NOT a provider HTTP error, so it still reaches
+ * Admin → AI Health. _shared/groq.ts logs non-2xx responses; a 200 carrying an
+ * empty completion logs nothing anywhere, which is precisely the case that left
+ * "the tutor is busy" unexplainable.
+ */
+async function logIssue(code: string, message: string, userId?: string) {
+  try {
+    await adminClient().from("bot_error_log").insert({
+      fn: "study-buddy",
+      code,
+      message: message.slice(0, 500),
+      key_index: 0,
+      key_count: 0,
+      user_id: userId ?? null,
+    });
+  } catch { /* telemetry must never break the reply */ }
+}
+
 // ── Rate limit (in-memory sliding window, same shape as help-bot) ──────────
 const hits = new Map<string, number[]>();
 function rateLimited(uid: string, max: number): boolean {
@@ -186,10 +205,18 @@ function selectPassages(rows: QaRow[], query: string): Retrieved {
   };
 }
 
-type Grounding = "notes" | "mixed" | "beyond" | "locked";
+type Grounding = "notes" | "mixed" | "beyond" | "locked" | "empty";
 
 function bandOf(r: Retrieved): Grounding {
-  if (r.passages.length === 0) return r.lockedCount > 0 ? "locked" : "beyond";
+  if (r.passages.length === 0) {
+    if (r.lockedCount > 0) return "locked";
+    // Rows came back but none carried a usable answer: the unit exists and has
+    // question placeholders, but nothing has been written up. That is a very
+    // different thing from a question being off-syllabus, and answering it as
+    // though it were off-syllabus is how Rex ends up inventing a syllabus.
+    if (r.rows.length > 0) return "empty";
+    return "beyond";
+  }
   if (r.coverage >= 0.55 || r.bestRank >= 0.12) return "notes";
   if (r.coverage >= 0.28 || r.bestRank >= 0.04) return "mixed";
   return "beyond";
@@ -241,6 +268,10 @@ function chatSystem(band: Grounding, name: string, scope: string, context: strin
 
   if (band === "mixed") {
     return `${VOICE}\n\n${who}\n\nTHEIR NOTES (partially relevant):\n${context}\n\nSYLLABUS OUTLINE:\n${outline}\n\nRULES\n- Lead with what their notes DO cover, in their notes' own terms.\n- If you must add anything beyond the notes to make the answer complete, mark that sentence with "(beyond your notes)" so they know it is not examinable material from their unit.\n- Do not invent details about their specific syllabus.`;
+  }
+
+  if (band === "empty") {
+    return `${VOICE}\n\n${who}\n\nThis unit has question placeholders but NO written Study-With-AI answers yet — there is genuinely nothing of theirs to quote.\nRULES\n- Open with one honest line saying this unit's answers haven't been written up yet, so what follows is general knowledge and not their syllabus.\n- Then give a short, genuinely useful explanation (about 120 words).\n- Do NOT describe what "their notes" or "their syllabus" contain. You do not know, and guessing invents a course that may not exist. Never present a made-up unit outline, reading list or set of topics as theirs.\n- Point them at the unit's Resources and PYQs tabs, which may well have material even though the Q&A doesn't.`;
   }
 
   if (band === "locked") {
@@ -525,21 +556,54 @@ Rules:
     }
 
     const system = chatSystem(band, name, scope, r.contextText, outline);
-    const res = await groq({
+    const history = msgs.map((m) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content ?? "").slice(0, 2000),
+    }));
+
+    const ask = (maxTokens: number, turns: typeof history) => groq({
       model: MODEL,
       temperature: band === "beyond" ? 0.5 : 0.3,
-      max_tokens: 1100,
-      messages: [
-        { role: "system", content: system },
-        ...msgs.map((m) => ({
-          role: m.role === "assistant" ? "assistant" : "user",
-          content: String(m.content ?? "").slice(0, 2000),
-        })),
-      ],
+      // Headroom on purpose. gpt-oss counts its reasoning against this budget,
+      // and Rex's prompts carry retrieved passages, so a tight cap can be spent
+      // entirely on reasoning and return an empty completion on a 200.
+      max_tokens: maxTokens,
+      messages: [{ role: "system", content: system }, ...turns],
     }, { userId: user.id });
 
-    const reply = res?.choices?.[0]?.message?.content?.trim();
+    let res = await ask(2000, history);
+    let reply = res?.choices?.[0]?.message?.content?.trim();
+
+    // One retry before giving up. An empty completion is usually the reasoning
+    // budget being spent before any visible token is emitted, so retry with more
+    // room and only the last exchange — a shorter prompt leaves more of the
+    // budget for the answer itself. This is also the case that shows up under
+    // load, where a student would otherwise just see an error.
     if (!reply) {
+      const choice = res?.choices?.[0];
+      void logIssue(
+        res ? "empty_completion_retry" : "no_provider_response_retry",
+        res
+          ? `finish_reason=${choice?.finish_reason ?? "?"} usage=${JSON.stringify(res?.usage ?? {})}`
+          : "groqChat returned null; retrying",
+        user.id,
+      );
+      res = await ask(3000, history.slice(-2));
+      reply = res?.choices?.[0]?.message?.content?.trim();
+    }
+    if (!reply) {
+      // A 200 with no content. gpt-oss models bill their reasoning against
+      // max_tokens and return it in a separate field, so a long prompt can
+      // exhaust the budget before a single visible token is emitted — the call
+      // "succeeds" and says nothing. Record what actually came back.
+      const choice = res?.choices?.[0];
+      void logIssue(
+        res ? "empty_completion" : "no_provider_response",
+        res
+          ? `finish_reason=${choice?.finish_reason ?? "?"} reasoning_len=${String(choice?.message?.reasoning ?? "").length} usage=${JSON.stringify(res?.usage ?? {})}`
+          : "groqChat returned null after exhausting every key",
+        user.id,
+      );
       // Model unavailable — hand back the best passage verbatim rather than an
       // apology. The student still gets their answer.
       const top = r.passages[0];

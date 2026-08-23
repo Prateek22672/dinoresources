@@ -28,7 +28,21 @@ export interface TutorNudge {
 }
 
 /** Where the answer's facts came from. */
-export type Grounding = "notes" | "mixed" | "beyond" | "locked";
+export type Grounding = "notes" | "mixed" | "beyond" | "locked" | "empty";
+
+/**
+ * Shortest answer worth calling an answer.
+ *
+ * Contributors sometimes add a question as a placeholder ("Check out PYQ's and
+ * Materials") with no real body. The UI used to count those as readable while
+ * retrieval discarded them, so Rex would announce he had read a unit's answers
+ * and then have nothing to quote — and fall through to inventing content.
+ * Both sides now agree by using this one threshold.
+ */
+export const MIN_ANSWER_CHARS = 80;
+
+export const hasUsableAnswer = (q: { answer_md: string | null }) =>
+  (q.answer_md ?? "").trim().length >= MIN_ANSWER_CHARS;
 
 export interface TutorSource {
   id: string;
@@ -112,6 +126,11 @@ export const GROUNDING_LABEL: Record<Grounding, { label: string; hint: string; t
     label: "Locked material",
     hint: "The full answer to this is in the subject you haven't unlocked.",
     tone: "zinc",
+  },
+  empty: {
+    label: "No notes here yet",
+    hint: "This unit has no Study-With-AI answers written up yet, so nothing below comes from your syllabus.",
+    tone: "amber",
   },
 };
 

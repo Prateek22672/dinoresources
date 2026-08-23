@@ -12,6 +12,7 @@ import { markStudied, ReadinessSection } from "@/lib/readiness";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import TutorOrb from "@/components/ai/tutor/TutorOrb";
 import TutorLauncher from "@/components/ai/tutor/TutorLauncher";
+import { hasUsableAnswer } from "@/components/ai/tutor/shared";
 import type { TutorContext, TutorMode, TutorNudge } from "@/components/ai/tutor/shared";
 
 // The tutor is a sizeable chunk (chat + drill + recall) and most sessions never
@@ -214,7 +215,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   useEffect(() => {
     if (!tutorOn || tutorOpen || !openId || nudgesQuiet()) return;
     const item = qa.find((x) => x.id === openId);
-    if (!item?.answer_md) return;
+    if (!item || !hasUsableAnswer(item)) return;
     const key = `q:${openId}`;
     if (nudged.current.has(key)) return;
     const t = setTimeout(() => {
@@ -239,7 +240,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   // reading, when a walkthrough is worth more than an explanation.
   useEffect(() => {
     if (!tutorOn || tutorOpen || loading || openId || nudgesQuiet()) return;
-    const readable = qa.filter((x) => !!x.answer_md).length;
+    const readable = qa.filter(hasUsableAnswer).length;
     if (readable === 0) return;
     const key = `u:${subjectId}:${section}`;
     if (nudged.current.has(key)) return;
@@ -289,7 +290,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   }
   const qaFree = (id: string) => !preview || freeQaIds.has(id);
   // How many answers the tutor can actually read — the RPC withholds the rest.
-  const tutorReadable = qa.filter((x) => !!x.answer_md).length;
+  const tutorReadable = qa.filter(hasUsableAnswer).length;
   // The server decides which material is unlocked (it withholds the url), so
   // trust that rather than guessing client-side.
   const resFree = (r: ResourceRow) => !!r.url;
@@ -400,8 +401,11 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     );
   }
 
-  const tabs: { id: UnitTab; label: string; icon: any; badge?: string }[] = [
-    { id: "ai", label: "Study With AI", icon: AiIcon },
+  const tabs: { id: UnitTab; label: string; icon: any; badge?: string; brand?: boolean }[] = [
+    // `brand: true` marks a PNG icon rather than a lucide one. Lucide icons draw
+    // in currentColor and are fine on the white active pill; the brand PNGs are
+    // white artwork and disappear into it.
+    { id: "ai", label: "Study With AI", icon: AiIcon, brand: true },
     { id: "videos", label: "Videos", icon: Clapperboard, badge: "Free" },
     { id: "resources", label: "Resources", icon: Layers },
   ];
@@ -455,7 +459,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           {tabs.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors ${tab === t.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+              <t.icon className={`w-3.5 h-3.5 ${t.brand && tab === t.id ? "td-icon-on-light" : ""}`} /> {t.label}
               {t.badge && (
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? "bg-black/10 text-black" : "td-accent-bg"}`}>{t.badge}</span>
               )}
