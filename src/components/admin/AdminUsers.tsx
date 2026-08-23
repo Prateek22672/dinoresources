@@ -7,6 +7,7 @@ import { useUserRole, UserRole } from "@/hooks/useUserRole";
 import { formatPaise } from "@/lib/money";
 import { orderToReceipt, manualReceipt, ReceiptData } from "@/lib/receipt";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import AdminRoleHolders from "@/components/admin/AdminRoleHolders";
 
 // jsPDF pulls in html2canvas + DOMPurify internally — defer that weight until a receipt is actually opened.
 const ReceiptDialog = lazy(() => import("@/components/receipt/ReceiptDialog"));
@@ -157,7 +158,11 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-6">
+    <div className="space-y-6">
+      {/* Who holds a role — the question the per-user search below cannot answer */}
+      <AdminRoleHolders onSelect={(p) => { setResults([p]); loadAccess(p); }} />
+
+      <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-6">
       {/* Search + results */}
       <div className="space-y-3">
         <div className="td-surface rounded-2xl flex items-center px-3 h-11">
@@ -374,6 +379,7 @@ export default function AdminUsers() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
