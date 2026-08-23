@@ -132,6 +132,9 @@ interface Retrieved {
   contextText: string;
   /** Rows whose answer is withheld because the student hasn't unlocked them. */
   lockedCount: number;
+  /** True when the search RPC itself errored — a different thing from "found
+   *  nothing", and the difference is the whole diagnosis when a reply fails. */
+  failed?: boolean;
 }
 
 const CONTEXT_BUDGET = 6500;
@@ -262,8 +265,21 @@ async function retrieve(
     _limit: limit,
   });
   if (error) {
+    // Console logs aren't reachable from the admin UI, and a silently empty
+    // result is indistinguishable from "your notes don't cover this" — which is
+    // exactly how a permissions or schema problem disguises itself as a model
+    // problem. Record it where Admin → AI Health will show it.
     console.error("study-buddy retrieval failed:", error.message);
-    return { passages: [], rows: [], coverage: 0, bestRank: 0, contextText: "", lockedCount: 0 };
+    try {
+      await adminClient().from("bot_error_log").insert({
+        fn: "study-buddy",
+        code: "retrieval_failed",
+        message: String(error.message ?? "").slice(0, 500),
+        key_index: 0,
+        key_count: 0,
+      });
+    } catch { /* telemetry must never break the reply */ }
+    return { passages: [], rows: [], coverage: 0, bestRank: 0, contextText: "", lockedCount: 0, failed: true };
   }
   return selectPassages((data ?? []) as QaRow[], query);
 }
@@ -533,7 +549,11 @@ Rules:
           grounding: "notes", sources, followups: followupsFrom(r, "notes"), searched: r.rows.length, degraded: true,
         });
       }
-      return jsonResponse({ error: "The tutor is busy right now — try again in a few seconds." }, 502);
+      return jsonResponse({
+        error: r.failed
+          ? "I can't reach your notes right now — that's on our side, not your question. Try again in a moment."
+          : "The tutor is busy right now — too many questions at once. Give it a few seconds and ask again.",
+      }, 502);
     }
 
     return jsonResponse({

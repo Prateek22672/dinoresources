@@ -18,6 +18,9 @@ function collectKeys(): { label: string; key: string }[] {
     if (t && !out.some((o) => o.key === t)) out.push({ label, key: t });
   };
   add("GROQ_API_KEY_HELP", Deno.env.get("GROQ_API_KEY_HELP"));
+  // Rex (study-buddy) prefers its own key. Without this the health page probed
+  // every key except the tutor's, and reported "healthy" while Rex was failing.
+  add("GROQ_API_KEY_STUDY", Deno.env.get("GROQ_API_KEY_STUDY"));
   add("GROQ_API_KEY", Deno.env.get("GROQ_API_KEY"));
   for (let i = 2; i <= MAX_KEYS; i++) add(`GROQ_API_KEY_${i}`, Deno.env.get(`GROQ_API_KEY_${i}`));
   return out;
