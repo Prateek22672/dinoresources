@@ -29,6 +29,7 @@ export default function SpinWheel({
   onWin: (code: string, percent: number) => void;
 }) {
   const [segs, setSegs] = useState<Seg[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [rot, setRot] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<Win | null>(null);
@@ -37,7 +38,11 @@ export default function SpinWheel({
   useEffect(() => {
     if (!open) return;
     setRot(0); setResult(null); setSpinning(false); pending.current = null;
-    (supabase as any).rpc("spin_segments_public").then(({ data }: any) => setSegs(data ?? []));
+    setLoaded(false);
+    (supabase as any).rpc("spin_segments_public").then(({ data }: any) => {
+      setSegs(data ?? []);
+      setLoaded(true);
+    });
   }, [open]);
 
   if (!open) return null;
@@ -87,9 +92,27 @@ export default function SpinWheel({
         <p className="text-white font-extrabold text-xl tracking-tight flex items-center justify-center gap-2">
           <Sparkles className="w-5 h-5" style={{ color: "var(--td-accent-soft)" }} /> Spin &amp; Win
         </p>
-        <p className="text-zinc-500 text-sm mt-1 mb-6">One free spin — up to {Math.max(0, ...segs.map((s) => s.percent))}% off your cart.</p>
+        <p className="text-zinc-500 text-sm mt-1 mb-6">
+          {n
+            ? <>One free spin — up to {Math.max(...segs.map((s) => s.percent))}% off your cart.</>
+            : loaded
+              ? "No prizes are set up right now."
+              : "Loading the wheel…"}
+        </p>
 
-        {/* Wheel */}
+        {loaded && !n ? (
+          /* Zero segments means an admin has not configured the wheel. Showing
+             the disc anyway produced a blank grey circle and a dead SPIN
+             button, which reads as a broken feature rather than an unfinished
+             one. */
+          <div className="td-surface-2 rounded-2xl p-6 mb-6">
+            <p className="text-zinc-300 text-sm font-semibold">The wheel isn&apos;t ready yet</p>
+            <p className="text-zinc-500 text-xs mt-1.5 leading-relaxed">
+              No prizes have been added to it. Nothing has been used up — your free spin is still waiting for when it&apos;s set up.
+            </p>
+          </div>
+        ) : (
+        /* Wheel */
         <div className="relative w-64 h-64 mx-auto mb-6 select-none">
           {/* pointer */}
           <div className="absolute left-1/2 -translate-x-1/2 -top-1 z-10 w-0 h-0"
@@ -117,6 +140,7 @@ export default function SpinWheel({
             </div>
           </div>
         </div>
+        )}
 
         {result ? (
           <div className="td-in">
@@ -134,9 +158,15 @@ export default function SpinWheel({
             </button>
           </div>
         ) : (
-          <button onClick={spin} disabled={spinning || !n} className="td-btn-primary w-full py-3.5 text-sm font-bold disabled:opacity-60">
-            {spinning ? "Spinning…" : "SPIN"}
-          </button>
+          n ? (
+            <button onClick={spin} disabled={spinning} className="td-btn-primary w-full py-3.5 text-sm font-bold disabled:opacity-60">
+              {spinning ? "Spinning…" : "SPIN"}
+            </button>
+          ) : (
+            <button onClick={() => onClose()} className="td-btn-ghost w-full py-3.5 rounded-full text-sm font-bold">
+              Close
+            </button>
+          )
         )}
       </div>
     </div>

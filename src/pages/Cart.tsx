@@ -43,16 +43,31 @@ export default function Cart() {
   // attempt, so if they close the wheel without applying, the code has to stay
   // reachable — it's theirs for the full 48 hours, applied whenever they choose.
   const [wonCoupon, setWonCoupon] = useState<{ code: string; percent: number } | null>(null);
+  // The wheel is only real if an admin has configured segments. With none, the
+  // RPC returns nothing, the wheel renders as a blank disc and SPIN is dead —
+  // so the cart must not advertise a prize that cannot be won.
+  const [spinMaxPercent, setSpinMaxPercent] = useState(0);
+  const [spinReady, setSpinReady] = useState(false);
+  /** When the next spin unlocks, for the cooling-down message. */
+  const [spinNextAt, setSpinNextAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!spinOn) return;
     (async () => {
-      const [{ data: st }, { data: last }] = await Promise.all([
+      const [{ data: st }, { data: last }, { data: segs }] = await Promise.all([
         tbl("app_settings").select("spin_cooldown_days").maybeSingle(),
         tbl("user_spins").select("created_at, coupon_code, percent").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        (supabase as any).rpc("spin_segments_public"),
       ]);
       const days = st?.spin_cooldown_days ?? 30;
-      setSpinEligible(!last?.created_at || Date.now() - new Date(last.created_at).getTime() > days * 86_400_000);
+      const list = (Array.isArray(segs) ? segs : []) as { percent: number }[];
+      setSpinReady(list.length > 0);
+      setSpinMaxPercent(list.length ? Math.max(...list.map((x) => Number(x.percent) || 0)) : 0);
+
+      const lastAt = last?.created_at ? new Date(last.created_at).getTime() : 0;
+      const nextAt = lastAt ? lastAt + days * 86_400_000 : 0;
+      setSpinEligible(!lastAt || Date.now() > nextAt);
+      setSpinNextAt(lastAt && Date.now() <= nextAt ? nextAt : null);
 
       // Spin coupons live 48 hours (see the spin_wheel RPC) — surface the last
       // win while it's still redeemable.
@@ -220,22 +235,45 @@ export default function Cart() {
                 </div>
               )}
 
-              {/* Spin & Win entry */}
-              {spinOn && spinEligible && !applied && !wonCoupon && (
-                <button
-                  type="button" onClick={() => setSpinOpen(true)}
-                  className="w-full mb-4 rounded-xl p-3 flex items-center gap-3 text-left border transition-transform hover:scale-[1.01]"
-                  style={{ background: "rgb(var(--td-accent-rgb) / 0.12)", borderColor: "rgb(var(--td-accent-rgb) / 0.35)" }}
-                >
-                  <span className="w-9 h-9 rounded-full td-accent-solid text-white flex items-center justify-center shrink-0">
-                    <Gift className="w-4.5 h-4.5" />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="text-white text-sm font-bold block">Spin &amp; Win</span>
-                    <span className="text-zinc-400 text-xs">Up to 50% OFF — you have 1 free spin</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 shrink-0" />
-                </button>
+              {/* Spin & Win entry. Only ever shown when the wheel actually has
+                  segments — otherwise it advertises a prize that cannot be won
+                  and opens a dead grey disc. The discount shown is the real
+                  best segment, not a hardcoded number. */}
+              {spinOn && spinReady && !applied && !wonCoupon && (
+                spinEligible ? (
+                  <button
+                    type="button" onClick={() => setSpinOpen(true)}
+                    className="w-full mb-4 rounded-xl p-3 flex items-center gap-3 text-left border transition-transform hover:scale-[1.01]"
+                    style={{ background: "rgb(var(--td-accent-rgb) / 0.12)", borderColor: "rgb(var(--td-accent-rgb) / 0.35)" }}
+                  >
+                    <span className="w-9 h-9 rounded-full td-accent-solid text-white flex items-center justify-center shrink-0">
+                      <Gift className="w-4.5 h-4.5" />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="text-white text-sm font-bold block">Spin &amp; Win</span>
+                      <span className="text-zinc-400 text-xs">
+                        Up to {spinMaxPercent}% OFF · <span className="font-semibold">1 spin available</span>
+                      </span>
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-zinc-400 shrink-0" />
+                  </button>
+                ) : (
+                  /* Used up. Saying nothing left people wondering whether the
+                     wheel had broken; say plainly that it's spent and when it
+                     comes back. */
+                  <div className="w-full mb-4 rounded-xl p-3 flex items-center gap-3 td-surface-2">
+                    <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-white/5 text-zinc-500">
+                      <Gift className="w-4.5 h-4.5" />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="text-zinc-300 text-sm font-bold block">Spin &amp; Win</span>
+                      <span className="text-zinc-500 text-xs">
+                        <span className="font-semibold">0 spins left</span>
+                        {spinNextAt ? ` · back on ${new Date(spinNextAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
+                      </span>
+                    </span>
+                  </div>
+                )
               )}
 
               {/* Coupon */}
