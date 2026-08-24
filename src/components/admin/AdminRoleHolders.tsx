@@ -58,8 +58,12 @@ export default function AdminRoleHolders({ onSelect }: { onSelect?: (p: ProfileR
       // PostgREST can't embed them — fetch the profiles separately.
       let byId = new Map<string, ProfileRow>();
       if (ids.length) {
+        // select("*") deliberately. A hand-listed column set silently drops
+        // whatever is added to ProfileRow later — is_test was missing here,
+        // so an admin picked from this roster reached the panel below with the
+        // flag undefined and its toggle appeared not to stick.
         const { data: profs } = await tbl("profiles")
-          .select("id, email, username, full_name, department, semester")
+          .select("*")
           .in("id", ids);
         byId = new Map(((profs ?? []) as ProfileRow[]).map((p) => [p.id, p]));
       }

@@ -121,11 +121,23 @@ export default function AdminUsers() {
   const setTestAccount = async (enabled: boolean) => {
     if (!selected || busy) return;
     setBusy(true);
-    const { error } = await tbl("profiles").update({ is_test: enabled }).eq("id", selected.id);
+    // .select() matters: an update that matches no rows (RLS, wrong id) comes
+    // back with NO error, so without reading the rows back a silent failure is
+    // indistinguishable from success — and the optimistic state below would
+    // then show a flag that was never written.
+    const { data, error } = await tbl("profiles")
+      .update({ is_test: enabled })
+      .eq("id", selected.id)
+      .select("id, is_test");
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    setSelected({ ...selected, is_test: enabled });
-    toast.success(enabled ? "Marked as a test account — its payments are out of analytics." : "Back in analytics.");
+    const saved = Array.isArray(data) ? data[0] : data;
+    if (!saved) {
+      toast.error("That didn't save — you may not have permission to change this account.");
+      return;
+    }
+    setSelected({ ...selected, is_test: !!saved.is_test });
+    toast.success(saved.is_test ? "Marked as a test account — its payments are out of analytics." : "Back in analytics.");
   };
 
   const setRole = async (role: UserRole, enabled: boolean) => {
