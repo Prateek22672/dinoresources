@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { X, Ticket, ArrowRight } from "lucide-react";
 import { DinoIcon } from "@/components/BrandIcons";
+import { useOnboardingSlot } from "@/lib/onboarding";
 
 interface Prompt { label: string; ask: string }
 
@@ -49,14 +50,17 @@ export default function HelpNudge({
 }: { onAsk: (question: string) => void; onRaiseTicket: () => void }) {
   const { pathname } = useLocation();
   const ctx = keyFor(pathname);
-  const [show, setShow] = useState(false);
+  const [ready, setReady] = useState(false);
+  // Last in the queue. An offer of help lands badly on top of a welcome tour,
+  // and it is the least important of the four.
+  const show = useOnboardingSlot("nudge", ready);
 
   useEffect(() => {
-    setShow(false);
+    setReady(false);
     if (!ctx) return;
     try { if (localStorage.getItem(seenKey(ctx))) return; } catch { /* private mode */ }
     // Let the page settle first — appearing mid-render reads as an ad.
-    const t = setTimeout(() => setShow(true), 3500);
+    const t = setTimeout(() => setReady(true), 3500);
     return () => clearTimeout(t);
   }, [ctx, pathname]);
 
@@ -64,17 +68,20 @@ export default function HelpNudge({
   const { title, sub, prompts } = CONTEXT[ctx];
 
   const dismiss = () => {
-    setShow(false);
+    setReady(false);
     try { localStorage.setItem(seenKey(ctx), "1"); } catch { /* ignore */ }
   };
 
   const ask = (question: string) => { dismiss(); onAsk(question); };
 
   return (
-    /* Bottom-LEFT: the cart's order summary (total + Unlock button) is sticky on
-       the right, and anchoring here covered the exact button we want tapped. The
-       xl offset clears the side rail. */
-    <div className="fixed bottom-4 left-4 xl:left-[23rem] z-[70] w-[min(21rem,calc(100vw-2rem))] td-in">
+    /* Bottom-LEFT, tucked against the side rail rather than out in the content
+       column. The cart's order summary (total + Unlock button) is sticky on the
+       right, so anchoring there covered the exact button we want tapped — but
+       the old xl offset of 23rem pushed it far enough inward that it sat over
+       the dashboard's own cards instead. Hugging the rail keeps it clear of
+       both, and it is narrower so it covers less of whatever is behind it. */
+    <div className="fixed bottom-4 left-4 xl:left-[15.5rem] z-[70] w-[min(19rem,calc(100vw-2rem))] td-in">
       <div className="td-glass rounded-[22px] p-4 shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85)] border border-white/10">
         <div className="flex items-start gap-3">
           <span className="w-9 h-9 rounded-full td-accent-solid flex items-center justify-center shrink-0">

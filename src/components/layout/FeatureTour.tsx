@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
-  Sparkles, Bot, TrendingUp, CalendarDays, Palette, Bug, ArrowRight, ArrowLeft, X, Check,
+  Sparkles, Bot, TrendingUp, Store, Bug, ArrowRight, ArrowLeft, X, Check,
 } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
+import { useOnboardingSlot } from "@/lib/onboarding";
 
 const DONE_KEY = "td:tour-v1";
 
@@ -14,38 +15,39 @@ interface Step {
   eyebrow: string;
   title: string;
   body: string;
+  /** Optional jump straight to the thing being described. A tour that only
+   *  talks about features is a slideshow; one you can act on from is onboarding. */
+  cta?: { label: string; to: string };
 }
 
 const STEPS: Step[] = [
   {
     icon: Sparkles, tint: "var(--td-accent)", eyebrow: "#TheNewTeamDino",
     title: "Welcome to the new TeamDino 🦖",
-    body: "We've added a lot — an AI assistant, an exam-readiness score, themes and more. Here's a 30-second tour of what's new.",
+    body: "Notes, PYQs and a study tutor that has actually read your syllabus. Thirty seconds and you'll know your way around.",
   },
   {
-    icon: Bot, tint: "#5b8def", eyebrow: "Your AI helper",
-    title: "Meet DinoBot",
-    body: "Ask it anything — how to buy, where a subject is, why something's locked. It can even change your theme, add to your cart, and raise a ticket for you. Find it at ⚡ Instant Help in the header.",
+    icon: Sparkles, tint: "var(--td-accent)", eyebrow: "Study With AI",
+    title: "Meet Rex, your study tutor",
+    body: "Open any unit and ask him anything. He answers from the real answers in YOUR notes — not the internet — and shows you which one he used. Then he quizzes you until it sticks.",
+    cta: { label: "Open my library", to: "/library" },
+  },
+  {
+    icon: Store, tint: "#6b8afd", eyebrow: "Get your subjects",
+    title: "Unlock a subject in one tap",
+    body: "Every subject has a free preview — read some of it before you decide. Add what you need to your cart, or take the full-year pack if you'll want more than two.",
+    cta: { label: "Browse subjects", to: "/store" },
   },
   {
     icon: TrendingUp, tint: "#34d399", eyebrow: "Know where you stand",
-    title: "Exam readiness score",
-    body: "As you open units, Q&A and PYQs, your readiness rises. The dashboard shows how ready you are for each subject — tied to your exam countdown.",
+    title: "Readiness & free calculators",
+    body: "Your readiness rises as you work through units. SGPA, CGPA and attendance calculators are free — no login, no card.",
+    cta: { label: "Try the calculators", to: "/calc" },
   },
   {
-    icon: CalendarDays, tint: "#f59e0b", eyebrow: "Never miss a date",
-    title: "Exam countdown",
-    body: "Mark your exam dates on the dashboard calendar and we'll count down the days for you — colour-coded as they get close.",
-  },
-  {
-    icon: Palette, tint: "#a78bfa", eyebrow: "Make it yours",
-    title: "Themes & more",
-    body: "Recolour the whole app from the palette icon, switch light/dark, and collapse the side rail for more room. Small touches, big comfort.",
-  },
-  {
-    icon: Bug, tint: "#f472b6", eyebrow: "Help us improve",
-    title: "Spotted a bug? Tell us",
-    body: "Use 'Report an issue' in the left rail (or inside DinoBot). Your report reaches the team and you can track its status.",
+    icon: Bot, tint: "#f472b6", eyebrow: "We're one tap away",
+    title: "Stuck? Just ask",
+    body: "⚡ Instant Help in the header opens DinoBot — it can add to your cart, change your theme, and raise a support ticket for you. Something broken? 'Report an issue' in the left rail.",
   },
 ];
 
@@ -53,27 +55,30 @@ const STEPS: Step[] = [
  *  and re-openable from the What's-New page. */
 export default function FeatureTour() {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [ready, setReady] = useState(false);
   const [i, setI] = useState(0);
+  // First in the queue — the tour explains what the rest of the popups are
+  // talking about, so it goes before them.
+  const open = useOnboardingSlot("tour", ready);
 
   useEffect(() => {
     let done = false;
     try { done = localStorage.getItem(DONE_KEY) === "1"; } catch { /* ignore */ }
     if (!done) {
-      const t = setTimeout(() => setOpen(true), 1200); // let the dashboard settle first
+      const t = setTimeout(() => setReady(true), 1200); // let the dashboard settle first
       return () => clearTimeout(t);
     }
   }, []);
 
   // allow re-opening from elsewhere
   useEffect(() => {
-    const openIt = () => { setI(0); setOpen(true); };
+    const openIt = () => { setI(0); setReady(true); };
     window.addEventListener("td:open-tour", openIt);
     return () => window.removeEventListener("td:open-tour", openIt);
   }, []);
 
   const finish = () => {
-    setOpen(false);
+    setReady(false);
     try { localStorage.setItem(DONE_KEY, "1"); } catch { /* ignore */ }
   };
 
@@ -102,6 +107,15 @@ export default function FeatureTour() {
             </div>
             <h2 className="text-white text-xl font-extrabold tracking-tight leading-snug">{step.title}</h2>
             <p className="text-zinc-400 text-[14px] leading-relaxed mt-2.5">{step.body}</p>
+            {step.cta && (
+              <button
+                onClick={() => { finish(); navigate(step.cta!.to); }}
+                className="td-surface-2 hover:border-white/25 transition-colors rounded-2xl mt-4 w-full px-4 py-3 flex items-center gap-2.5 text-left"
+              >
+                <span className="text-[13px] font-bold text-white flex-1">{step.cta.label}</span>
+                <ArrowRight className="w-4 h-4 td-accent-text shrink-0" />
+              </button>
+            )}
           </div>
         </div>
 

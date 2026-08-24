@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
 import { Sun, Moon, Check, X } from "lucide-react";
 import { ACCENTS, useAccent } from "@/hooks/useAccent";
+import { useOnboardingSlot } from "@/lib/onboarding";
 
 /** Bumping this re-shows the popup to everyone — use it only when the
  *  appearance options genuinely change, not for unrelated announcements. */
@@ -24,7 +25,10 @@ const SEEN_KEY = "td:theme-picker-seen";
 export default function ThemePicker() {
   const { theme, setTheme } = useTheme();
   const { accent, setAccent } = useAccent();
-  const [show, setShow] = useState(false);
+  const [ready, setReady] = useState(false);
+  // Waits for the tour. Both used to fire at 1200ms and landed on top of
+  // each other, which is what made the first login feel broken.
+  const show = useOnboardingSlot("theme", ready);
 
   useEffect(() => {
     let seen = 0;
@@ -32,12 +36,12 @@ export default function ThemePicker() {
     if (seen >= VERSION) return;
     // Let the page paint first — a modal that beats the content on screen
     // reads as an interstitial rather than a helpful heads-up.
-    const t = setTimeout(() => setShow(true), 1200);
+    const t = setTimeout(() => setReady(true), 900);
     return () => clearTimeout(t);
   }, []);
 
   const dismiss = () => {
-    setShow(false);
+    setReady(false);
     try { localStorage.setItem(SEEN_KEY, String(VERSION)); } catch { /* private mode */ }
   };
 

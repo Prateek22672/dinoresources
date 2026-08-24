@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, X, ArrowRight } from "lucide-react";
+import { useOnboardingSlot } from "@/lib/onboarding";
 
 interface WhatsNewCfg {
   active: boolean;
@@ -23,7 +24,9 @@ const SEEN_KEY = "td:whatsnew-seen"; // stores the last version the user dismiss
 export default function WhatsNew() {
   const navigate = useNavigate();
   const [cfg, setCfg] = useState<WhatsNewCfg | null>(null);
-  const [show, setShow] = useState(false);
+  const [ready, setReady] = useState(false);
+  // Queued behind the tour and the theme picker.
+  const show = useOnboardingSlot("whatsnew", ready);
 
   useEffect(() => {
     let alive = true;
@@ -46,13 +49,13 @@ export default function WhatsNew() {
         if (seen >= c.version) return; // already dismissed this version
         setCfg(c);
         // small delay so it slides in after the page settles
-        setTimeout(() => alive && setShow(true), 900);
+        setTimeout(() => alive && setReady(true), 900);
       });
     return () => { alive = false; };
   }, []);
 
   const dismiss = () => {
-    setShow(false);
+    setReady(false);
     if (cfg) { try { localStorage.setItem(SEEN_KEY, String(cfg.version)); } catch { /* ignore */ } }
   };
 
