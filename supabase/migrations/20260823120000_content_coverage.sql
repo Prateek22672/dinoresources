@@ -43,15 +43,24 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     ), '{}'),
 
     -- Materials live under either `unit_number` or a "Unit N" category
-    -- depending on how they were uploaded; both have to count.
+    -- depending on how they were uploaded; both have to count. `category` is
+    -- the resource_category ENUM, so every comparison casts to text first —
+    -- the regex operator does not exist for an enum, and an unknown literal
+    -- like 'PYQs' would raise rather than simply not matching.
     COALESCE((
       SELECT array_agg(DISTINCT t.u ORDER BY t.u)
         FROM (
+          -- "All Units Resources" is exactly that: it covers every unit.
+          SELECT generate_series(1, 5) AS u
+            FROM public.resources r
+           WHERE r.subject_id = s.id
+             AND r.category::text = 'All Units Resources'
+          UNION
           SELECT COALESCE(
                    r.unit_number,
-                   CASE WHEN r.category ~ '^Unit [1-5]$'
-                        THEN substring(r.category from 6)::integer END
-                 ) AS u
+                   CASE WHEN r.category::text ~ '^Unit [1-5]$'
+                        THEN substring(r.category::text from 6)::integer END
+                 )
             FROM public.resources r
            WHERE r.subject_id = s.id
         ) t
@@ -65,10 +74,12 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     ), '{}'),
 
     (SELECT count(*) FROM public.subject_qa q WHERE q.subject_id = s.id),
+    -- 'PYQs' is not an enum label, but the app treats it as an alias in places;
+    -- comparing as text accepts it instead of raising on an unknown label.
     (SELECT count(*) FROM public.resources r
-      WHERE r.subject_id = s.id AND r.category IN ('Previous Papers', 'PYQs')),
+      WHERE r.subject_id = s.id AND r.category::text IN ('Previous Papers', 'PYQs')),
     (SELECT count(*) FROM public.resources r
-      WHERE r.subject_id = s.id AND r.category = 'Syllabus')
+      WHERE r.subject_id = s.id AND r.category::text = 'Syllabus')
 
   FROM public.subjects s
   LEFT JOIN public.years y ON y.id = s.year_id
