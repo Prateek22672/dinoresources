@@ -19,6 +19,16 @@ interface Stats {
   byYear: { name: string; count: number }[];
   subjectSales: number;
   comboSales: number;
+  /** Payments from accounts marked as test accounts, kept out of the figures
+   *  above but reported so the exclusion is visible rather than silent. */
+  excludedOrders: number;
+  excludedRevenue: number;
+}
+
+interface RevenueStats {
+  revenue_total: number; revenue_month: number; revenue_today: number;
+  payments_count: number; payments_month: number; payments_today: number;
+  discounts_total: number; excluded_orders: number; excluded_revenue: number;
 }
 
 function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); }
@@ -39,21 +49,25 @@ export default function AdminAnalytics() {
       ] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
-        tbl("orders").select("amount_paise, discount_paise, created_at, status").eq("status", "paid"),
+        // Revenue comes from an RPC that excludes test accounts, so the rule
+        // lives in one place instead of every caller remembering to filter.
+        (supabase as any).rpc("admin_revenue_stats"),
         tbl("user_subject_access").select("id", { count: "exact", head: true }).is("revoked_at", null),
         tbl("user_year_access").select("year_id, revoked_at"),
         tbl("years").select("id, name").order("order_index", { ascending: true }),
         tbl("order_items").select("item_type, order_id"),
       ]);
 
-      const orders = (paidOrders.data ?? []) as any[];
-      const revenueTotal = orders.reduce((s, o) => s + o.amount_paise, 0);
-      const revenueMonth = orders.filter((o) => o.created_at >= monthStart).reduce((s, o) => s + o.amount_paise, 0);
-      const revenueToday = orders.filter((o) => o.created_at >= todayStart).reduce((s, o) => s + o.amount_paise, 0);
-      const paymentsCount = orders.length;
-      const paymentsToday = orders.filter((o) => o.created_at >= todayStart).length;
-      const paymentsMonth = orders.filter((o) => o.created_at >= monthStart).length;
-      const discountsTotal = orders.reduce((s, o) => s + (o.discount_paise ?? 0), 0);
+      const rev = (Array.isArray(paidOrders.data) ? paidOrders.data[0] : paidOrders.data) as RevenueStats | undefined;
+      const revenueTotal = Number(rev?.revenue_total ?? 0);
+      const revenueMonth = Number(rev?.revenue_month ?? 0);
+      const revenueToday = Number(rev?.revenue_today ?? 0);
+      const paymentsCount = Number(rev?.payments_count ?? 0);
+      const paymentsToday = Number(rev?.payments_today ?? 0);
+      const paymentsMonth = Number(rev?.payments_month ?? 0);
+      const discountsTotal = Number(rev?.discounts_total ?? 0);
+      const excludedOrders = Number(rev?.excluded_orders ?? 0);
+      const excludedRevenue = Number(rev?.excluded_revenue ?? 0);
       const avgOrder = paymentsCount ? Math.round(revenueTotal / paymentsCount) : 0;
 
       // Subscriptions by year (active combos)
@@ -75,6 +89,7 @@ export default function AdminAnalytics() {
         byYear,
         subjectSales: items.filter((i) => i.item_type === "subject").length,
         comboSales: items.filter((i) => i.item_type === "combo").length,
+        excludedOrders, excludedRevenue,
       });
       setLoading(false);
     })();
@@ -109,6 +124,13 @@ export default function AdminAnalytics() {
               across <span className="font-semibold text-white">{stats.paymentsCount}</span> payment{stats.paymentsCount === 1 ? "" : "s"}
               {stats.discountsTotal > 0 ? ` · ${formatPaise(stats.discountsTotal)} given as discounts` : ""}
             </p>
+            {/* Say what was left out. A number that quietly excludes things is
+                harder to trust than one that shows its own workings. */}
+            {stats.excludedOrders > 0 && (
+              <p className="text-zinc-600 text-xs mt-1.5">
+                Excludes {stats.excludedOrders} test payment{stats.excludedOrders === 1 ? "" : "s"} ({formatPaise(stats.excludedRevenue)})
+              </p>
+            )}
           </div>
           <div className="sm:border-l sm:border-white/10 sm:pl-6 flex flex-col justify-center">
             <p className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Payments done</p>

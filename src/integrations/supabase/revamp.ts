@@ -123,6 +123,9 @@ export interface YearAccessRow {
 
 export interface ProfileRow {
   id: string;
+  /** Admin-set: keeps this account's payments out of the analytics figures.
+   *  Nothing is deleted — the orders and access remain exactly as they are. */
+  is_test?: boolean;
   email: string | null;
   username: string | null;
   full_name: string | null;

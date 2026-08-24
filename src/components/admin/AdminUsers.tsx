@@ -13,7 +13,7 @@ import AdminRoleHolders from "@/components/admin/AdminRoleHolders";
 const ReceiptDialog = lazy(() => import("@/components/receipt/ReceiptDialog"));
 import { toast } from "sonner";
 import {
-  Search, User, ShieldCheck, BookOpen, Package, Plus, X, Trash2, RefreshCw, FileText, Download,
+  Search, User, ShieldCheck, BookOpen, Package, Plus, X, Trash2, RefreshCw, FileText, Download, FlaskConical,
 } from "lucide-react";
 
 interface AccessInfo {
@@ -114,6 +114,18 @@ export default function AdminUsers() {
     if (error) { toast.error(error); return; }
     toast.success("Access revoked");
     loadAccess(selected);
+  };
+
+  /** Mark an account as a test account. Its payments stay exactly where they
+   *  are — receipts, access, everything — they just stop counting as revenue. */
+  const setTestAccount = async (enabled: boolean) => {
+    if (!selected || busy) return;
+    setBusy(true);
+    const { error } = await tbl("profiles").update({ is_test: enabled }).eq("id", selected.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setSelected({ ...selected, is_test: enabled });
+    toast.success(enabled ? "Marked as a test account — its payments are out of analytics." : "Back in analytics.");
   };
 
   const setRole = async (role: UserRole, enabled: boolean) => {
@@ -239,6 +251,16 @@ export default function AdminUsers() {
                       </button>
                     );
                   })}
+                  <button
+                    disabled={busy}
+                    onClick={() => setTestAccount(!selected.is_test)}
+                    title="Keep this account's payments out of the revenue figures"
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 ${
+                      selected.is_test ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "td-btn-ghost"
+                    }`}
+                  >
+                    <FlaskConical className="w-3 h-3" /> {selected.is_test ? "Test account" : "Mark as test"}
+                  </button>
                   <button
                     onClick={() => setManualOpen(true)}
                     className="td-btn-ghost px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5"
