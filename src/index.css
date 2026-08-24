@@ -490,6 +490,47 @@ iframe[src*="razorpay"] {
   }
   @keyframes td-anniv-sweep { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(100%); } }
 
+  /* A page that is deliberately dark in BOTH themes — the auth hero.
+     It renders outside .td-app, so the light theme's text flips never reached
+     it, but the surface overrides (.td-glass, .td-btn-*) are global and did.
+     The result once light became the default: white chips and light-on-light
+     buttons with invisible text sitting on a near-black page. Re-assert the
+     dark values inside this scope so the page stays internally consistent
+     whatever the root theme is. */
+  :root:not(.dark) .td-force-dark :is(.td-glass) {
+    background: rgba(33,33,33,0.82);
+    border-color: rgba(255,255,255,0.08);
+    color: #e4e4e7;
+  }
+  :root:not(.dark) .td-force-dark :is(.td-surface) {
+    background: #2a2a2a; border-color: rgba(255,255,255,0.08); box-shadow: none; color: #e4e4e7;
+  }
+  :root:not(.dark) .td-force-dark :is(.td-surface-2) {
+    background: #363636; border-color: rgba(255,255,255,0.08); color: #e4e4e7;
+  }
+  :root:not(.dark) .td-force-dark .td-btn-primary { background: #ffffff; color: #0d0d0d; }
+  :root:not(.dark) .td-force-dark .td-btn-ghost {
+    background: rgba(255,255,255,0.05); color: #e4e4e7; border-color: rgba(255,255,255,0.09);
+  }
+  :root:not(.dark) .td-force-dark .td-btn-ghost:hover {
+    background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.16);
+  }
+  :root:not(.dark) .td-force-dark .td-accent-text { color: var(--td-accent-soft); }
+
+  /* And undo the text flips. The two unlock dialogs are Radix portals, so they
+     match [role="dialog"] in the rules above and would have had their text
+     forced dark on a near-black card. Same specificity as those rules, declared
+     later, so these win. */
+  :root:not(.dark) .td-force-dark .text-white   { color: #ffffff !important; }
+  :root:not(.dark) .td-force-dark .text-zinc-100 { color: #f4f4f5 !important; }
+  :root:not(.dark) .td-force-dark .text-zinc-200 { color: #e4e4e7 !important; }
+  :root:not(.dark) .td-force-dark .text-zinc-300 { color: #d4d4d8 !important; }
+  :root:not(.dark) .td-force-dark .text-zinc-400 { color: #a1a1aa !important; }
+  :root:not(.dark) .td-force-dark .text-zinc-500 { color: #71717a !important; }
+  :root:not(.dark) .td-force-dark .text-zinc-600 { color: #52525b !important; }
+  :root:not(.dark) .td-force-dark .bg-white      { background-color: #ffffff !important; }
+  :root:not(.dark) .td-force-dark .text-black    { color: #0d0d0d !important; }
+
   /* Brand icons are white PNGs that flip with the theme. On a permanently
      white surface — an active tab pill, which is white in BOTH themes — that
      leaves them invisible. This forces them dark regardless of theme.

@@ -62,7 +62,7 @@ export function SubjectUnlockDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#0e0e11] border border-white/10 text-zinc-100 rounded-3xl">
+      <DialogContent className="td-force-dark sm:max-w-md bg-[#0e0e11] border border-white/10 text-zinc-100 rounded-3xl">
         <DialogHeader>
           <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
             <Lock className="w-5 h-5 text-indigo-400" />

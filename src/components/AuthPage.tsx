@@ -105,7 +105,7 @@ export default function AuthPage() {
     "placeholder:text-zinc-600 outline-none transition-shadow td-auth-field";
 
   return (
-    <div className="min-h-[100dvh] lg:h-[100dvh] bg-[#0b0b0e] text-zinc-100 font-sans flex flex-col relative overflow-hidden">
+    <div className="td-force-dark min-h-[100dvh] lg:h-[100dvh] bg-[#0b0b0e] text-zinc-100 font-sans flex flex-col relative overflow-hidden">
       <style>{`
         .td-auth-field:focus {
           border-color: rgb(var(--td-accent-rgb) / 0.55);

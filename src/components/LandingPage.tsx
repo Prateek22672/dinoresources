@@ -477,7 +477,7 @@ export default function LandingPage() {
   const goAuth = () => navigate("/auth");
 
   return (
-    <div className="min-h-screen bg-[#0b0b0e] text-zinc-100 font-sans overflow-x-clip relative">
+    <div className="td-force-dark min-h-screen bg-[#0b0b0e] text-zinc-100 font-sans overflow-x-clip relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Caveat:wght@600;700&display=swap');
         .ld-display { font-family: 'Baloo 2', 'Inter', sans-serif; }
