@@ -150,7 +150,7 @@ export default function TutorLauncher({
   return createPortal(
     <div
       ref={elRef}
-      className={`fixed z-[80] ${dragging ? "" : "transition-[left,right,top] duration-300 ease-out"}`}
+      className={`td-portal fixed z-[80] ${dragging ? "" : "transition-[left,right,top] duration-300 ease-out"}`}
       style={{ ...style, touchAction: "none" }}
     >
       {nudge && !dragging && !collapsed && (

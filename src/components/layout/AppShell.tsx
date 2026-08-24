@@ -13,6 +13,7 @@ import NoticesBell from "@/components/layout/NoticesBell";
 import SideNav from "@/components/layout/SideNav";
 import WhatsNew from "@/components/layout/WhatsNew";
 import FeatureTour from "@/components/layout/FeatureTour";
+import ThemePicker from "@/components/layout/ThemePicker";
 import MobileNavOverlay, { MobileNavItem } from "@/components/layout/MobileNavOverlay";
 import HelpNudge from "@/components/HelpNudge";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,6 +152,9 @@ export default function AppShell({ children, hideHeader = false }: { children: R
 
       {/* First-run guided tour (once per user) + admin-controlled What's-New popup */}
       <FeatureTour />
+      {/* One-time appearance heads-up — the theme switch existed but lived
+          behind an icon nobody opened. */}
+      {!botOpen && <ThemePicker />}
       {!botOpen && <WhatsNew />}
 
       {/* Proactive greeting on the pages where students most often get stuck */}

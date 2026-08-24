@@ -86,7 +86,7 @@ export default function IssueReporter({ open, onClose }: { open: boolean; onClos
   const descOk = description.trim().length >= MIN_DESC;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex sm:items-center sm:justify-center">
+    <div className="td-portal fixed inset-0 z-[120] flex sm:items-center sm:justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="td-surface relative w-full sm:max-w-lg sm:rounded-[26px] rounded-t-[26px] mt-auto sm:mt-0 max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
         {/* header */}

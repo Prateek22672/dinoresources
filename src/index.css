@@ -342,18 +342,18 @@ iframe[src*="razorpay"] {
      The scope must include Radix PORTALS — dropdowns, selects, popovers,
      dialogs and toasts render into <body>, outside .td-app, and would
      otherwise keep white text on a white popover (invisible). */
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-white   { color: #0d0d0d !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-zinc-100 { color: #0d0d0d !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-zinc-200 { color: #1f1f1f !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-zinc-300 { color: #2d2d2d !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-zinc-400 { color: #5d5d5d !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-zinc-500 { color: #6e6e6e !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-zinc-600 { color: #909090 !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .bg-white     { background-color: #0d0d0d !important; }
-  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"]) .text-black   { color: #ffffff !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-white   { color: #0d0d0d !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-zinc-100 { color: #0d0d0d !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-zinc-200 { color: #1f1f1f !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-zinc-300 { color: #2d2d2d !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-zinc-400 { color: #5d5d5d !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-zinc-500 { color: #6e6e6e !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-zinc-600 { color: #909090 !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .bg-white     { background-color: #0d0d0d !important; }
+  :root:not(.dark) :is(.td-app, [data-radix-popper-content-wrapper], [data-radix-portal], [role="dialog"], [role="menu"], [role="listbox"], .td-portal) .text-black   { color: #ffffff !important; }
 
   /* Portalled surfaces themselves (the popover panel, its borders and hovers) */
-  :root:not(.dark) :is([data-radix-popper-content-wrapper], [role="dialog"]) :is(.td-glass, .td-surface, .td-surface-2) { color: #1f1f1f; }
+  :root:not(.dark) :is([data-radix-popper-content-wrapper], [role="dialog"], .td-portal) :is(.td-glass, .td-surface, .td-surface-2) { color: #1f1f1f; }
   :root:not(.dark) :is([data-radix-popper-content-wrapper], [role="dialog"]) .border-white\/10 { border-color: rgb(var(--td-accent-rgb) / 0.14) !important; }
   :root:not(.dark) :is([data-radix-popper-content-wrapper], [role="dialog"]) :is([data-highlighted], .focus\:bg-white\/10:focus) {
     background-color: rgb(var(--td-accent-rgb) / 0.10) !important;

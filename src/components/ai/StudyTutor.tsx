@@ -107,7 +107,7 @@ export default function StudyTutor({
       {/* One fixed, viewport-sized layer that owns both the backdrop and the
           modal, centred with flex rather than top/left + translate — nothing
           to mis-measure, and no transform of its own. */}
-      <div className="fixed inset-0 z-[96] flex items-center justify-center">
+      <div className="td-portal fixed inset-0 z-[96] flex items-center justify-center">
         <div
           className="absolute inset-0 bg-black/65 backdrop-blur-[3px]"
           onClick={onClose}
@@ -149,8 +149,9 @@ export default function StudyTutor({
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-zinc-300 hover:text-white transition-colors"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)" }}
+                  /* td-btn-ghost rather than inline white-alpha: those values are
+                     invisible against the light theme's white surface. */
+                  className="td-btn-ghost w-10 h-10 rounded-full flex items-center justify-center shrink-0"
                   aria-label="Close tutor"
                   title="Close (Esc)"
                 >

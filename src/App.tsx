@@ -139,10 +139,14 @@ const ScrollToTop = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="td-theme">
+    {/* Light is the default now. This only affects people who have never
+        picked a theme — next-themes reads td-theme from localStorage first,
+        so anyone who already chose dark keeps it. The ThemePicker popup is
+        what tells the rest that the choice exists at all. */}
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="td-theme">
     <TooltipProvider>
       <Toaster />
-      <Sonner position="top-center" theme="dark" closeButton />
+      <Sonner position="top-center" closeButton />
       <BrowserRouter>
         <SEO />
         <ScrollToTop />

@@ -83,7 +83,7 @@ export default function FeatureTour() {
   const Icon = step.icon;
 
   return createPortal(
-    <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+    <div className="td-portal fixed inset-0 z-[130] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={finish} />
       <div className="td-surface relative w-full max-w-md rounded-[28px] overflow-hidden shadow-2xl">
         {/* header band */}
