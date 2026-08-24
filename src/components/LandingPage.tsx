@@ -9,12 +9,10 @@ import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
+import { AGENTFURY_EXT, AGENTFURY_WEB } from "@/lib/links";
 
-// Agent Fury links. The extension is in Chrome Web Store review — flip
-// AGENTFURY_EXT_LIVE to true and drop in the URL once it's published.
-const AGENTFURY_WEB = "https://agentfury.foliofyx.in/";
-const AGENTFURY_EXT_LIVE = false;
-const AGENTFURY_EXT = "https://chromewebstore.google.com/"; // TODO: real listing when live
+// Agent Fury is published — the store listing is live.
+const AGENTFURY_EXT_LIVE = true;
 
 /* Cursor-follow: elements drift toward/away from the mouse at their own
  * strengths, smoothly lerped (springy, 60fps, transform-only). */

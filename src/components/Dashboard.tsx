@@ -26,6 +26,7 @@ import { GenAiIcon } from "@/components/BrandIcons";
 import TutorOrb from "@/components/ai/tutor/TutorOrb";
 import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
+import { AGENTFURY_EXT } from "@/lib/links";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
 
@@ -160,7 +161,7 @@ export default function Dashboard() {
     { key: "store", overline: "Subjects", title: "Explore subjects", desc: "Unlock your subjects & full-year packs.", cta: "Explore subjects",
       accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
     ...(isOn("agent") ? [{ key: "agent", overline: "Assistant · Chrome + Web", title: "Agent Fury", desc: "Your AI in Gmail, your browser & reminders.", cta: "Open Agent Fury",
-      accent: "#7c6cf0", icon: GenAiIcon, img: agentFuryLogo, onClick: () => window.open("https://agentfury.foliofyx.in/", "_blank") }] : []),
+      accent: "#7c6cf0", icon: GenAiIcon, img: agentFuryLogo, onClick: () => window.open(AGENTFURY_EXT, "_blank") }] : []),
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
     // SGPA + Attendance share one tile, split into two tappable halves
