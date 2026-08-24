@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight, ArrowUpRight, Calculator, Briefcase, ChevronDown, Check, Sparkles, BookOpen,
+  ArrowRight, ArrowUpRight, Calculator, MessageSquare, ChevronDown, Check, Sparkles, BookOpen,
 } from "lucide-react";
 import Footer from "./Footer";
 import { AiIcon } from "@/components/BrandIcons";
@@ -151,20 +151,20 @@ const SHOW = [
   {
     eyebrow: "Study With AI",
     title: "PYQs and practice questions, answered",
-    desc: "Every question organised unit by unit, each with a clear AI-written answer — so you're revising with what's actually been asked, not guessing at a chatbot prompt.",
+    desc: "Every question organised unit by unit, each with a clear worked answer — so you're revising what's actually been asked, not guessing at a chatbot prompt.",
     ctas: [{ label: "Get started free", to: "/auth" }],
+  },
+  {
+    eyebrow: "Meet Rex",
+    title: "A tutor that has actually read your syllabus",
+    desc: "Ask him anything from a unit and he answers from your own notes — never the internet — and shows you which answer he took it from. Then he drills you on it until it sticks.",
+    ctas: [{ label: "Try Study With AI", to: "/auth" }],
   },
   {
     eyebrow: "Free tools",
     title: "Know exactly where you stand",
     desc: "SGPA calculator, CGPA predictor and attendance planner. Free forever, no login, no card.",
     ctas: [{ label: "SGPA Calc", to: "/sgpa-calc" }, { label: "Attendance Calc", to: "/attendance-calc" }],
-  },
-  {
-    eyebrow: "Placement prep",
-    title: "Walk into interviews ready",
-    desc: "Exam patterns, curated materials and previous questions — organised company by company.",
-    ctas: [{ label: "Explore placement prep", to: "/jobs" }],
   },
 ];
 
@@ -192,10 +192,10 @@ const STACK = [
     dark: false,
   },
   {
-    title: "Crack placements company by company",
-    desc: "Patterns, materials and real questions for the companies that actually visit campus.",
-    icon: Briefcase,
-    bg: "#0F9D9A",
+    title: "Ask Rex at 2am when you're stuck",
+    desc: "He's read your unit's answers and explains from those — then quizzes you until it sticks. No queue, no judgement.",
+    icon: MessageSquare,
+    bg: "#7c6cf0",
     dark: true,
   },
 ];
@@ -257,19 +257,29 @@ function StackArt({ i }: { i: number }) {
     );
   return (
     <>
-      {/* teal card: campus-drive widget + shortlist sticker */}
-      <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56" style={{ background: "#0B7A78", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
-      <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[250px]">
+      {/* violet card: Rex mid-answer, with the badge that makes the claim */}
+      <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56" style={{ background: "#6d5fe0", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
+      <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[258px]">
         <div className="bg-white text-black rounded-[22px] p-4 -rotate-2 shadow-2xl">
-          <div className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500">This season on campus</div>
-          <div className="flex flex-wrap gap-1.5 mt-2.5">
-            {["TCS", "Infosys", "Wipro", "Accenture"].map((n) => (
-              <span key={n} className="bg-black text-white rounded-full px-3 py-1 text-[12px] font-bold">{n}</span>
-            ))}
+          <div className="flex items-center gap-2">
+            <span className="relative w-7 h-7 shrink-0">
+              <span className="absolute inset-0" style={{ background: "#7c6cf0", borderRadius: "54% 46% 58% 42% / 52% 58% 42% 48%" }} />
+              <span className="absolute top-1.5 left-2 w-1.5 h-1.5 rounded-full bg-white/60" />
+            </span>
+            <span className="text-[13px] font-extrabold">Rex</span>
+            <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider"
+              style={{ background: "rgba(16,185,129,0.14)", color: "#047857" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> From your notes
+            </span>
           </div>
-          <div className="mt-3 text-[13px] font-semibold text-zinc-600">Pattern · Aptitude · 40 real PYQs</div>
+          <div className="mt-2.5 text-[13px] font-semibold text-zinc-700 leading-snug">
+            Velocity is the <span className="text-black font-extrabold">speed</span> data arrives at — your Unit 1 notes call it the hardest V to design for.
+          </div>
+          <div className="mt-2.5 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-500 truncate">
+            U1 · Explain the 5 Vs of Big Data
+          </div>
         </div>
-        <div className="bg-[#FFB61E] text-black rounded-full px-4 py-2 text-[13px] font-extrabold w-max mt-3 ml-8 rotate-2 shadow-xl">Shortlisted — Round 2</div>
+        <div className="bg-[#FFB61E] text-black rounded-full px-4 py-2 text-[13px] font-extrabold w-max mt-3 ml-8 rotate-2 shadow-xl">Quiz me on this →</div>
       </div>
     </>
   );
@@ -310,6 +320,33 @@ function PinnedShowcase() {
       </div>
       <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-semibold"><AiIcon className="w-3.5 h-3.5" /> Unit 3 · DBMS — a real PYQ, answered</div>
     </div>,
+    /* Rex mock — the grounding badge and the citation are the whole pitch:
+       proof the answer came from their notes rather than the internet. */
+    <div key="rex" className="w-full space-y-3">
+      <div className="bg-white text-black rounded-2xl rounded-br-md px-4 py-3 text-sm font-medium ml-auto w-fit max-w-[85%]">Explain the 5 Vs of Big Data</div>
+
+      <div className="flex items-center gap-2.5">
+        <span className="relative w-7 h-7 shrink-0">
+          <span className="absolute -inset-1.5 rounded-full" style={{ background: "rgba(124,108,240,0.3)", filter: "blur(7px)" }} />
+          <span className="absolute inset-0.5" style={{ background: "var(--td-accent)", borderRadius: "54% 46% 58% 42% / 52% 58% 42% 48%" }} />
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase"
+          style={{ background: "rgba(52,211,153,0.14)", color: "#6ee7b7" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> From your notes
+        </span>
+        <span className="text-[10px] text-zinc-500 font-medium">searched 31 answers</span>
+      </div>
+
+      <p className="text-sm text-zinc-200 leading-relaxed pl-3 border-l-2" style={{ borderColor: "rgb(var(--td-accent-rgb) / 0.45)" }}>
+        <strong className="text-white">Volume, Velocity, Variety, Veracity and Value</strong> — the five properties that make data &ldquo;big&rdquo; in your Unit 1 notes.
+      </p>
+
+      <div className="flex flex-wrap gap-1.5">
+        <span className="bg-white/[0.06] border border-white/10 rounded-xl px-2.5 py-1.5 text-[11px] text-zinc-400 max-w-full truncate">
+          <span className="td-accent-text font-bold">U1</span> · What is Big Data? Explain its characteristics
+        </span>
+      </div>
+    </div>,
     /* SGPA mock — ring gauge + graded subjects + goal line */
     <div key="tools" className="w-full">
       <div className="flex items-center justify-center gap-6">
@@ -347,16 +384,6 @@ function PinnedShowcase() {
           </div>
         ))}
       </div>
-    </div>,
-    /* Placement mock */
-    <div key="prep" className="w-full space-y-2.5">
-      {[["TCS NQT", "Pattern · 40 questions"], ["Infosys", "Materials · 12 sets"], ["Wipro", "PYQs · 3 rounds"]].map(([c, m]) => (
-        <div key={c} className="flex items-center gap-3 bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3.5">
-          <span className="w-9 h-9 rounded-xl bg-white text-black font-black flex items-center justify-center text-sm">{(c as string).charAt(0)}</span>
-          <div className="min-w-0"><p className="text-white text-sm font-bold">{c}</p><p className="text-zinc-500 text-[11px]">{m}</p></div>
-          <ArrowRight className="w-4 h-4 text-zinc-600 ml-auto" />
-        </div>
-      ))}
     </div>,
   ];
 
