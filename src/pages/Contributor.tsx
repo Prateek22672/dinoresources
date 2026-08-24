@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { tbl, SubjectRow, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
+import { tbl, invokeFn, SubjectRow, SubjectQARow, EditorialRow, TopicRow, YearRow } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
@@ -22,10 +22,23 @@ import {
   Link2,
   ImagePlus,
   ChevronDown,
+  Sparkles,
+  RefreshCw,
+  Check,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
+import ContentCoverage from "@/components/contributor/ContentCoverage";
 
 const UNITS = [1, 2, 3, 4, 5];
+
+/** A suggestion from `related-videos`. `videoId` is present only when the
+ *  YouTube Data API answered — Groq-only fallbacks carry a search `query`. */
+interface FoundVideo {
+  title: string;
+  channel?: string;
+  videoId?: string;
+  query?: string;
+}
 
 /** Contributor tasks. "syllabus" is subject-wide; the rest are per-unit. */
 type CTab = "qa" | "materials" | "videos" | "syllabus";
@@ -112,8 +125,19 @@ function MarkdownImageInserter({
 }
 
 export default function Contributor() {
+  const [years, setYears] = useState<YearRow[]>([]);
+  // Year first, then subject. One flat list of every subject across every year
+  // meant hunting; the year is how the work is actually divided up.
+  const [yearId, setYearId] = useState<string>(() => {
+    try { return localStorage.getItem("td:contrib-year") ?? ""; } catch { return ""; }
+  });
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [subjectId, setSubjectId] = useState("");
+  // AI video finder (reuses the same related-videos function the subject page
+  // uses, so suggestions are cached and cost no extra YouTube quota).
+  const [vFinding, setVFinding] = useState(false);
+  const [vFound, setVFound] = useState<FoundVideo[]>([]);
+  const [vAdded, setVAdded] = useState<Set<string>>(new Set());
   const [unit, setUnit] = useState(1);
   const [qa, setQa] = useState<SubjectQARow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -278,13 +302,66 @@ export default function Contributor() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await tbl("subjects").select("*").order("name");
-      const subs = (data ?? []) as SubjectRow[];
-
+      const [subRes, yrRes] = await Promise.all([
+        tbl("subjects").select("*").order("name"),
+        tbl("years").select("*").order("order_index", { ascending: true }),
+      ]);
+      const subs = (subRes.data ?? []) as SubjectRow[];
+      const yrs = (yrRes.data ?? []) as YearRow[];
       setSubjects(subs);
-      if (subs[0]) setSubjectId(subs[0].id);
+      setYears(yrs);
     })();
   }, []);
+
+  // Subjects for the chosen year. An empty year means "all", so a subject
+  // with no year set is still reachable.
+  const visibleSubjects = yearId ? subjects.filter((s) => s.year_id === yearId) : subjects;
+
+  // Keep the pair valid: default the year from the first subject, and whenever
+  // the chosen subject falls outside the chosen year, move to that year's first.
+  useEffect(() => {
+    if (!subjects.length) return;
+    const list = yearId ? subjects.filter((s) => s.year_id === yearId) : subjects;
+    if (!list.length) { setYearId(""); return; }
+    if (!list.some((s) => s.id === subjectId)) setSubjectId(list[0].id);
+  }, [subjects, yearId, subjectId]);
+
+  useEffect(() => {
+    try { localStorage.setItem("td:contrib-year", yearId); } catch { /* quota */ }
+  }, [yearId]);
+
+  /** Ask the model for videos on this unit, then add the good ones in a tap. */
+  const findVideos = useCallback(async () => {
+    const subject = subjects.find((s) => s.id === subjectId);
+    if (!subject || vFinding) return;
+    setVFinding(true);
+    setVFound([]);
+    const topicTitle = edTopic ? topics.find((t) => t.id === edTopic)?.title : null;
+    const unitTopics = !topicTitle && topics.length ? ` (${topics.map((t) => t.title).slice(0, 4).join(", ")})` : "";
+    const topic = `${subject.name} — Unit ${unit}${topicTitle ? ` — ${topicTitle}` : unitTopics}`;
+    const { data, error } = await invokeFn<{ videos: FoundVideo[] }>("related-videos", { topic });
+    setVFinding(false);
+    if (error) { toast.error(error); return; }
+    const found = data?.videos ?? [];
+    setVFound(found);
+    if (!found.length) toast.info("Nothing found for this unit — try picking a topic first.");
+  }, [subjects, subjectId, unit, edTopic, topics, vFinding]);
+
+  const addFoundVideo = async (v: FoundVideo) => {
+    if (!v.videoId) return;
+    const url = `https://www.youtube.com/watch?v=${v.videoId}`;
+    const { error } = await tbl("subject_editorial").insert({
+      subject_id: subjectId,
+      unit_number: unit,
+      topic_id: edTopic || null,
+      title: v.title.slice(0, 200),
+      youtube_url: url,
+    });
+    if (error) { toast.error(error.message); return; }
+    setVAdded((p) => new Set(p).add(v.videoId!));
+    toast.success("Video added");
+    loadEditorials();
+  };
 
   const loadQa = useCallback(async () => {
     if (!subjectId) return;
@@ -470,14 +547,32 @@ export default function Contributor() {
       {/* Context — what you're editing. Sticky so it stays put while you work
           down a long list, and the unit picker hides on subject-wide tasks so
           it can't imply a scope that doesn't apply. */}
+      <ContentCoverage onPick={(sid, u) => {
+        const found = subjects.find((x) => x.id === sid);
+        if (found?.year_id) setYearId(found.year_id);
+        setSubjectId(sid);
+        setUnit(u);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }} />
+
       <div className="sticky top-16 z-20 -mx-1 px-1 py-2 mb-4 td-base">
         <div className="flex flex-wrap items-center gap-2.5">
+          <select
+            value={yearId}
+            onChange={(e) => setYearId(e.target.value)}
+            className="td-surface-2 rounded-full px-4 h-11 text-sm text-white outline-none font-medium"
+          >
+            <option value="">All years</option>
+            {years.map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
+          </select>
+
           <select
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
             className="td-surface-2 rounded-full px-4 h-11 text-sm text-white outline-none min-w-[200px] max-w-full font-medium"
           >
-            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {visibleSubjects.length === 0 && <option value="">No subjects in this year</option>}
+            {visibleSubjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
 
           {unitScoped && (
@@ -898,6 +993,69 @@ export default function Contributor() {
             )}
 
             <p className="text-zinc-600 text-xs mt-2">Plays embedded on the subject's Videos tab - grouped under the topic you pick.</p>
+
+            {/* Finding videos by hand is why so many units have none. This asks
+                for real YouTube results for the unit (or the chosen topic) and
+                adds one in a tap. Same cached endpoint the subject page uses,
+                so repeat searches cost no extra YouTube quota. */}
+            <div className="mt-4 pt-4 border-t border-white/8">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={findVideos}
+                  disabled={vFinding || !subjectId}
+                  className="td-btn-ghost px-3.5 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {vFinding ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 td-accent-text" />}
+                  {vFinding ? "Searching…" : `Find videos for Unit ${unit}`}
+                </button>
+                <span className="text-zinc-600 text-[11px]">
+                  {edTopic ? "Searches the selected topic" : "Pick a topic above for sharper results"}
+                </span>
+              </div>
+
+              {vFound.length > 0 && (
+                <div className="grid sm:grid-cols-2 gap-2 mt-3">
+                  {vFound.map((v, i) => {
+                    const added = !!v.videoId && vAdded.has(v.videoId);
+                    return (
+                      <div key={i} className="td-surface-2 rounded-2xl p-2.5 flex items-center gap-2.5">
+                        {v.videoId ? (
+                          <img src={`https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`} alt="" loading="lazy" className="w-20 h-[45px] object-cover rounded-lg shrink-0 bg-black" />
+                        ) : (
+                          <span className="w-20 h-[45px] rounded-lg bg-black/40 flex items-center justify-center shrink-0"><Youtube className="w-4 h-4 text-zinc-600" /></span>
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-white text-[12px] font-medium line-clamp-2 leading-snug">{v.title}</span>
+                          {v.channel && <span className="block text-zinc-600 text-[10px] truncate">{v.channel}</span>}
+                        </span>
+                        {v.videoId ? (
+                          <button
+                            onClick={() => addFoundVideo(v)}
+                            disabled={added}
+                            className="td-btn-primary px-2.5 py-1.5 rounded-full text-[11px] font-bold shrink-0 inline-flex items-center gap-1 disabled:opacity-60"
+                          >
+                            {added ? <><Check className="w-3 h-3" /> Added</> : <><Plus className="w-3 h-3" /> Add</>}
+                          </button>
+                        ) : (
+                          <a
+                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(v.query ?? v.title)}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="td-btn-ghost px-2.5 py-1.5 rounded-full text-[11px] font-semibold shrink-0"
+                          >
+                            Search
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <p className="sm:col-span-2 text-zinc-600 text-[11px]">
+                    {vFound.some((v) => v.videoId)
+                      ? "Real YouTube results — check each one before adding."
+                      : "AI suggestions only. Add a YOUTUBE_API_KEY secret to get real, addable results."}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {editorials.length > 0 && (
               <div className="space-y-2 mt-3">
