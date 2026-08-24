@@ -80,6 +80,29 @@ export async function createRazorpayOrder(amountPaise: number, receipt: string, 
   return (await res.json()) as { id: string; amount: number; currency: string };
 }
 
+/**
+ * List the payments attempted against a Razorpay order. Used only for
+ * reconciling an order stuck at "created" in our own DB — the case where
+ * Razorpay actually captured the money (payment_capture:1, so capture doesn't
+ * wait on our side) but the student's browser never survived to tell us, and
+ * no webhook was configured yet to hear it independently.
+ */
+export async function fetchRazorpayOrderPayments(
+  razorpayOrderId: string,
+  keys: { id: string; secret: string },
+): Promise<{ id: string; status: string; amount: number; method: string; created_at: number }[]> {
+  const auth = btoa(`${keys.id}:${keys.secret}`);
+  const res = await fetch(`https://api.razorpay.com/v1/orders/${razorpayOrderId}/payments`, {
+    headers: { Authorization: `Basic ${auth}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Razorpay payments lookup failed: ${res.status} ${text}`);
+  }
+  const data = await res.json();
+  return (data.items ?? []) as { id: string; status: string; amount: number; method: string; created_at: number }[];
+}
+
 /** Verify the Razorpay payment signature: HMAC_SHA256(order_id|payment_id).
  *  Verifies against the given secret (defaults to the primary account). */
 export async function verifyRazorpaySignature(

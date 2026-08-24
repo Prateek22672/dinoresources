@@ -1,1 +1,8 @@
 project_id = "yidbijzsfrwqskjzawqq"
+
+# Razorpay calls this directly from its own servers with its own HMAC
+# signature (verified inside the function) — it can never carry a Supabase
+# user JWT, so the platform's default JWT gate has to be off for this one
+# function only. Every other function keeps the default (verify_jwt = true).
+[functions.razorpay-webhook]
+verify_jwt = false
