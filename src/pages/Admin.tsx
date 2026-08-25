@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminUsers from "@/components/admin/AdminUsers";
@@ -62,7 +63,19 @@ const TAB_KEYWORDS: Record<string, string> = {
 };
 
 export default function Admin() {
-  const [tab, setTab] = useState<Tab>("analytics");
+  // The open section lives in the URL, not component state — a refresh (or a
+  // deep-linked/bookmarked section) used to dump you back on Analytics and
+  // cost you the scroll position in a 17-tab strip. `replace` so Back still
+  // leaves the console instead of walking every tab you touched.
+  const [params, setParams] = useSearchParams();
+  const urlTab = params.get("tab");
+  const tab: Tab = tabs.some((t) => t.id === urlTab) ? (urlTab as Tab) : "analytics";
+  const setTab = (id: Tab) => {
+    const next = new URLSearchParams(params);
+    // Analytics is the default, so it stays out of the URL — /admin is clean.
+    if (id === "analytics") next.delete("tab"); else next.set("tab", id);
+    setParams(next, { replace: true });
+  };
   const stripRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
   const [canL, setCanL] = useState(false);
