@@ -72,6 +72,17 @@ const STOP = new Set([
   "used", "use", "between", "over", "under", "each", "just", "like", "want",
 ]);
 
+/**
+ * A greeting or an acknowledgement, not a question.
+ *
+ * These carry no content words, so retrieval has nothing to match and any
+ * grounding claim about them is vacuous. Answering one costs a search and a
+ * completion to say "hello" — and used to badge that hello "From your notes".
+ * Matched exactly, so a real question is never swallowed by it.
+ */
+const SMALL_TALK =
+  /^\s*(hi+|hey+|he+llo+|yo|helo|namaste|good\s*(morning|afternoon|evening|night)|thanks?|thank\s*you|thx|ty|ok(ay)?|k|kk|cool|nice|great|awesome|perfect|bye|byee?|gn|gm|sup|hola)[\s!.,?]*$/i;
+
 function terms(s: string): string[] {
   return (s.toLowerCase().match(/[a-z0-9]+/g) ?? [])
     .filter((w) => w.length > 2 && !STOP.has(w));
@@ -189,7 +200,10 @@ function selectPassages(rows: QaRow[], query: string): Retrieved {
   // Coverage of the *selected* context is what decides grounding.
   const blob = picked.map((p) => `${p.question} ${p.heading} ${p.text}`).join(" ").toLowerCase();
   const found = qTerms.filter((t) => blob.includes(t)).length;
-  const coverage = qTerms.length ? found / qTerms.length : (picked.length ? 1 : 0);
+  // No content words means nothing was matched, so there is no evidence of
+  // grounding — the old fallback of 1 asserted the opposite and was how a bare
+  // "hi" came back badged "From your notes · searched 6 answers".
+  const coverage = qTerms.length ? found / qTerms.length : 0;
 
   const contextText = picked
     .map((p, i) => `[S${i + 1}] Unit ${p.unit}${p.topic ? ` · ${p.topic}` : ""} — ${p.question}${p.heading ? `\n(${p.heading})` : ""}\n${p.text}`)
@@ -205,7 +219,7 @@ function selectPassages(rows: QaRow[], query: string): Retrieved {
   };
 }
 
-type Grounding = "notes" | "mixed" | "beyond" | "locked" | "empty";
+type Grounding = "notes" | "mixed" | "beyond" | "locked" | "empty" | "chat";
 
 function bandOf(r: Retrieved): Grounding {
   if (r.passages.length === 0) {
@@ -612,6 +626,19 @@ Rules:
     const userTurns = msgs.filter((m) => m?.role === "user").map((m) => String(m.content ?? ""));
     const last = userTurns.at(-1) ?? "";
     if (!last.trim()) return jsonResponse({ error: "No question" }, 400);
+
+    // Small talk: answer it directly. No search, no completion, and crucially
+    // no grounding badge — there is nothing to be grounded in.
+    if (SMALL_TALK.test(last)) {
+      const who = await studentName(user);
+      return jsonResponse({
+        reply: `Hey ${who}! I've read the Study-With-AI answers for ${scope}. Ask me anything from it — or say **quiz me** and I'll test you on it instead.`,
+        grounding: "chat" as Grounding,
+        sources: [],
+        followups: ["What are the main topics here?", "Quiz me on this unit", "What should I revise first?"],
+        searched: 0,
+      });
+    }
 
     // Query rewrite: a follow-up like "explain that simpler" carries no content
     // words of its own, so fold in the previous turn and the open topic.

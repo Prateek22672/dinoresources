@@ -10,6 +10,17 @@ import {
   type Grounding, type TutorContext, type TutorMessage, type TutorSource,
 } from "./shared";
 
+/**
+ * "quiz me", "keep quiz", "mcqs" — a request to be tested, not a question.
+ *
+ * Answering these in the chat produced a plaintext quiz with the answer printed
+ * under every question, which cannot be used to test yourself and scored
+ * nothing. Drill mode already does this properly, so the request is handed
+ * there instead. Deliberately narrow — short messages only, and never one that
+ * opens like a real question — so "explain quiz scheduling" still gets answered.
+ */
+const QUIZ_INTENT = /^(?!.*(?:explain|what|why|how|define|describe|compare))(?=.{0,44}$).*(?:quiz|mcq|drill|test me)/i;
+
 /** The reply currently streaming in, before it settles into `messages`. */
 interface Live {
   text: string;
@@ -20,6 +31,8 @@ interface Live {
 
 /** Badge that names where an answer's facts came from. */
 function GroundingBadge({ g, searched }: { g: Grounding; searched?: number }) {
+  // Small talk makes no claim about sources, so it gets no badge at all.
+  if (g === "chat") return null;
   const meta = GROUNDING_LABEL[g];
   const style =
     meta.tone === "emerald" ? { background: "rgba(52,211,153,0.14)", color: "#6ee7b7" }
@@ -149,6 +162,20 @@ export default function TutorChat({
     ];
     setMessages(next);
     setInput("");
+
+    // Hand a request to be tested straight to Drill mode — it scores the
+    // answers and records mastery, neither of which a chat reply can do.
+    if (QUIZ_INTENT.test(content)) {
+      setMessages([...next, {
+        role: "assistant",
+        content: `I'll quiz you properly rather than typing questions out here — Drill mode marks each answer and tracks what you keep missing.`,
+        grounding: "chat",
+        action: "drill",
+        fresh: false,
+      }]);
+      return;
+    }
+
     setBusy(true);
     setLive(null);
     streamed.current = false;
@@ -335,6 +362,15 @@ export default function TutorChat({
               <div className="pl-3.5 border-l-2" style={{ borderColor: "rgb(var(--td-accent-rgb) / 0.35)" }}>
                 <Answer text={m.content} animate={!!m.fresh && last} />
                 <SourceChips sources={m.sources ?? []} />
+
+                {m.action === "drill" && (
+                  <button
+                    onClick={onDrill}
+                    className="td-btn-primary mt-3 px-4 py-2 rounded-full text-[12px] font-bold inline-flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Start the quiz
+                  </button>
+                )}
 
                 {m.degraded && (
                   <p className="text-[11px] text-amber-400/80 mt-2.5">Served straight from your notes — the model was unavailable.</p>

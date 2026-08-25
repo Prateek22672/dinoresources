@@ -28,7 +28,7 @@ export interface TutorNudge {
 }
 
 /** Where the answer's facts came from. */
-export type Grounding = "notes" | "mixed" | "beyond" | "locked" | "empty";
+export type Grounding = "notes" | "mixed" | "beyond" | "locked" | "empty" | "chat";
 
 /**
  * Shortest answer worth calling an answer.
@@ -61,6 +61,8 @@ export interface TutorMessage {
   degraded?: boolean;
   /** Set on the newest reply so it types itself in once, then stays put. */
   fresh?: boolean;
+  /** Offers a jump into another mode instead of answering in the chat. */
+  action?: "drill";
 }
 
 export interface DrillQuestion {
@@ -107,6 +109,13 @@ export interface TutorQa {
 }
 
 export const GROUNDING_LABEL: Record<Grounding, { label: string; hint: string; tone: string }> = {
+  // Small talk. A greeting is grounded in nothing, so it claims nothing — the
+  // badge is suppressed entirely rather than shown with a reassuring label.
+  chat: {
+    label: "",
+    hint: "",
+    tone: "zinc",
+  },
   notes: {
     label: "From your notes",
     hint: "Answered from this subject's own Study-With-AI material.",
