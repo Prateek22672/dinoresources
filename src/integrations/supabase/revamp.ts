@@ -228,6 +228,10 @@ export const ticketCategoryLabel = (value: string) =>
 // deno-lint-ignore no-explicit-any
 export const tbl = (name: string) => (supabase as any).from(name);
 
+/** Same, for RPCs — the revamp functions aren't in the generated types either. */
+// deno-lint-ignore no-explicit-any
+export const rpc = (fn: string, args: Record<string, unknown> = {}) => (supabase as any).rpc(fn, args);
+
 /**
  * Whether the access tables have the `expires_at` column (i.e. the purchase-validity
  * migration has been applied). Probed once and cached, so the app keeps working even
@@ -250,6 +254,59 @@ export async function notExpiredFilter(): Promise<string | null> {
   const ok = await accessSupportsExpiry();
   return ok ? `expires_at.is.null,expires_at.gt.${new Date().toISOString()}` : null;
 }
+
+// ─── Feedback polls ─────────────────────────────────────────────────────────
+export type PollKind = "single" | "multi";
+
+/** Ids are stable so relabelling an option never orphans its votes. */
+export interface PollOption { id: string; label: string }
+
+export interface PollRow {
+  id: string;
+  question: string;
+  kind: PollKind;
+  options: PollOption[];
+  allow_text: boolean;
+  text_prompt: string | null;
+  active: boolean;
+  closes_at: string | null;
+  created_by?: string | null;
+  created_at: string;
+}
+
+export interface PollVoteRow {
+  id: string;
+  poll_id: string;
+  user_id: string;
+  option_ids: string[];
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** admin_poll_overview() — a poll plus its tallies, without pulling the votes. */
+export interface PollOverviewRow extends Omit<PollRow, "created_by"> {
+  responses: number;
+  comments: number;
+}
+
+/** poll_results() — withheld by the server until the caller has voted. */
+export interface PollResultRow { option_id: string; votes: number }
+
+/** A poll's options come back as jsonb, so guard the shape before rendering. */
+export function pollOptions(raw: unknown): PollOption[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((o): o is PollOption =>
+      !!o && typeof o === "object"
+      && typeof (o as PollOption).id === "string"
+      && typeof (o as PollOption).label === "string")
+    .map((o) => ({ id: o.id, label: o.label }));
+}
+
+/** Closed either by the switch or by its own deadline. */
+export const pollIsOpen = (p: { active: boolean; closes_at: string | null }) =>
+  p.active && (!p.closes_at || new Date(p.closes_at).getTime() > Date.now());
 
 // ─── Issue tracker ──────────────────────────────────────────────────────────
 export type IssueCategory = "bug" | "payment" | "content" | "access" | "suggestion";

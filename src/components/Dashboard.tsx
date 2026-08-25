@@ -10,6 +10,7 @@ import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@
 import { matchProfileYear } from "@/lib/year";
 
 import AppShell from "@/components/layout/AppShell";
+import PollCard from "@/components/polls/PollCard";
 import FloatingBook from "@/components/brand/FloatingBook";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
 import AttendanceCalculator from "./AttendanceCalculator";
@@ -339,6 +340,10 @@ export default function Dashboard() {
               Same cards as Explore Subjects (preview + add to cart) rather than
               a different-looking summary, so the action is identical wherever a
               student meets a subject. Three, then a door to the rest. */}
+          {/* Renders nothing unless there is an open poll this student has not
+              already answered or dismissed. */}
+          <PollCard className="mb-8" />
+
           {/* Nothing left to buy in this year. Confirm that, rather than
               removing the row — a section that silently disappears after a
               purchase is indistinguishable from one that failed to load, which
