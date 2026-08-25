@@ -109,10 +109,14 @@ export default function AppShell({ children, hideHeader = false }: { children: R
               td-util-bar gives a blurred backdrop so these never visually collide
               with content scrolling beneath the transparent xl header. */}
           <div className="td-util-bar flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto xl:pointer-events-auto">
-            <button onClick={signOut} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Sign out" title="Sign out">
+            {/* Only below xl. The SideNav rail carries Settings and Sign out as
+                labelled rows, so from 1280px up these were the same two actions
+                twice on one screen — as unlabelled icons, which is the worse of
+                the two. They stay for lg, where the rail is not mounted yet. */}
+            <button onClick={signOut} className="hidden lg:flex xl:hidden w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Sign out" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
-            <button onClick={() => navigate("/setup?edit=true")} className="hidden lg:flex w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Profile" title="Profile & settings">
+            <button onClick={() => navigate("/setup?edit=true")} className="hidden lg:flex xl:hidden w-9 h-9 rounded-full td-btn-ghost items-center justify-center" aria-label="Profile" title="Profile & settings">
               <UserCog className="w-4 h-4" />
             </button>
             <AccentPicker />
