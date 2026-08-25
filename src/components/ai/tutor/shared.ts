@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeFn } from "@/integrations/supabase/revamp";
 
 /** Which face of the tutor is showing. */
-export type TutorMode = "chat" | "drill" | "recall";
+export type TutorMode = "chat" | "drill" | "recall" | "exam";
 
 /**
  * A proactive offer from Rex, shown next to the launcher.
@@ -368,6 +368,61 @@ export interface MasteryRow {
   attempts: number;
   pct: number;
   last_at: string;
+}
+
+// ── Exam plan ───────────────────────────────────────────────────────────────
+
+/** One sitting. `unit` is null only on the closing mixed review. */
+export interface PlanBlock {
+  unit: number | null;
+  kind: "study" | "drill" | "review" | string;
+  focus: string;
+}
+
+export interface PlanDay {
+  /** ISO yyyy-mm-dd, for keys and ordering. */
+  date: string;
+  /** "Today", "Tomorrow", or a short weekday date. */
+  label: string;
+  blocks: PlanBlock[];
+}
+
+export interface PlanUnitRow {
+  unit: number;
+  /** Drill accuracy, or null when never drilled — shown as such, not as 0%. */
+  pct: number | null;
+  attempts: number;
+  qa: number;
+  topics: string[];
+  blocks: number;
+  tip: string | null;
+}
+
+export interface ExamPlan {
+  daysLeft: number;
+  examDate: string;
+  headline: string;
+  /** The schedule is always real; this says the wording fell back to computed. */
+  degraded: boolean;
+  units: PlanUnitRow[];
+  days: PlanDay[];
+}
+
+/**
+ * Build a revision schedule for this subject from the student's own drill
+ * scores. The server does the arithmetic — see the PLAN branch of study-buddy —
+ * so the ordering reflects measured weakness rather than a model's guess.
+ */
+export async function buildExamPlan(
+  ctx: TutorContext,
+  examDate: string,
+): Promise<{ data: ExamPlan | null; error: string | null }> {
+  return invokeFn<ExamPlan>("study-buddy", {
+    mode: "plan",
+    subject_id: ctx.subjectId,
+    subject_name: ctx.subjectName,
+    exam_date: examDate,
+  });
 }
 
 /** Score band shown on drill and recall results. Mirrors lib/readiness bands. */

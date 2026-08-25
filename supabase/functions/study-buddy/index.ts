@@ -437,6 +437,84 @@ function sseChat(
   });
 }
 
+// ── Exam plan ──────────────────────────────────────────────────────────────
+// The schedule is computed, not generated. A model asked for "a revision plan"
+// returns sleep well and make flashcards, because it has no idea which units
+// this student is weak on — while the drill scores that answer exactly that
+// question are sitting in study_mastery. So the arithmetic below decides what
+// gets revised and for how long, and the model is only ever allowed to phrase
+// it. That also means the plan still works when the model is unavailable.
+
+const DAY_MS = 86_400_000;
+
+interface PlanUnit {
+  unit: number;
+  /** Drill accuracy, or null when this unit has never been drilled. */
+  pct: number | null;
+  attempts: number;
+  /** Answers actually written up and readable by this student. */
+  qa: number;
+  topics: string[];
+  risk: number;
+  blocks: number;
+  tip?: string;
+}
+
+/**
+ * How badly a unit needs time, on 0..1.
+ *
+ * Weighted toward weakness over size: a large unit already at 90% is a worse
+ * use of the last night than a small one at 40%. A unit never drilled is
+ * treated as shaky rather than fine (55) and carries an uncertainty premium,
+ * so "no score" can never quietly mean "no revision".
+ */
+function riskOf(pct: number | null, qa: number, maxQa: number): number {
+  const known = pct !== null;
+  const p = known ? pct : 55;
+  const weakness = Math.min(1, Math.max(0, (100 - p) / 100));
+  const volume = maxQa > 0 ? qa / maxQa : 0;
+  const r = 0.72 * weakness + 0.28 * volume + (known ? 0 : 0.08);
+  return Math.min(1, Math.max(0.05, r));
+}
+
+/**
+ * Share out study blocks by risk, using largest-remainder.
+ *
+ * Plain proportional rounding loses or invents blocks — five units at 1.4 each
+ * floor to 5 when 7 were going — so the fractional remainders decide the
+ * leftovers.
+ *
+ * `units` must be sorted by risk, weakest first. A unit that still ends on
+ * nothing may then be topped up, but ONLY from a unit further down that list,
+ * i.e. one that needs the time less. Donating from whoever holds the most is
+ * the tempting version and it is exactly backwards: largest-remainder makes
+ * the weakest unit the biggest holder, so that rule quietly took a block off
+ * the unit at 42% to give one to the unit at 90%. When nobody weaker can
+ * spare a block the unit is left at zero, and the plan says so rather than
+ * inventing time that does not exist.
+ */
+function allocateBlocks(units: PlanUnit[], total: number) {
+  const sum = units.reduce((s, u) => s + u.risk, 0) || 1;
+  const exact = units.map((u) => (u.risk / sum) * total);
+  units.forEach((u, i) => { u.blocks = Math.floor(exact[i]); });
+
+  let left = total - units.reduce((s, u) => s + u.blocks, 0);
+  const byRemainder = units
+    .map((_, i) => i)
+    .sort((a, b) => (exact[b] % 1) - (exact[a] % 1));
+  for (let k = 0; left > 0 && k < byRemainder.length * 4; k++) {
+    units[byRemainder[k % byRemainder.length]].blocks++;
+    left--;
+  }
+
+  for (let i = 0; i < units.length; i++) {
+    if (units[i].blocks > 0 || units[i].qa === 0) continue;
+    for (let j = units.length - 1; j > i; j--) {
+      if (units[j].blocks > 1) { units[j].blocks--; units[i].blocks = 1; break; }
+    }
+  }
+}
+
 function shuffleOptions(opts: string[], answer: number, seed: number) {
   const idx = opts.map((_, i) => i);
   // deterministic per-question shuffle — models overwhelmingly put the correct
@@ -618,6 +696,156 @@ Rules:
 
       if (!questions.length) return jsonResponse({ error: "Couldn't build a quiz just now — try again, or use Recall mode." }, 502);
       return jsonResponse({ questions, scope, grounding: "notes" as Grounding });
+    }
+
+    // ── PLAN — a revision schedule from this student's own drill scores ────
+    if (mode === "plan") {
+      const examISO = String(body?.exam_date ?? "").slice(0, 40);
+      const examAt = Date.parse(examISO);
+      if (!Number.isFinite(examAt)) return jsonResponse({ error: "Pick the date of your exam first." }, 400);
+
+      // Whole days remaining, floored at 1: an exam later today is still a
+      // plan, just a short one. Counted from the start of today so "tomorrow"
+      // reads as 1 day regardless of the hour it is asked.
+      const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+      const daysLeft = Math.min(30, Math.max(1, Math.round((examAt - startOfToday.getTime()) / DAY_MS)));
+
+      const [qaRes, topicRes, mRes] = await Promise.all([
+        db.from("subject_qa").select("unit_number, answer_md").eq("subject_id", subjectId),
+        db.from("unit_topics").select("unit_number, title, order_index").eq("subject_id", subjectId).order("order_index", { ascending: true }),
+        db.rpc("study_mastery", { _subject_id: subjectId }),
+      ]);
+
+      // deno-lint-ignore no-explicit-any
+      const qaRows = (qaRes.data ?? []) as any[];
+      // deno-lint-ignore no-explicit-any
+      const topicRows = (topicRes.data ?? []) as any[];
+      // deno-lint-ignore no-explicit-any
+      const mRows = (mRes.data ?? []) as any[];
+
+      const byUnit = new Map<number, PlanUnit>();
+      const touch = (n: number) => {
+        if (!byUnit.has(n)) byUnit.set(n, { unit: n, pct: null, attempts: 0, qa: 0, topics: [], risk: 0, blocks: 0 });
+        return byUnit.get(n)!;
+      };
+      // Only answers that are actually written up and readable count as
+      // material — a placeholder row is not something you can revise from,
+      // and neither is an answer this student has not unlocked.
+      for (const r of qaRows) {
+        const n = Number(r.unit_number);
+        if (!Number.isFinite(n)) continue;
+        if (String(r.answer_md ?? "").trim().length >= 80) touch(n).qa++;
+      }
+      for (const t of topicRows) {
+        const n = Number(t.unit_number);
+        if (!Number.isFinite(n)) continue;
+        const u = touch(n);
+        if (u.topics.length < 8) u.topics.push(String(t.title ?? "").slice(0, 70));
+      }
+      for (const m of mRows) {
+        const n = Number(m.unit_number);
+        if (!Number.isFinite(n)) continue;
+        const u = touch(n);
+        u.pct = Number(m.pct);
+        u.attempts = Number(m.attempts) || 0;
+      }
+
+      const units = [...byUnit.values()].filter((u) => u.qa > 0);
+      if (!units.length) {
+        return jsonResponse({ error: "There's nothing written up for this subject yet, so I can't build a plan from it." }, 422);
+      }
+
+      const maxQa = units.reduce((m, u) => Math.max(m, u.qa), 0);
+      for (const u of units) u.risk = riskOf(u.pct, u.qa, maxQa);
+      units.sort((a, b) => b.risk - a.risk || a.unit - b.unit);
+
+      // Longer sessions when the exam is close, because there is no room for
+      // a light day; the last slot of every day is a drill, so each day ends
+      // by testing what it just covered rather than only reading it.
+      const perDay = daysLeft <= 1 ? 4 : daysLeft <= 3 ? 3 : 2;
+      allocateBlocks(units, daysLeft * perDay);
+
+      // Round-robin in risk order, so the weakest unit is touched on day one
+      // and no unit gets four identical sittings back to back.
+      const queue: number[] = [];
+      const left = units.map((u) => u.blocks);
+      for (let pass = 0; pass < 64 && left.some((n) => n > 0); pass++) {
+        units.forEach((u, i) => { if (left[i] > 0) { queue.push(u.unit); left[i]--; } });
+      }
+
+      const cursor = new Map<number, number>();
+      const focusFor = (n: number) => {
+        const u = byUnit.get(n)!;
+        if (!u.topics.length) return `All of Unit ${n}`;
+        const i = cursor.get(n) ?? 0;
+        cursor.set(n, i + 1);
+        return u.topics[i % u.topics.length];
+      };
+
+      const days: { date: string; label: string; blocks: { unit: number | null; kind: string; focus: string }[] }[] = [];
+      for (let d = 0; d < daysLeft; d++) {
+        const when = new Date(startOfToday.getTime() + d * DAY_MS);
+        const slice = queue.splice(0, perDay);
+        const blocks = slice.map((n) => ({ unit: n, kind: "study", focus: focusFor(n) }));
+        if (blocks.length) {
+          const weakest = slice.reduce((a, b) => (byUnit.get(a)!.risk >= byUnit.get(b)!.risk ? a : b));
+          blocks.push({ unit: weakest, kind: "drill", focus: `Drill Unit ${weakest} and mark it` });
+        }
+        if (d === daysLeft - 1) {
+          blocks.push({ unit: null, kind: "review", focus: "Mixed drill across every unit, then re-read only what you missed" });
+        }
+        days.push({
+          date: when.toISOString().slice(0, 10),
+          label: d === 0 ? "Today" : d === 1 ? "Tomorrow" : when.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }),
+          blocks,
+        });
+      }
+
+      // The model only writes words. It is given the numbers, never asked for
+      // them, so a failure here costs a nicer sentence and nothing else.
+      let headline = daysLeft === 1
+        ? `One day. Unit ${units[0].unit} is your weakest, so it goes first.`
+        : `${daysLeft} days. Start with Unit ${units[0].unit} — it's your weakest.`;
+      let degraded = true;
+      if (GROQ_KEYS) {
+        const facts = units.map((u) =>
+          `Unit ${u.unit}: ${u.pct === null ? "never drilled" : `${u.pct}% over ${u.attempts} drills`}, ${u.qa} answers, topics: ${u.topics.slice(0, 5).join("; ") || "none listed"}`
+        ).join("\n");
+        const d = await groq({
+          model: MODEL, temperature: 0.3, max_tokens: 900,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content: 'Reply ONLY JSON {"headline":"...","tips":[{"unit":1,"tip":"..."}]}. The headline is ONE sentence, under 20 words, naming the weakest unit and the time left. Each tip is ONE concrete revision action for that unit, under 18 words, referring to its listed topics by name. Never invent a topic. Never give generic advice about sleep, food, flashcards or timetables.',
+            },
+            { role: "user", content: `${subjectName}. Exam in ${daysLeft} day(s).\n${facts}` },
+          ],
+        }, { userId: user.id });
+        try {
+          const parsed = JSON.parse(d?.choices?.[0]?.message?.content ?? "{}");
+          if (typeof parsed.headline === "string" && parsed.headline.trim()) {
+            headline = parsed.headline.trim().slice(0, 160);
+            degraded = false;
+          }
+          for (const t of Array.isArray(parsed.tips) ? parsed.tips : []) {
+            const u = byUnit.get(Number(t?.unit));
+            if (u && typeof t?.tip === "string") u.tip = t.tip.trim().slice(0, 140);
+          }
+        } catch { /* keep the computed wording */ }
+      }
+
+      return jsonResponse({
+        daysLeft,
+        examDate: new Date(examAt).toISOString().slice(0, 10),
+        headline,
+        degraded,
+        units: units.map((u) => ({
+          unit: u.unit, pct: u.pct, attempts: u.attempts, qa: u.qa,
+          topics: u.topics, blocks: u.blocks, tip: u.tip ?? null,
+        })),
+        days,
+      });
     }
 
     // ── CHAT — RAG first, model's own knowledge only as a labelled fallback ─

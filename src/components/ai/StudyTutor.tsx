@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Maximize2, Minimize2, MessageSquare, Target, PenLine, Lock } from "lucide-react";
+import { X, Maximize2, Minimize2, MessageSquare, Target, PenLine, Lock, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
 import TutorOrb from "./tutor/TutorOrb";
 import TutorChat from "./tutor/TutorChat";
 import TutorDrill from "./tutor/TutorDrill";
 import TutorRecall from "./tutor/TutorRecall";
+import TutorExam from "./tutor/TutorExam";
 import { callRpc, hasUsableAnswer, type MasteryRow, type TutorContext, type TutorMode } from "./tutor/shared";
 
 export type { TutorMode };
 
-const MODES: { id: TutorMode; label: string; icon: typeof MessageSquare; hint: string }[] = [
+const MODES: { id: TutorMode; label: string; icon: typeof MessageSquare; hint: string; beta?: boolean }[] = [
   { id: "chat", label: "Explain", icon: MessageSquare, hint: "Ask anything from this unit" },
   { id: "drill", label: "Drill", icon: Target, hint: "Rapid MCQs from your notes" },
   { id: "recall", label: "Recall", icon: PenLine, hint: "Write it out and get marked" },
+  { id: "exam", label: "Exam", icon: CalendarDays, hint: "Plan your revision from your drill scores", beta: true },
 ];
 
 /**
@@ -38,8 +40,11 @@ export default function StudyTutor({
   const [full, setFull] = useState(false);
   const [name, setName] = useState("there");
   const [mastery, setMastery] = useState<number | null>(null);
+  /** Question handed over from another mode — e.g. tapping a topic in the plan.
+   *  Takes precedence over the `seed` prop, which only fires once on open. */
+  const [askSeed, setAskSeed] = useState<string | null>(null);
 
-  useEffect(() => { if (open) setMode(initialMode); }, [open, initialMode]);
+  useEffect(() => { if (open) { setMode(initialMode); setAskSeed(null); } }, [open, initialMode]);
 
   // Who am I talking to, and how have they been doing?
   useEffect(() => {
@@ -159,18 +164,32 @@ export default function StudyTutor({
                 </button>
               </div>
 
-              {/* ── Modes ─────────────────────────────────────────── */}
+              {/* ── Modes ───────────────────────────────────────────
+                  Four tabs share this row, so each one is allowed to shrink
+                  and its label to truncate — on a narrow phone the icons stay
+                  legible rather than the row overflowing its container. */}
               <div className="td-surface-2 rounded-full p-1 flex gap-1 mt-3.5">
                 {MODES.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setMode(m.id)}
-                    title={m.hint}
-                    className={`flex-1 rounded-full py-2 text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                    title={m.beta ? `${m.hint} (beta)` : m.hint}
+                    className={`flex-1 min-w-0 rounded-full py-2 text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                       mode === m.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <m.icon className="w-3.5 h-3.5" /> {m.label}
+                    <m.icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{m.label}</span>
+                    {m.beta && (
+                      <span
+                        aria-label="beta"
+                        className={`hidden sm:inline text-[8px] font-bold tracking-[0.1em] uppercase px-1 py-0.5 rounded-full shrink-0 ${
+                          mode === m.id ? "bg-black/10 text-black/60" : "td-surface text-zinc-500"
+                        }`}
+                      >
+                        Beta
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -188,9 +207,16 @@ export default function StudyTutor({
               Capped to a reading width and centred: the modal can be 860px
               wide, but a line of explanation shouldn't be. */}
           <div className="flex-1 min-h-0 flex flex-col w-full max-w-5xl mx-auto">
-            {mode === "chat" && <TutorChat ctx={ctx} name={name} mastery={mastery} seed={seed} onDrill={() => setMode("drill")} />}
+            {mode === "chat" && <TutorChat ctx={ctx} name={name} mastery={mastery} seed={askSeed ?? seed} onDrill={() => setMode("drill")} />}
             {mode === "drill" && <TutorDrill ctx={ctx} />}
             {mode === "recall" && <TutorRecall ctx={ctx} />}
+            {mode === "exam" && (
+              <TutorExam
+                ctx={ctx}
+                onDrill={() => setMode("drill")}
+                onAsk={(q) => { setAskSeed(q); setMode("chat"); }}
+              />
+            )}
           </div>
         </div>
       </div>
