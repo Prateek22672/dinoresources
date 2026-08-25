@@ -6,9 +6,17 @@ import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import TutorOrb from "./TutorOrb";
 import {
-  askTutor, jumpToSource, GROUNDING_LABEL, hasUsableAnswer,
+  askTutorStream, jumpToSource, GROUNDING_LABEL, hasUsableAnswer,
   type Grounding, type TutorContext, type TutorMessage, type TutorSource,
 } from "./shared";
+
+/** The reply currently streaming in, before it settles into `messages`. */
+interface Live {
+  text: string;
+  grounding?: Grounding;
+  sources?: TutorSource[];
+  searched?: number;
+}
 
 /** Badge that names where an answer's facts came from. */
 function GroundingBadge({ g, searched }: { g: Grounding; searched?: number }) {
@@ -91,10 +99,18 @@ export default function TutorChat({
   });
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [live, setLive] = useState<Live | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLTextAreaElement | null>(null);
   const seedSent = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  /** Whether this reply actually streamed, or arrived whole from the fallback. */
+  const streamed = useRef(false);
+
+  // A reply still arriving when the panel closes or the unit changes would
+  // otherwise land in the next conversation's state.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   // Switching unit switches conversation — the tutor is scoped to what's open.
   useEffect(() => {
@@ -105,7 +121,7 @@ export default function TutorChat({
     try { localStorage.setItem(storeKey, JSON.stringify(messages.slice(-24))); } catch { /* storage full */ }
   }, [messages, storeKey]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy, live?.text]);
 
   const readable = ctx.qa.filter(hasUsableAnswer);
   const locked = ctx.qa.length - readable.length;
@@ -134,9 +150,35 @@ export default function TutorChat({
     setMessages(next);
     setInput("");
     setBusy(true);
+    setLive(null);
+    streamed.current = false;
 
-    const { data, error } = await askTutor(ctx, next.map((m) => ({ role: m.role, content: m.content })));
+    abortRef.current?.abort();
+    const ctl = new AbortController();
+    abortRef.current = ctl;
+
+    const { data, error } = await askTutorStream(
+      ctx,
+      next.map((m) => ({ role: m.role, content: m.content })),
+      {
+        // Retrieval is done by now, so the badge and citations can settle
+        // before the first word — that ordering is the story of a grounded
+        // answer: what it found, then what it made of it.
+        onMeta: (m) => setLive({ text: "", ...m }),
+        onDelta: (t) => {
+          streamed.current = true;
+          setLive((l) => ({ ...(l ?? { text: "" }), text: (l?.text ?? "") + t }));
+        },
+      },
+      ctl.signal,
+    );
+
+    if (ctl.signal.aborted) return;
     setBusy(false);
+    setLive(null);
+
+    // Both null means we aborted on purpose — nothing to say about it.
+    if (!data && !error) return;
 
     if (error || !data?.reply) {
       setMessages((m) => [...m, {
@@ -155,7 +197,11 @@ export default function TutorChat({
       followups: data.followups ?? [],
       searched: data.searched,
       degraded: data.degraded,
-      fresh: true,
+      // Only animate what did NOT stream. A streamed reply has already written
+      // itself in, so replaying a typewriter over it shows the answer twice;
+      // one that fell back to the buffered path arrives whole, and the
+      // typewriter is what keeps the two paths feeling like the same tutor.
+      fresh: !streamed.current,
     }]);
   };
 
@@ -324,13 +370,31 @@ export default function TutorChat({
           );
         })}
 
-        {busy && (
+        {/* Searching — until retrieval reports back. */}
+        {busy && !live && (
           <div className="td-msg flex items-center gap-3">
             <TutorOrb size={22} busy />
             <span className="td-scan td-surface-2 rounded-full px-3 py-1.5 text-[11px] font-medium text-zinc-400 inline-flex items-center gap-1.5">
               <Search className="w-3 h-3" />
               Reading your notes{ctx.unit ? ` · Unit ${ctx.unit}` : ""}…
             </span>
+          </div>
+        )}
+
+        {/* Answering — rendered in the settled message's own shape so nothing
+            shifts when it finishes and moves into `messages`. */}
+        {live && (
+          <div className="td-msg">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <TutorOrb size={22} busy={!live.text} />
+              <GroundingBadge g={live.grounding ?? "notes"} searched={live.searched} />
+            </div>
+            <div className="pl-3.5 border-l-2" style={{ borderColor: "rgb(var(--td-accent-rgb) / 0.35)" }}>
+              {live.text
+                ? <MarkdownRenderer content={live.text} isTyping />
+                : <span className="td-scan text-[13px] text-zinc-500">Writing your answer…</span>}
+              <SourceChips sources={live.sources ?? []} />
+            </div>
           </div>
         )}
         <div ref={endRef} />

@@ -19,7 +19,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { adminClient, getAuthUser } from "../_shared/razorpay.ts";
-import { groqChat as groqCall, groqKeyCount } from "../_shared/groq.ts";
+import { groqChat as groqCall, groqKeyCount, groqStream } from "../_shared/groq.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -344,6 +344,85 @@ function followupsFrom(r: Retrieved, band: Grounding): string[] {
   return out.slice(0, 4);
 }
 
+/**
+ * Forward a Groq stream to the browser as SSE.
+ *
+ * Retrieval has already finished by the time this is called, so `meta` goes out
+ * on the first frame: the student sees "From your notes · searched 6" and the
+ * citations while the first sentence is still being written, which is the whole
+ * point of streaming a retrieval answer.
+ *
+ * The buffered path's safety net is kept intact. If the model streams nothing
+ * at all — gpt-oss can spend its whole budget on reasoning and emit no visible
+ * token — the best retrieved passage is sent as the answer instead, exactly as
+ * the non-streaming path does, rather than leaving an empty bubble.
+ */
+function sseChat(
+  upstream: Response,
+  meta: Record<string, unknown>,
+  fallbackText: string | null,
+  followups: string[],
+): Response {
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const frame = (ctl: ReadableStreamDefaultController, obj: unknown) =>
+    ctl.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+
+  const body = new ReadableStream({
+    async start(ctl) {
+      frame(ctl, { type: "meta", ...meta });
+      let got = "";
+      try {
+        const reader = upstream.body!.getReader();
+        let buf = "";
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          // Frames are newline-delimited; the tail may be a partial line, so
+          // it is held back until the rest of it arrives.
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            const s = line.trim();
+            if (!s.startsWith("data:")) continue;
+            const chunk = s.slice(5).trim();
+            if (!chunk || chunk === "[DONE]") continue;
+            try {
+              const t = JSON.parse(chunk)?.choices?.[0]?.delta?.content;
+              if (t) { got += t; frame(ctl, { type: "delta", t }); }
+            } catch { /* keep-alive or a frame split across reads */ }
+          }
+        }
+      } catch (e) {
+        console.error("study-buddy stream broke", e);
+      }
+
+      if (!got.trim()) {
+        if (fallbackText) {
+          frame(ctl, { type: "delta", t: fallbackText });
+          frame(ctl, { type: "done", followups, degraded: true });
+        } else {
+          frame(ctl, { type: "error", error: "The tutor is busy right now — too many questions at once. Give it a few seconds and ask again." });
+        }
+        ctl.close();
+        return;
+      }
+
+      frame(ctl, { type: "done", followups, degraded: false });
+      ctl.close();
+    },
+  });
+
+  return new Response(body, {
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+    },
+  });
+}
+
 function shuffleOptions(opts: string[], answer: number, seed: number) {
   const idx = opts.map((_, i) => i);
   // deterministic per-question shuffle — models overwhelmingly put the correct
@@ -561,6 +640,38 @@ Rules:
       content: String(m.content ?? "").slice(0, 2000),
     }));
 
+    // The passage handed over when the model says nothing usable — identical
+    // in the streaming and buffered paths, so a degraded answer reads the same
+    // either way.
+    const top = r.passages[0];
+    const passageFallback = top
+      ? `I couldn't reach the model just now, but your notes cover this. From **Unit ${top.unit}${top.topic ? ` · ${top.topic}` : ""}**:\n\n${top.text}`
+      : null;
+
+    // ── Streaming ──────────────────────────────────────────────────────────
+    // Opt-in per request. Anything that goes wrong before the first token
+    // simply falls through to the buffered path below, so an older client, a
+    // proxy that buffers, or an exhausted key never costs the student an answer.
+    if (body?.stream === true) {
+      const upstream = await groqStream({
+        model: MODEL,
+        temperature: band === "beyond" ? 0.5 : 0.3,
+        max_tokens: 2000,
+        stream: true,
+        messages: [{ role: "system", content: system }, ...history],
+      }, { userId: user.id });
+
+      if (upstream?.body) {
+        return sseChat(
+          upstream,
+          { grounding: band, sources, searched: r.rows.length, locked: r.lockedCount },
+          passageFallback,
+          followupsFrom(r, band),
+        );
+      }
+      void logIssue("stream_unavailable", "groqStream returned no body; falling back to buffered", user.id);
+    }
+
     const ask = (maxTokens: number, turns: typeof history) => groq({
       model: MODEL,
       temperature: band === "beyond" ? 0.5 : 0.3,
@@ -606,10 +717,9 @@ Rules:
       );
       // Model unavailable — hand back the best passage verbatim rather than an
       // apology. The student still gets their answer.
-      const top = r.passages[0];
-      if (top) {
+      if (passageFallback) {
         return jsonResponse({
-          reply: `I couldn't reach the model just now, but your notes cover this. From **Unit ${top.unit}${top.topic ? ` · ${top.topic}` : ""}**:\n\n${top.text}`,
+          reply: passageFallback,
           grounding: "notes", sources, followups: followupsFrom(r, "notes"), searched: r.rows.length, degraded: true,
         });
       }

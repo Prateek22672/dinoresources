@@ -145,7 +145,7 @@ export function jumpToSource(qaId: string) {
   } catch { /* non-critical */ }
 }
 
-interface ChatReply {
+export interface ChatReply {
   reply: string;
   grounding: Grounding;
   sources: TutorSource[];
@@ -166,6 +166,151 @@ export async function askTutor(
     topic: ctx.topic ?? undefined,
     messages,
   });
+}
+
+// client.ts is generated ("do not edit directly"), so the endpoint is named
+// again here rather than exported from it — an edit there would be lost on the
+// next regeneration. The Vite vars win when present, so pointing a fork at a
+// different project needs no code change. The anon key is public by design and
+// already ships in the bundle.
+const FN_BASE =
+  (import.meta.env?.VITE_SUPABASE_URL as string | undefined) ||
+  "https://yidbijzsfrwqskjzawqq.supabase.co";
+const FN_ANON =
+  (import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZGJpanpzZnJ3cXNranphd3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjkyNTAsImV4cCI6MjA3NjMwNTI1MH0.8Q_wm2Z37GafNi9yFOu845PrxgtdJnMT7nQHDchdyU4";
+
+export interface StreamHandlers {
+  /** Grounding and citations, known from retrieval before the first word. */
+  onMeta?: (m: { grounding: Grounding; sources: TutorSource[]; searched: number }) => void;
+  onDelta?: (t: string) => void;
+}
+
+/**
+ * Streaming twin of `askTutor`.
+ *
+ * Retrieval finishes before the model starts, so the grounding badge and the
+ * source chips land immediately and the answer writes itself in underneath —
+ * the student sees what Rex found while he is still explaining it, instead of
+ * watching a spinner for the whole completion.
+ *
+ * Resolves with the same shape `askTutor` returns, so callers store the result
+ * exactly as before. Any transport failure falls back to the buffered path
+ * rather than costing an answer: a proxy that buffers SSE, a deployment without
+ * the stream branch, or a signed-out session all still work. `data` and `error`
+ * both null means the caller aborted deliberately.
+ */
+export async function askTutorStream(
+  ctx: TutorContext,
+  messages: { role: string; content: string }[],
+  handlers: StreamHandlers = {},
+  signal?: AbortSignal,
+): Promise<{ data: ChatReply | null; error: string | null }> {
+  let token: string | undefined;
+  try {
+    const { data } = await supabase.auth.getSession();
+    token = data.session?.access_token;
+  } catch { /* fall through */ }
+  if (!token) return askTutor(ctx, messages);
+
+  let res: Response;
+  try {
+    res = await fetch(`${FN_BASE}/functions/v1/study-buddy`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: FN_ANON,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "chat",
+        stream: true,
+        subject_id: ctx.subjectId,
+        subject_name: ctx.subjectName,
+        unit: ctx.unit ?? undefined,
+        topic: ctx.topic ?? undefined,
+        messages,
+      }),
+      signal,
+    });
+  } catch {
+    if (signal?.aborted) return { data: null, error: null };
+    return askTutor(ctx, messages);
+  }
+
+  // The function still answers JSON when it declines to stream at all — a rate
+  // limit, an empty question, no key configured. Those are real answers, not
+  // transport faults, so they pass straight through.
+  const ctype = res.headers.get("content-type") ?? "";
+  if (!res.ok || !ctype.includes("text/event-stream") || !res.body) {
+    if (ctype.includes("application/json")) {
+      const j = await res.json().catch(() => null) as (ChatReply & { error?: string }) | null;
+      if (j?.error) return { data: null, error: j.error };
+      if (j?.reply) return { data: j, error: null };
+    }
+    return askTutor(ctx, messages);
+  }
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  let reply = "";
+  let meta: { grounding: Grounding; sources: TutorSource[]; searched: number } | null = null;
+  let followups: string[] = [];
+  let degraded = false;
+  let refused: string | null = null;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        const s = line.trim();
+        if (!s.startsWith("data:")) continue;
+        const chunk = s.slice(5).trim();
+        if (!chunk) continue;
+        let ev: { type?: string; t?: string; error?: string; followups?: string[]; degraded?: boolean }
+          & Partial<{ grounding: Grounding; sources: TutorSource[]; searched: number }>;
+        try { ev = JSON.parse(chunk); } catch { continue; }
+        if (ev.type === "meta") {
+          meta = { grounding: ev.grounding ?? "notes", sources: ev.sources ?? [], searched: ev.searched ?? 0 };
+          handlers.onMeta?.(meta);
+        } else if (ev.type === "delta" && ev.t) {
+          reply += ev.t;
+          handlers.onDelta?.(ev.t);
+        } else if (ev.type === "done") {
+          followups = ev.followups ?? [];
+          degraded = !!ev.degraded;
+        } else if (ev.type === "error") {
+          refused = ev.error ?? "The tutor is busy right now.";
+        }
+      }
+    }
+  } catch {
+    if (signal?.aborted) return { data: null, error: null };
+    // Broke mid-answer. Whatever already streamed is real and worth keeping;
+    // only retry from scratch if nothing arrived at all.
+    if (!reply.trim()) return askTutor(ctx, messages);
+  }
+
+  if (signal?.aborted) return { data: null, error: null };
+  if (refused) return { data: null, error: refused };
+  if (!reply.trim()) return askTutor(ctx, messages);
+
+  return {
+    data: {
+      reply,
+      grounding: meta?.grounding ?? "notes",
+      sources: meta?.sources ?? [],
+      followups,
+      searched: meta?.searched ?? 0,
+      degraded,
+    },
+    error: null,
+  };
 }
 
 export async function buildDrill(

@@ -106,6 +106,77 @@ function errorCode(body: string): string | undefined {
 /** How many keys are configured — for health checks. Never exposes values. */
 export const groqKeyCount = (preferredEnv?: string) => collectKeys(preferredEnv).length;
 
+/** Keys in the order this call should try them, secrets before Vault. */
+async function keyRing(opts: GroqOpts): Promise<string[]> {
+  const keys = collectKeys(opts.preferredEnv);
+  for (const k of await loadDbKeys()) if (!keys.includes(k)) keys.push(k);
+  return keys;
+}
+
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+/**
+ * Same rotation as groqChat, but hands back the live Response so the caller can
+ * forward tokens as they arrive instead of waiting for the whole completion.
+ *
+ * Failover still works: Groq reports 429/401 in the response headers, which
+ * arrive before any body streams, so a busy key is swapped out exactly as it is
+ * below. Once a key answers 200 we are committed to that stream — there is no
+ * rewinding a response the student has already started reading.
+ *
+ * Returns null if every key was exhausted, which leaves the caller free to fall
+ * back to the buffered path rather than showing an error.
+ */
+export async function groqStream(payload: unknown, opts: GroqOpts = {}): Promise<Response | null> {
+  const keys = await keyRing(opts);
+  if (keys.length === 0) {
+    console.error("groq: no API key configured");
+    return null;
+  }
+  const rounds = opts.rounds ?? 2;
+  const dead = new Set<number>();
+
+  for (let round = 0; round < rounds; round++) {
+    for (let i = 0; i < keys.length; i++) {
+      const idx = (cursor++ + i) % keys.length;
+      if (dead.has(idx)) continue;
+
+      // The timeout covers reaching first byte only, and is cleared the moment
+      // headers land — leaving it armed would abort a long answer mid-sentence.
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), opts.timeoutMs ?? 20_000);
+      try {
+        const res = await fetch(GROQ_URL, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${keys[idx]}`, "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: ctl.signal,
+        });
+        clearTimeout(timer);
+        if (res.ok && res.body) return res;
+
+        const raw = await res.text();
+        const body = redact(raw).slice(0, 200);
+        console.error(`groq stream key#${idx + 1}/${keys.length} ${res.status} ${body}`);
+        void logFailure(opts, {
+          status: res.status, code: errorCode(raw), message: body,
+          keyIndex: idx + 1, keyCount: keys.length,
+        });
+        if (res.status === 401 || res.status === 403) { dead.add(idx); continue; }
+        if (res.status === 429 || res.status >= 500) continue;
+        return null;
+      } catch (e) {
+        clearTimeout(timer);
+        const msg = e instanceof Error ? redact(e.message) : "error";
+        console.error(`groq stream key#${idx + 1}/${keys.length} failed:`, msg);
+        void logFailure(opts, { code: "network_or_timeout", message: msg, keyIndex: idx + 1, keyCount: keys.length });
+      }
+    }
+    if (round < rounds - 1) await new Promise((r) => setTimeout(r, 800));
+  }
+  return null;
+}
+
 /**
  * POST to Groq chat completions, rotating keys on rate limits.
  * Returns the parsed response, or null once every key has been tried.
