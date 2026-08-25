@@ -34,7 +34,13 @@ export default function SideNav({
     { label: "What's new", icon: Sparkles, onClick: () => navigate("/whats-new") },
     { label: "Settings", icon: Settings, onClick: () => navigate("/setup?edit=true") },
     { label: "About us", icon: Info, onClick: () => navigate("/about") },
-    { label: "Report an issue", icon: Bug, onClick: () => window.dispatchEvent(new Event("td:open-issue-reporter")) },
+    // "Report an issue" lived here and fired td:open-issue-reporter — the exact
+    // event Instant Help's "Report a bug" already fires, opening the same
+    // reporter and writing the same `issues` row. Two labels for one action, so
+    // the one inside Instant Help wins: it sits beside "Raise a ticket", which
+    // is the choice a student actually has to make (a bug, or their own
+    // account). HelpBot is not behind the helpbot flag — that only gates the
+    // proactive nudge — so this stays reachable however the flags are set.
   ];
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");

@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect, lazy, Suspense } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
-  Zap, Menu, X, Briefcase, Bug, Sparkles,
+  Zap, Menu, X, Briefcase, Sparkles,
 } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
 // DinoBot + the issue reporter ship as their own chunks — loaded on first use.
@@ -40,8 +40,10 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const [botLoaded, setBotLoaded] = useState(false); // chunk fetched on first open, stays mounted
   useEffect(() => { if (botOpen) setBotLoaded(true); }, [botOpen]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [issueOpen, setIssueOpen] = useState(false); // "Report an issue" — from rail / menu
-  // DinoBot (or anything) can open the reporter by dispatching this event
+  const [issueOpen, setIssueOpen] = useState(false);
+  // The only way in now: Instant Help's "Report a bug" dispatches this. Kept as
+  // an event rather than a prop so anything can open the reporter without
+  // AppShell having to hand a callback down to it.
   useEffect(() => {
     const open = () => setIssueOpen(true);
     window.addEventListener("td:open-issue-reporter", open);
@@ -71,8 +73,10 @@ export default function AppShell({ children, hideHeader = false }: { children: R
     ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
     { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
     { label: "What's new", icon: Sparkles, bottom: true, onClick: () => navigate("/whats-new") },
+    // Same de-duplication as the rail: Instant Help already opens the bug
+    // reporter from its own "Report a bug", so a second row for it here was
+    // the same action under a different name.
     { label: "Instant Help", icon: Zap, bottom: true, onClick: () => setBotOpen(true) },
-    { label: "Report an issue", icon: Bug, bottom: true, onClick: () => setIssueOpen(true) },
     { label: "Settings", icon: UserCog, bottom: true, onClick: () => navigate("/setup?edit=true") },
     { label: "Sign out", icon: LogOut, danger: true, bottom: true, onClick: signOut },
   ];
