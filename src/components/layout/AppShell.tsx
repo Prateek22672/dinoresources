@@ -131,7 +131,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
             <Link to="/cart" className="relative w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center" aria-label="Cart" title="Cart">
               <ShoppingCart className="w-4 h-4" />
               {count > 0 && (
-                <span className="td-accent-solid absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center">{count}</span>
+                <span className="td-accent-badge absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center">{count}</span>
               )}
             </Link>
 

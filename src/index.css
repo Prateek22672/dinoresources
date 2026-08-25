@@ -61,11 +61,18 @@ All colors MUST be HSL.
     --td-accent-rgb: 124 108 240;
   }
 
-  /* Curated accents — desaturated to sit calmly on the grey UI. */
-  :root[data-accent="emerald"] { --td-accent:#14b8a6; --td-accent-soft:#6ee7db; --td-accent-strong:#0d9488; --td-accent-rgb:20 184 166; }
+  /* Curated accents — desaturated to sit calmly on the grey UI.
+     --td-accent-soft is the text colour in dark mode and --td-accent-strong the
+     one in light mode, so both are held to 4.5:1 against the surface they land
+     on (#2a2a2a and #ffffff). Teal's strong was #0d9488, which measured 3.74:1
+     on a white card — legible as a swatch, not as the 11px labels it actually
+     paints. Rose's was 4.57:1, passing with nothing to spare. Both were
+     darkened; the swatch and the solid fill are unchanged, so neither accent
+     looks any different, it just stays readable where it is used as text.
+     Gold was removed outright — see ACCENTS in hooks/useAccent.ts. */
+  :root[data-accent="emerald"] { --td-accent:#14b8a6; --td-accent-soft:#6ee7db; --td-accent-strong:#0f766e; --td-accent-rgb:20 184 166; }
   :root[data-accent="blue"]    { --td-accent:#5b8def; --td-accent-soft:#a3c2ff; --td-accent-strong:#3f6ad8; --td-accent-rgb:91 141 239; }
-  :root[data-accent="amber"]   { --td-accent:#d9a441; --td-accent-soft:#ecc989; --td-accent-strong:#a97b28; --td-accent-rgb:217 164 65; }
-  :root[data-accent="rose"]    { --td-accent:#d962a8; --td-accent-soft:#f0a6d4; --td-accent-strong:#c2478f; --td-accent-rgb:217 98 168; }
+  :root[data-accent="rose"]    { --td-accent:#d962a8; --td-accent-soft:#f0a6d4; --td-accent-strong:#b03b80; --td-accent-rgb:217 98 168; }
 
   .dark {
     --background: 240 10% 4%;
@@ -174,6 +181,12 @@ All colors MUST be HSL.
   .td-accent-ring { box-shadow: 0 0 0 3px rgb(var(--td-accent-rgb) / 0.18); }
   .td-accent-bg   { background: rgb(var(--td-accent-rgb) / 0.16); color: var(--td-accent-soft); }
   .td-accent-solid { background: var(--td-accent); }
+  /* Small white text on a filled accent — the cart count, and chips like it.
+     td-accent-solid is tuned to be a pleasant fill, not a text background:
+     white on it measures 2.5–4.0:1 across the accents, all under 4.5:1, and
+     the count is 10px. --td-accent-strong is the darker end of the same hue,
+     which carries white at 4.8–5.6:1 in either theme. */
+  .td-accent-badge { background: var(--td-accent-strong); color: #ffffff; }
 
   /* Accent emphasis — SOLID only (no gradients anywhere, by design). */
   .td-grad-text { color: var(--td-accent-soft); }

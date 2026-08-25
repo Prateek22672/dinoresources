@@ -53,7 +53,7 @@ export default function AccentPicker() {
 
           {/* Accent */}
           <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 px-1 mb-2">Accent color</p>
-          <div className="grid grid-cols-5 gap-2 px-1 pb-1">
+          <div className="grid grid-cols-4 gap-2 px-1 pb-1">
             {ACCENTS.map((a) => (
               <button
                 key={a.id}

@@ -187,7 +187,7 @@ export default function AuthPage() {
                 {["A", "R", "S", "K"].map((l) => (
                   <span key={l} className="w-8 h-8 rounded-full bg-white/[0.07] border-2 border-[#0b0b0e] flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
                 ))}
-                <span className="w-8 h-8 rounded-full td-accent-solid border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black text-white">1.5k</span>
+                <span className="w-8 h-8 rounded-full td-accent-badge border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black">1.5k</span>
               </div>
               <span className="text-sm text-zinc-500 font-medium">1500+ signups already inside</span>
             </div>
