@@ -177,11 +177,15 @@ export default function Dashboard() {
       accent: "#f5b042", icon: Megaphone, onClick: () => setTool("announcements") },
   ];
 
-  // only suggest the student's OWN year pack — never another year's
+  // only ever the student's OWN year pack — never another year's.
+  // Owning it no longer removes the strip: buying the pack used to make the
+  // whole row disappear, which reads as "did that work?" rather than as
+  // confirmation. It stays and says it is unlocked, the way the store does.
   const studentYearId = matchProfileYear(profile?.semester ?? null, years);
   const comboYear = years.find((y) =>
-    y.id === studentYearId && !ownedYearIds.has(y.id) && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id),
+    y.id === studentYearId && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id),
   );
+  const comboOwned = !!comboYear && ownedYearIds.has(comboYear.id);
 
   return (
     <AppShell>
@@ -288,21 +292,44 @@ export default function Dashboard() {
             <div className="td-hero rounded-3xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
               <div className="relative z-10 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center"><Package className="w-5 h-5" /></div>
-                <div>
-                  <p className="text-white font-semibold">{comboYear.name} — Complete Access</p>
-                  <p className="text-zinc-400 text-sm">Unlock every {comboYear.name} subject at once.</p>
-                  <button onClick={() => navigate("/setup?edit=true")}
-                    className="text-zinc-500 hover:text-white text-xs font-medium mt-1 inline-flex items-center gap-1">
-                    <GraduationCap className="w-3 h-3" /> Not your year? Change here
-                  </button>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold flex items-center gap-2 flex-wrap">
+                    {comboYear.name} — Complete Access
+                    {comboOwned && (
+                      <span className="td-accent-bg text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0">
+                        <Check className="w-3 h-3" /> Unlocked
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-zinc-400 text-sm">
+                    {comboOwned
+                      ? `Every ${comboYear.name} subject is open to you.`
+                      : `Unlock every ${comboYear.name} subject at once.`}
+                  </p>
+                  {/* Changing year is an offer to buy a different pack — pointless
+                      once this one is owned, and alarming next to "Unlocked". */}
+                  {!comboOwned && (
+                    <button onClick={() => navigate("/setup?edit=true")}
+                      className="text-zinc-500 hover:text-white text-xs font-medium mt-1 inline-flex items-center gap-1">
+                      <GraduationCap className="w-3 h-3" /> Not your year? Change here
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="relative z-10 flex items-center gap-3">
-                <span className="text-white font-bold text-lg">{formatPaise(comboYear.combo_price_paise)}</span>
-                {isInCart("combo", comboYear.id) ? (
-                  <button onClick={() => navigate("/cart")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Check className="w-4 h-4" /> In cart</button>
+                {comboOwned ? (
+                  <button onClick={() => navigate("/library")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4" /> Open My Library
+                  </button>
                 ) : (
-                  <button onClick={() => addCombo(comboYear.id, comboYear.name)} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Plus className="w-4 h-4" /> Add combo</button>
+                  <>
+                    <span className="text-white font-bold text-lg">{formatPaise(comboYear.combo_price_paise)}</span>
+                    {isInCart("combo", comboYear.id) ? (
+                      <button onClick={() => navigate("/cart")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Check className="w-4 h-4" /> In cart</button>
+                    ) : (
+                      <button onClick={() => addCombo(comboYear.id, comboYear.name)} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Plus className="w-4 h-4" /> Add combo</button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -312,6 +339,35 @@ export default function Dashboard() {
               Same cards as Explore Subjects (preview + add to cart) rather than
               a different-looking summary, so the action is identical wherever a
               student meets a subject. Three, then a door to the rest. */}
+          {/* Nothing left to buy in this year. Confirm that, rather than
+              removing the row — a section that silently disappears after a
+              purchase is indistinguishable from one that failed to load, which
+              is the moment a student most wants to see that it worked.
+              Guarded on owned so an empty catalogue doesn't claim a win. */}
+          {available.length === 0 && owned.length > 0 && (
+            <section className="mb-8">
+              <div className="td-hero rounded-3xl p-5 flex items-center justify-between gap-4 flex-wrap">
+                <div className="relative z-10 flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0">
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold">
+                      All {owned.length} subject{owned.length === 1 ? "" : "s"} unlocked
+                    </p>
+                    <p className="text-zinc-400 text-sm">Nothing left to buy — open any of them from your library.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate("/library")}
+                  className="relative z-10 td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5 shrink-0"
+                >
+                  <BookOpen className="w-4 h-4" /> My Library
+                </button>
+              </div>
+            </section>
+          )}
+
           {available.length > 0 && (
             <section className="mb-8">
               <div className="flex items-baseline justify-between mb-3">
