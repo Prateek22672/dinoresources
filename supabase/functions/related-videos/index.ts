@@ -18,6 +18,23 @@ const MODEL = Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b";
 const CACHE_TTL_DAYS = 30;
 const cacheKeyOf = (topic: string) => topic.toLowerCase().replace(/\s+/g, " ").trim();
 
+// YouTube's JSON responses carry HTML-escaped title/channel text (e.g. a
+// literal "&amp;" for "&"), a quirk of the API rather than something JSON
+// itself would do — left alone it shows up raw in the UI, and gets baked
+// permanently into subject_editorial.title for anything an admin adds.
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'", nbsp: " ",
+};
+function decodeHtmlEntities(s: string): string {
+  return s.replace(/&(#\d+|#x[0-9a-f]+|[a-z0-9]+);/gi, (m, ent) => {
+    if (ent[0] === "#") {
+      const code = ent[1]?.toLowerCase() === "x" ? parseInt(ent.slice(2), 16) : parseInt(ent.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : m;
+    }
+    return HTML_ENTITIES[ent.toLowerCase()] ?? m;
+  });
+}
+
 /** @param ignoreTtl serve an expired entry anyway (used when YouTube refuses). */
 async function readCache(key: string, ignoreTtl = false) {
   try {
@@ -107,8 +124,8 @@ Deno.serve(async (req) => {
         const d = await r.json();
         const videos = (d.items ?? []).map((it: any) => ({
           videoId: it.id?.videoId,
-          title: it.snippet?.title ?? "Video",
-          channel: it.snippet?.channelTitle ?? "",
+          title: decodeHtmlEntities(it.snippet?.title ?? "Video"),
+          channel: decodeHtmlEntities(it.snippet?.channelTitle ?? ""),
           thumbnail: it.snippet?.thumbnails?.medium?.url ?? it.snippet?.thumbnails?.default?.url ?? null,
         })).filter((v: any) => v.videoId);
         await writeCache(key, query, "youtube", videos);
