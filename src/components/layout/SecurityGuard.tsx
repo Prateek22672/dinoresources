@@ -6,9 +6,10 @@ import { tbl } from "@/integrations/supabase/revamp";
  *  0 — Off (developer mode; nothing blocked)
  *  1 — Block DevTools (F12 / Ctrl+Shift+I/J/C / Ctrl+U) + right-click
  *  2 — Level 1 + block copy / cut / paste + text selection
- *  3 — Level 2 + block printing + image drag + screenshot deterrence
- *      (PrintScreen wipes the clipboard & flashes a shield; the page blurs
- *       whenever the window loses focus — which snipping tools trigger)
+ *  3 — Level 2 + block printing + image drag
+ *
+ * Screenshot deterrence (PrintScreen) is a separate toggle — see
+ * useScreenshotShield below — not part of this ladder.
  */
 export function useSecurityLevel(): number {
   const [level, setLevel] = useState<number>(() => {
@@ -26,8 +27,26 @@ export function useSecurityLevel(): number {
   return level;
 }
 
+/** app_settings.screenshot_shield — independent on/off for the PrintScreen shield. */
+export function useScreenshotShield(): boolean {
+  const [on, setOn] = useState<boolean>(() => {
+    const c = localStorage.getItem("td-sec-shield");
+    return c === null ? true : c === "1";
+  });
+  useEffect(() => {
+    tbl("app_settings").select("screenshot_shield").maybeSingle().then(({ data }: any) => {
+      if (data && typeof data.screenshot_shield === "boolean") {
+        setOn(data.screenshot_shield);
+        try { localStorage.setItem("td-sec-shield", data.screenshot_shield ? "1" : "0"); } catch { /* ignore */ }
+      }
+    });
+  }, []);
+  return on;
+}
+
 export default function SecurityGuard() {
   const level = useSecurityLevel();
+  const shieldEnabled = useScreenshotShield();
 
   useEffect(() => {
     if (level <= 0) return;
@@ -45,34 +64,12 @@ export default function SecurityGuard() {
     const onClipboard = (e: Event) => { if (level >= 2) e.preventDefault(); };
     const onDragStart = (e: Event) => { if (level >= 3) e.preventDefault(); };
 
-    // ── L3 screenshot deterrence ──
-    const shieldOn = () => document.documentElement.classList.add("td-shield");
-    const shieldOff = () => document.documentElement.classList.remove("td-shield");
-    const onWinBlur = () => shieldOn();
-    const onWinFocus = () => shieldOff();
-    const onVis = () => (document.hidden ? shieldOn() : shieldOff());
-    const onKeyUp = (e: KeyboardEvent) => {
-      // PrintScreen only fires keyup in browsers; wipe the captured clipboard
-      // and flash the shield so the grab lands on blurred content.
-      if (e.key === "PrintScreen") {
-        try { navigator.clipboard.writeText(""); } catch { /* clipboard unavailable */ }
-        shieldOn();
-        setTimeout(shieldOff, 900);
-      }
-    };
-
     document.addEventListener("contextmenu", onContext);
     document.addEventListener("keydown", onKey, true);
     document.addEventListener("copy", onClipboard);
     document.addEventListener("cut", onClipboard);
     document.addEventListener("paste", onClipboard);
     document.addEventListener("dragstart", onDragStart);
-    if (level >= 3) {
-      window.addEventListener("blur", onWinBlur);
-      window.addEventListener("focus", onWinFocus);
-      document.addEventListener("visibilitychange", onVis);
-      document.addEventListener("keyup", onKeyUp, true);
-    }
 
     let prevSelect = "";
     if (level >= 2) {
@@ -88,19 +85,36 @@ export default function SecurityGuard() {
       document.removeEventListener("cut", onClipboard);
       document.removeEventListener("paste", onClipboard);
       document.removeEventListener("dragstart", onDragStart);
-      if (level >= 3) {
-        window.removeEventListener("blur", onWinBlur);
-        window.removeEventListener("focus", onWinFocus);
-        document.removeEventListener("visibilitychange", onVis);
-        document.removeEventListener("keyup", onKeyUp, true);
-        shieldOff();
-      }
       if (level >= 2) {
         document.body.style.userSelect = prevSelect;
         (document.body.style as any).webkitUserSelect = prevSelect;
       }
     };
   }, [level]);
+
+  // PrintScreen is the only client-observable signal that's actually a
+  // screenshot rather than a guess — unlike window-blur, clicking into an
+  // embedded video (which steals focus from the top-level window the same
+  // way switching tabs does) can never trigger this by accident.
+  useEffect(() => {
+    if (!shieldEnabled) return;
+
+    const shieldOn = () => document.documentElement.classList.add("td-shield");
+    const shieldOff = () => document.documentElement.classList.remove("td-shield");
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen") {
+        try { navigator.clipboard.writeText(""); } catch { /* clipboard unavailable */ }
+        shieldOn();
+        setTimeout(shieldOff, 900);
+      }
+    };
+
+    document.addEventListener("keyup", onKeyUp, true);
+    return () => {
+      document.removeEventListener("keyup", onKeyUp, true);
+      shieldOff();
+    };
+  }, [shieldEnabled]);
 
   return null;
 }

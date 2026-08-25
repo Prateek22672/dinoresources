@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Shield, Check, Code2, Lock, Ban, CalendarClock, Smartphone, Save, CreditCard } from "lucide-react";
+import { Shield, Check, Code2, Lock, Ban, CalendarClock, Smartphone, Save, CreditCard, Camera } from "lucide-react";
 
 const LEVELS = [
   { value: 0, title: "Off — Developer mode", desc: "Nothing is blocked. DevTools, right-click, copy/paste all allowed.", icon: Code2 },
   { value: 1, title: "Level 1 — No DevTools", desc: "Blocks F12 / Ctrl+Shift+I·J·C / Ctrl+U and right-click.", icon: Shield },
   { value: 2, title: "Level 2 — No copy/paste", desc: "Level 1 + blocks copy, cut, paste and text selection.", icon: Lock },
-  { value: 3, title: "Level 3 — Strict", desc: "Level 2 + blocks printing & image dragging, and deters screenshots (PrintScreen wipes the clipboard; content blurs when the window loses focus).", icon: Ban },
+  { value: 3, title: "Level 3 — Strict", desc: "Level 2 + blocks printing & image dragging.", icon: Ban },
 ];
 
 export default function AdminSecurity() {
@@ -17,14 +17,16 @@ export default function AdminSecurity() {
   const [singleDevice, setSingleDevice] = useState(false);
   const [gateway, setGateway] = useState<"primary" | "secondary">("primary");
   const [secondaryReady, setSecondaryReady] = useState(false);
+  const [shield, setShield] = useState(true);
 
   useEffect(() => {
-    tbl("app_settings").select("security_level, purchase_validity_days, single_device, active_gateway, gateway_secondary_ready").maybeSingle().then(({ data }: any) => {
+    tbl("app_settings").select("security_level, purchase_validity_days, single_device, active_gateway, gateway_secondary_ready, screenshot_shield").maybeSingle().then(({ data }: any) => {
       setLevel(data?.security_level ?? 1);
       setValidityDays(String(data?.purchase_validity_days ?? 0));
       setSingleDevice(!!data?.single_device);
       setGateway(data?.active_gateway === "secondary" ? "secondary" : "primary");
       setSecondaryReady(!!data?.gateway_secondary_ready);
+      setShield(data?.screenshot_shield ?? true);
     });
   }, []);
 
@@ -59,6 +61,14 @@ export default function AdminSecurity() {
     if (error) { toast.error(error.message); return; }
     setSingleDevice(next);
     toast.success(next ? "Single-device login enforced" : "Single-device login disabled");
+  };
+
+  const toggleShield = async (next: boolean) => {
+    const { error } = await tbl("app_settings").update({ screenshot_shield: next, updated_at: new Date().toISOString() }).eq("id", true);
+    if (error) { toast.error(error.message); return; }
+    setShield(next);
+    try { localStorage.setItem("td-sec-shield", next ? "1" : "0"); } catch { /* ignore */ }
+    toast.success(next ? "Screenshot shield enabled" : "Screenshot shield disabled");
   };
 
   return (
@@ -122,6 +132,33 @@ export default function AdminSecurity() {
           })}
         </div>
       )}
+
+      {/* Screenshot shield */}
+      <div className="mt-10">
+        <div className="flex items-center gap-2.5 mb-2">
+          <Camera className="w-5 h-5 td-accent-text" />
+          <h2 className="text-lg font-bold text-white">Screenshot shield</h2>
+        </div>
+        <p className="text-zinc-500 text-sm mb-4">
+          When on, pressing PrintScreen wipes the clipboard and briefly blurs the page. This
+          only fires on the actual PrintScreen key, never on ordinary use (switching tabs,
+          clicking into an embedded video, etc.) — a browser has no way to detect screen
+          recording or a phone camera pointed at the screen, so this can't catch those.
+        </p>
+        <button onClick={() => toggleShield(!shield)}
+          className={`w-full td-surface td-card-click rounded-2xl p-4 flex items-center gap-4 text-left ${shield ? "ring-2 ring-[#7c6cf0]" : ""}`}>
+          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${shield ? "bg-white" : "td-surface-2"}`}>
+            <Camera className={`w-5 h-5 ${shield ? "text-black" : "text-zinc-300"}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-white font-semibold">{shield ? "On — PrintScreen triggers the shield" : "Off — PrintScreen does nothing special"}</p>
+            <p className="text-zinc-500 text-sm mt-0.5">Tap to {shield ? "disable" : "enable"}.</p>
+          </div>
+          <span className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${shield ? "td-accent-solid" : "bg-white/15"}`}>
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${shield ? "translate-x-5" : ""}`} />
+          </span>
+        </button>
+      </div>
 
       {/* Purchase validity */}
       <div className="mt-10">
