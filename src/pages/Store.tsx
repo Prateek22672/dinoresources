@@ -10,7 +10,7 @@ import PageHero from "@/components/layout/PageHero";
 import SubjectFolderCard, { tone as subjectTone } from "@/components/stacks/SubjectFolderCard";
 import SearchBox, { type SearchItem } from "@/components/ui/SearchBox";
 import { useBundleOffer } from "@/hooks/useBundleOffer";
-import { Check, Plus, Sparkles, BookOpen, Package, ArrowRight, Zap, GraduationCap } from "lucide-react";
+import { Check, Plus, BookOpen, Package, ArrowRight, Zap, GraduationCap, ShoppingBag } from "lucide-react";
 
 interface YearGroup { year: YearRow; subjects: SubjectRow[] }
 
@@ -142,7 +142,7 @@ export default function Store() {
     <AppShell>
       <PageHero
         eyebrow="Store"
-        eyebrowIcon={Sparkles}
+        eyebrowIcon={ShoppingBag}
         book={{ cover: "#0F9D9A", spine: "#0B7A78", title: "COA" }}
         title={studentYear ? <>Everything for <span className="td-accent-text">{studentYear.name}</span>.</> : "Unlock exactly what you need."}
         subtitle="Unlock one subject, or open your whole year at once. One payment — notes, PYQs and Study-With-AI included."

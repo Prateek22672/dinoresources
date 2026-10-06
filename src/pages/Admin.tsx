@@ -18,12 +18,13 @@ import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminFeatures from "@/components/admin/AdminFeatures";
 import AdminCharges from "@/components/admin/AdminCharges";
 import AdminOffers from "@/components/admin/AdminOffers";
+import AdminShowcase from "@/components/admin/AdminShowcase";
 import AdminNotices from "@/components/admin/AdminNotices";
 import AdminSocial from "@/components/admin/AdminSocial";
 import AdminPolls from "@/components/admin/AdminPolls";
-import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Bot, Sparkles, Percent } from "lucide-react";
+import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Bot, Percent, ImageIcon, Rocket } from "lucide-react";
 
-type Tab = "analytics" | "users" | "subjects" | "coupons" | "offers" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth" | "social" | "polls";
+type Tab = "analytics" | "users" | "subjects" | "coupons" | "offers" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth" | "social" | "polls" | "showcase";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -39,8 +40,9 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "audit", label: "Audit Log", icon: ScrollText },
   { id: "aihealth", label: "AI Health", icon: Bot },
-  { id: "social", label: "Launch Graphics", icon: Sparkles },
+  { id: "social", label: "Launch Graphics", icon: ImageIcon },
   { id: "polls", label: "Polls", icon: BarChart3 },
+  { id: "showcase", label: "Campus Showcase", icon: Rocket },
   { id: "security", label: "Security", icon: Lock },
   { id: "access", label: "Access Audit", icon: ShieldAlert },
   { id: "sharing", label: "Account Sharing", icon: UserX },
@@ -67,6 +69,7 @@ const TAB_KEYWORDS: Record<string, string> = {
   database: "storage cleanup delete space size",
   social: "poster instagram whatsapp story marketing png export launch graphics rex",
   polls: "poll survey feedback vote question students opinion",
+  showcase: "campus showcase projects posts approve review moderation likes students",
 };
 
 export default function Admin() {
@@ -194,6 +197,7 @@ export default function Admin() {
       {tab === "team" && <AdminTeam />}
       {tab === "coupons" && <AdminCoupons />}
       {tab === "offers" && <AdminOffers />}
+      {tab === "showcase" && <AdminShowcase />}
       {tab === "charges" && <AdminCharges />}
       {tab === "notices" && <AdminNotices />}
       {tab === "features" && <AdminFeatures />}

@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import {
-  Sparkles, Bot, TrendingUp, Store, Bug, ArrowRight, ArrowLeft, X, Check,
-} from "lucide-react";
+import { Bot, TrendingUp, Store, Bug, ArrowRight, ArrowLeft, X, Check, Megaphone, Lightbulb } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import { useOnboardingSlot } from "@/lib/onboarding";
 
@@ -22,12 +20,12 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    icon: Sparkles, tint: "var(--td-accent)", eyebrow: "#TheNewTeamDino",
+    icon: Megaphone, tint: "var(--td-accent)", eyebrow: "#TheNewTeamDino",
     title: "Welcome to the new TeamDino 🦖",
     body: "Notes, PYQs and a study tutor that has actually read your syllabus. Thirty seconds and you'll know your way around.",
   },
   {
-    icon: Sparkles, tint: "var(--td-accent)", eyebrow: "Study With AI",
+    icon: Lightbulb, tint: "var(--td-accent)", eyebrow: "Study With AI",
     title: "Meet Rex, your study tutor",
     body: "Open any unit and ask him anything. He answers from the real answers in YOUR notes — not the internet — and shows you which one he used. Then he quizzes you until it sticks.",
     cta: { label: "Open my library", to: "/library" },

@@ -16,6 +16,8 @@ export interface ReceiptData {
   items: ReceiptLineItem[];
   subtotal_paise: number;
   discount_paise: number;
+  /** bundle-offer saving, shown as its own line */
+  bundle_discount_paise?: number;
   couponCode: string | null;
   charges: ReceiptLineItem[];
   total_paise: number;
@@ -60,6 +62,7 @@ export function orderToReceipt(order: OrderRow, items: OrderItemRow[]): ReceiptD
     })),
     subtotal_paise: subtotal,
     discount_paise: order.discount_paise ?? 0,
+    bundle_discount_paise: order.bundle_discount_paise ?? 0,
     couponCode: order.coupon_code ?? null,
     charges: (order.charges_detail ?? []).map((c) => ({ label: c.label, amount_paise: c.amount_paise })),
     total_paise: order.amount_paise,

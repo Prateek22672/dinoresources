@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Sparkles, BrainCircuit, Trophy, ArrowRight } from "lucide-react";
+import { ChevronLeft, BrainCircuit, Trophy, ArrowRight, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { useTypewriter } from "../../hooks/useTypewriter";
 import { MarkdownRenderer } from "./MarkdownRenderer";

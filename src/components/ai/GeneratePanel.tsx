@@ -1,6 +1,6 @@
 // src/components/ai/GeneratePanel.tsx
 import { useState, useEffect } from "react";
-import { ChevronLeft, BrainCircuit, Zap, ChevronRight, BookOpen, Sparkles } from "lucide-react";
+import { ChevronLeft, BrainCircuit, Zap, ChevronRight, BookOpen, Lightbulb } from "lucide-react";
 import { PracticeCard } from "./PracticeCard";
 
 interface GeneratePanelProps {
@@ -142,7 +142,7 @@ export function GeneratePanel({
         {genPhase === 2 && selectedTopic && (
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 pb-10">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <Lightbulb className="w-4 h-4 text-indigo-400" />
               <span className="text-xs text-indigo-400 uppercase tracking-widest font-bold">
                 Framed Question Set
               </span>

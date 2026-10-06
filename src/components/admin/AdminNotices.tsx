@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
 import { toast } from "sonner";
-import { Bell, Send, Trash2, Users, User, Info, AlertTriangle, ShieldAlert, Check, Sparkles, Save } from "lucide-react";
+import { Bell, Send, Trash2, Users, User, Info, AlertTriangle, ShieldAlert, Check, Save, Megaphone } from "lucide-react";
 
 interface NoticeRow {
   id: string; user_id: string | null; title: string; body: string | null;
@@ -153,7 +153,7 @@ export default function AdminNotices() {
       {/* What's-New / welcome popup */}
       <section className="td-surface rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-white font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Welcome / What's-New popup</h3>
+          <h3 className="text-white font-semibold flex items-center gap-2"><Megaphone className="w-4 h-4 td-accent-text" /> Welcome / What's-New popup</h3>
           <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer shrink-0">
             <input type="checkbox" checked={wn.active} onChange={(e) => setWn((p) => ({ ...p, active: e.target.checked }))} />
             {wn.active ? "Live" : "Off"}

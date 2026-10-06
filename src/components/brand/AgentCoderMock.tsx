@@ -1,6 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Check, Plus, History, Settings, Paperclip, ArrowUp, Sparkles, Zap } from "lucide-react";
+import { Check, Plus, History, Settings, Paperclip, ArrowUp, Zap, Hammer } from "lucide-react";
 
 const ORANGE = "#d97757";
 
@@ -50,7 +50,7 @@ export default function AgentCoderMock({ className = "" }: { className?: string 
   const writing = tick < STEPS.length;
 
   return (
-    <div className={`rounded-[22px] bg-[#141414] border border-white/10 text-white overflow-hidden shadow-[0_30px_70px_-30px_rgba(0,0,0,0.8)] ${className}`}>
+    <div className={`td-force-dark rounded-[22px] bg-[#141414] border border-white/10 text-white overflow-hidden shadow-[0_30px_70px_-30px_rgba(0,0,0,0.8)] ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
         <AgentCoderMark className="w-[18px] h-[18px]" />
         <span className="text-[14px] font-bold">FreeAgentCoder</span>
@@ -65,7 +65,7 @@ export default function AgentCoderMock({ className = "" }: { className?: string 
         <div className="flex items-center gap-1.5 flex-wrap">
           <AgentCoderMark className="w-3.5 h-3.5" />
           <span className="text-[12.5px] font-bold mr-1">FreeAgentCoder</span>
-          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10.5px] flex items-center gap-1"><Sparkles className="w-2.5 h-2.5" style={{ color: ORANGE }} /> Build</span>
+          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10.5px] flex items-center gap-1"><Hammer className="w-2.5 h-2.5" style={{ color: ORANGE }} /> Build</span>
           <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10.5px] flex items-center gap-1"><Zap className="w-2.5 h-2.5 text-amber-300" /> Deep</span>
         </div>
 

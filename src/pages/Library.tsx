@@ -76,7 +76,7 @@ export default function Library() {
         <div className="flex flex-wrap gap-2 mb-6">
           {comboYears.map((y) => (
             <span key={y.id} className="td-bento-accent rounded-full pl-1.5 pr-3.5 py-1.5 text-[13px] font-semibold flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center"><Package className="w-3 h-3" /></span> {y.name} — Full Access
+              <span className="w-6 h-6 rounded-full td-ink-disc flex items-center justify-center"><Package className="w-3 h-3" /></span> {y.name} — Full Access
             </span>
           ))}
         </div>

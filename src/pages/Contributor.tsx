@@ -7,26 +7,7 @@ import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
-import {
-  PenSquare,
-  Plus,
-  Trash2,
-  Save,
-  Eye,
-  EyeOff,
-  FileUp,
-  ExternalLink,
-  Clapperboard,
-  Briefcase,
-  FileText,
-  Youtube,
-  Link2,
-  ImagePlus,
-  ChevronDown,
-  Sparkles,
-  RefreshCw,
-  Check,
-} from "lucide-react";
+import { PenSquare, Plus, Trash2, Save, Eye, EyeOff, FileUp, ExternalLink, Clapperboard, Briefcase, FileText, Youtube, Link2, ImagePlus, ChevronDown, RefreshCw, Check, Search } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
 import ContentCoverage from "@/components/contributor/ContentCoverage";
 
@@ -1009,7 +990,7 @@ export default function Contributor() {
                   disabled={vFinding || !subjectId}
                   className="td-btn-ghost px-3.5 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  {vFinding ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 td-accent-text" />}
+                  {vFinding ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5 td-accent-text" />}
                   {vFinding ? "Searching…" : `Find videos for Unit ${unit}`}
                 </button>
                 <span className="text-zinc-600 text-[11px]">

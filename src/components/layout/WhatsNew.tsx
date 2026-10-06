@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { tbl } from "@/integrations/supabase/revamp";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, Megaphone } from "lucide-react";
 import { useOnboardingSlot } from "@/lib/onboarding";
 
 interface WhatsNewCfg {
@@ -88,7 +88,7 @@ export default function WhatsNew() {
           <div className="flex items-center gap-2 mb-2">
             <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center text-lg shrink-0">{cfg.emoji}</span>
             <span className="td-accent-text text-[11px] font-bold tracking-[0.18em] uppercase flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> What's new
+              <Megaphone className="w-3 h-3" /> What's new
             </span>
           </div>
           <p className="text-white font-bold leading-snug pr-6">{cfg.title}</p>
@@ -103,7 +103,7 @@ export default function WhatsNew() {
             <button onClick={dismiss} className="td-btn-ghost rounded-full h-9 px-4 text-[13px] font-semibold">Got it</button>
           </div>
           <button onClick={() => { dismiss(); navigate("/whats-new"); }} className="text-[11px] text-zinc-500 hover:text-zinc-300 mt-2.5 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" /> See everything TeamDino can do
+            <Megaphone className="w-3 h-3" /> See everything TeamDino can do
           </button>
         </div>
       </div>

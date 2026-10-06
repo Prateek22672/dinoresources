@@ -77,8 +77,8 @@ export default function FanCarousel({
     <div
       ref={wrap}
       className="relative"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") setHover(true); }}
+      onPointerLeave={(e) => { if (e.pointerType === "mouse") setHover(false); }}
       onFocus={() => setFocusIn(true)}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setFocusIn(false); }}
       onKeyDown={(e) => {
@@ -167,9 +167,10 @@ export default function FanCarousel({
               key={i}
               onClick={() => goTo(i)}
               aria-label={`Card ${i + 1}`}
-              className="relative h-1.5 rounded-full overflow-hidden transition-[width] duration-300"
-              style={{ width: i === active ? 26 : 6, background: "rgb(127 127 127 / 0.35)" }}
+              className="relative h-6 flex items-center"
             >
+              <span className="relative h-1.5 rounded-full overflow-hidden transition-[width] duration-300 block"
+                style={{ width: i === active ? 26 : 6, background: "rgb(127 127 127 / 0.35)" }}>
               {i === active && (
                 <span
                   // keyed on active+tick so the fill restarts each step
@@ -182,6 +183,7 @@ export default function FanCarousel({
                   }}
                 />
               )}
+              </span>
             </button>
           ))}
         </div>

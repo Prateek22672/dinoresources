@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Sparkles } from "lucide-react";
+import { X, Gift } from "lucide-react";
 import { DinoBlackIcon } from "@/components/BrandIcons";
 
 interface Seg { id: string; label: string; percent: number; }
@@ -90,7 +90,7 @@ export default function SpinWheel({
         </button>
 
         <p className="text-white font-extrabold text-xl tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="w-5 h-5" style={{ color: "var(--td-accent-soft)" }} /> Spin &amp; Win
+          <Gift className="w-5 h-5" style={{ color: "var(--td-accent-soft)" }} /> Spin &amp; Win
         </p>
         <p className="text-zinc-500 text-sm mt-1 mb-6">
           {n

@@ -1,5 +1,4 @@
-import ai from "@/assets/aiWhite.png";
-import genai from "@/assets/genaiWhite.png";
+import { Lightbulb, Bot } from "lucide-react";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 
 /**
@@ -7,15 +6,18 @@ import dinoBlack from "@/assets/dinosaurBlack.png";
  * etc.). Theme-aware: white assets turn black on the light theme and vice versa.
  */
 
-/** Sparkle stars (Study-With-AI mark). White in dark theme, black in light. */
+/** Study-With-AI mark. The sparkle-stars artwork is retired site-wide; a
+ *  lightbulb ("explains it to you") stands in, drawn in currentColor so it
+ *  follows the theme like any other icon. */
 export const AiIcon = ({ className = "", ..._rest }: { className?: string; [k: string]: any }) => (
-  <img src={ai} alt="" draggable={false} className={`select-none invert dark:invert-0 ${className}`} />
+  <Lightbulb className={className} aria-hidden />
 );
 
-/** "AI" badge mark. White in dark theme, black in light. */
+/** Agent / assistant mark — was a sparkle artwork too. */
 export const GenAiIcon = ({ className = "", ..._rest }: { className?: string; [k: string]: any }) => (
-  <img src={genai} alt="" draggable={false} className={`select-none invert dark:invert-0 ${className}`} />
+  <Bot className={className} aria-hidden />
 );
+
 
 /** The dino. Black in light theme, white in dark. */
 export const DinoIcon = ({ className = "", ..._rest }: { className?: string; [k: string]: any }) => (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { Download, RotateCcw, Sparkles, ImageIcon, Loader2 } from "lucide-react";
+import { Download, RotateCcw, ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   GRAPHICS, DEFAULT_COPY, SocialCopyProvider, type SocialCopy, type GraphicDef,
@@ -115,7 +115,7 @@ export default function AdminSocial() {
         <div aria-hidden className="absolute -top-16 -right-10 w-64 h-56 opacity-50 pointer-events-none"
           style={{ background: "rgb(var(--td-accent-rgb) / 0.22)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(30px)" }} />
         <div className="relative z-10 flex items-start gap-4">
-          <span className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Sparkles className="w-5 h-5" /></span>
+          <span className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><ImageIcon className="w-5 h-5" /></span>
           <div className="min-w-0">
             <p className="text-white font-bold text-lg leading-tight">Launch graphics</p>
             <p className="text-zinc-400 text-[13px] mt-1 leading-relaxed max-w-[64ch]">

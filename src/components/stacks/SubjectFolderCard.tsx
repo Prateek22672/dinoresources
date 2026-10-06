@@ -40,7 +40,7 @@ export default function SubjectFolderCard({
       <div className="relative h-[104px] overflow-hidden">
         <div aria-hidden className="td-folder-cover absolute inset-0" style={{ background: `linear-gradient(160deg, ${from}, ${to})` }} />
         <div aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.28) 0%, transparent 38%)" }} />
-        <span className="absolute top-3.5 right-3.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur text-white text-[12px] font-bold">
+        <span className="absolute top-3.5 right-3.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur td-on-dark text-[12px] font-bold">
           {owned ? <span className="inline-flex items-center gap-1"><Check className="w-3 h-3" /> Owned</span> : formatPaise(s.price_paise)}
         </span>
       </div>

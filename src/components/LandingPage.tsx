@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight, ArrowUpRight, Calculator, MessageSquare, ChevronDown, Check, Sparkles, BookOpen,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, ChevronDown, Check, Quote } from "lucide-react";
 import Footer from "./Footer";
 import CurvedGallery from "@/components/stacks/CurvedGallery";
-import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 import fyxLogo from "@/assets/fyx.png";
 import AgentCoderFeature from "@/components/brand/AgentCoderFeature";
+import HorizontalShowcase from "@/components/landing/HorizontalShowcase";
 import { HOME_FAQ as FAQS } from "@/data/seo";
 
 
@@ -148,326 +146,6 @@ const SHELF = [
   { from: "#6f8fe0", to: "#1b2350" }, // undertow
 ];
 
-/* Pinned showcase steps (Fluently-style: one scroll, panel swaps in place) */
-const SHOW = [
-  {
-    eyebrow: "Study With AI",
-    title: "PYQs and practice questions, answered",
-    desc: "Every question organised unit by unit, each with a clear worked answer — so you're revising what's actually been asked, not guessing at a chatbot prompt.",
-    ctas: [{ label: "Get started free", to: "/auth" }],
-  },
-  {
-    eyebrow: "Meet Rex",
-    title: "A tutor that has actually read your syllabus",
-    desc: "Ask him anything from a unit and he answers from your own notes — never the internet — and shows you which answer he took it from. Then he drills you on it until it sticks.",
-    ctas: [{ label: "Try Study With AI", to: "/auth" }],
-  },
-  {
-    eyebrow: "Free tools",
-    title: "Know exactly where you stand",
-    desc: "SGPA calculator, CGPA predictor and attendance planner. Free forever, no login, no card.",
-    ctas: [{ label: "SGPA Calc", to: "/sgpa-calc" }, { label: "Attendance Calc", to: "/attendance-calc" }],
-  },
-];
-
-/* Final stacked-scroll cards — hand-illustrated, hero-style (no stock photos) */
-const STACK = [
-  {
-    title: "Find the right notes in seconds",
-    desc: "No more digging through 10 WhatsApp groups and dead drive links — every subject lives in one organised place.",
-    icon: BookOpen,
-    bg: "#FFB61E",
-    dark: false,
-  },
-  {
-    title: "Walk into exams calm",
-    desc: "PYQs tell you what's coming, Study-With-AI has them answered already, and the exam countdown keeps you honest.",
-    icon: Sparkles,
-    bg: "#131316",
-    dark: true,
-  },
-  {
-    title: "Track SGPA & attendance without guesswork",
-    desc: "Predict your CGPA, plan the classes you can skip, and always know exactly where you stand.",
-    icon: Calculator,
-    bg: "#ffffff",
-    dark: false,
-  },
-  {
-    title: "Ask Rex at 2am when you're stuck",
-    desc: "He's read your unit's answers and explains from those — then quizzes you until it sticks. No queue, no judgement.",
-    icon: MessageSquare,
-    bg: "var(--td-accent-strong)",
-    dark: true,
-  },
-];
-
-/* Per-card illustration scenes for the stack — built from the hero's own parts */
-function StackArt({ i }: { i: number }) {
-  if (i === 0)
-    return (
-      <>
-        {/* yellow card: blobs + two hardcovers spilling out of the corner */}
-        <div aria-hidden className="absolute -top-14 -left-10 w-64 h-56" style={{ background: "#FCD34D", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
-        <div aria-hidden className="absolute -bottom-20 left-[38%] w-72 h-64" style={{ background: "#FDE68A", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%" }} />
-        <div aria-hidden className="absolute right-32 -bottom-24 w-[190px] rotate-[9deg] hidden lg:block">
-          <BookMock cover="#0F9D9A" spine="#0B7A78" title="COA" />
-        </div>
-        <div aria-hidden className="absolute -right-8 -bottom-12 w-[235px] rotate-[-10deg] hidden sm:block">
-          <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
-        </div>
-      </>
-    );
-  if (i === 1)
-    return (
-      <>
-        {/* dark card: floating countdown widget + progress sticker */}
-        <div aria-hidden className="absolute -top-16 -right-12 w-64 h-56" style={{ background: "#1d1d23", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
-        <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[240px]">
-          <div className="bg-white text-black rounded-[22px] p-4 rotate-[3deg] shadow-2xl">
-            <div className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500">DBMS · External</div>
-            <div className="text-3xl font-black mt-1 leading-none">12 days <span className="text-sm font-bold text-zinc-500">to go</span></div>
-            <div className="grid grid-cols-7 gap-1.5 mt-3.5">
-              {Array.from({ length: 21 }).map((_, d) => (
-                <span key={d} className="h-2.5 rounded-full" style={{ background: d === 16 ? "#FFB61E" : "#e4e4e7" }} />
-              ))}
-            </div>
-          </div>
-          <div className="bg-[#FFB61E] text-black rounded-full px-4 py-2 text-[13px] font-extrabold w-max mt-3 ml-5 -rotate-2 shadow-xl flex items-center gap-1.5">
-            <Check className="w-3.5 h-3.5" /> Syllabus 80% done
-          </div>
-        </div>
-      </>
-    );
-  if (i === 2)
-    return (
-      <>
-        {/* white card: soft blob + ring gauge + attendance sticker */}
-        <div aria-hidden className="absolute -bottom-16 -right-10 w-72 h-64" style={{ background: "#FFF3D6", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%" }} />
-        <div aria-hidden className="absolute right-10 sm:right-16 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center">
-          <svg viewBox="0 0 100 100" className="w-40 h-40 drop-shadow-xl">
-            <circle cx="50" cy="50" r="42" fill="#ffffff" />
-            <circle cx="50" cy="50" r="42" stroke="#eeede8" strokeWidth="9" fill="none" />
-            <circle cx="50" cy="50" r="42" stroke="#0F9D9A" strokeWidth="9" fill="none" strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 42} strokeDashoffset={2 * Math.PI * 42 * 0.13} transform="rotate(-90 50 50)" />
-            <text x="50" y="50" textAnchor="middle" fill="#0a0a0a" fontWeight="900" fontSize="24">8.7</text>
-            <text x="50" y="65" textAnchor="middle" fill="#71717a" fontWeight="700" fontSize="9">SGPA</text>
-          </svg>
-          <div className="bg-black text-white rounded-full px-4 py-2 text-[13px] font-extrabold mt-2 rotate-2 shadow-xl">Can skip 2 classes — still 76%</div>
-        </div>
-      </>
-    );
-  return (
-    <>
-      {/* accent card: Rex mid-answer, with the badge that makes the claim */}
-      <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56" style={{ background: "var(--td-accent)", opacity: 0.6, borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
-      <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[258px]">
-        <div className="bg-white text-black rounded-[22px] p-4 -rotate-2 shadow-2xl">
-          <div className="flex items-center gap-2">
-            <span className="relative w-7 h-7 shrink-0">
-              <span className="absolute inset-0" style={{ background: "var(--td-accent)", borderRadius: "54% 46% 58% 42% / 52% 58% 42% 48%" }} />
-              <span className="absolute top-1.5 left-2 w-1.5 h-1.5 rounded-full bg-white/60" />
-            </span>
-            <span className="text-[13px] font-extrabold">Rex</span>
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider"
-              style={{ background: "rgba(16,185,129,0.14)", color: "#047857" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> From your notes
-            </span>
-          </div>
-          <div className="mt-2.5 text-[13px] font-semibold text-zinc-700 leading-snug">
-            Velocity is the <span className="text-black font-extrabold">speed</span> data arrives at — your Unit 1 notes call it the hardest V to design for.
-          </div>
-          <div className="mt-2.5 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-500 truncate">
-            U1 · Explain the 5 Vs of Big Data
-          </div>
-        </div>
-        <div className="bg-[#FFB61E] text-black rounded-full px-4 py-2 text-[13px] font-extrabold w-max mt-3 ml-8 rotate-2 shadow-xl">Quiz me on this →</div>
-      </div>
-    </>
-  );
-}
-
-/* ─── Pinned showcase (sticky panel, steps swap on one continuous scroll) ─── */
-function PinnedShowcase() {
-  const navigate = useNavigate();
-  const [active, setActive] = useState(0);
-  // Set-based registry — the desktop AND mobile step elements both drive `active`
-  const refs = useRef<Set<HTMLElement>>(new Set());
-  const register = (i: number) => (el: HTMLElement | null) => {
-    if (el) { el.dataset.idx = String(i); refs.current.add(el); }
-  };
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const idx = Number((e.target as HTMLElement).dataset.idx);
-            if (!Number.isNaN(idx)) setActive(idx);
-          }
-        }
-      },
-      { threshold: 0.45 },
-    );
-    refs.current.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
-
-  const mocks = [
-    /* AI chat mock */
-    <div key="ai" className="space-y-3 w-full">
-      <div className="bg-white text-black rounded-2xl rounded-br-md px-4 py-3 text-sm font-medium ml-auto w-fit max-w-[85%]">Explain normalization with an example.</div>
-      <div className="bg-white/[0.07] border border-white/10 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-zinc-200 max-w-[90%] leading-relaxed">
-        Normalization removes redundancy by splitting data into related tables. 1NF = atomic values only. 2NF = no partial dependency. 3NF = no transitive dependency…
-      </div>
-      <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-semibold"><AiIcon className="w-3.5 h-3.5" /> Unit 3 · DBMS — a real PYQ, answered</div>
-    </div>,
-    /* Rex mock — the grounding badge and the citation are the whole pitch:
-       proof the answer came from their notes rather than the internet. */
-    <div key="rex" className="w-full space-y-3">
-      <div className="bg-white text-black rounded-2xl rounded-br-md px-4 py-3 text-sm font-medium ml-auto w-fit max-w-[85%]">Explain the 5 Vs of Big Data</div>
-
-      <div className="flex items-center gap-2.5">
-        <span className="relative w-7 h-7 shrink-0">
-          <span className="absolute -inset-1.5 rounded-full" style={{ background: "rgba(124,108,240,0.3)", filter: "blur(7px)" }} />
-          <span className="absolute inset-0.5" style={{ background: "var(--td-accent)", borderRadius: "54% 46% 58% 42% / 52% 58% 42% 48%" }} />
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase"
-          style={{ background: "rgba(52,211,153,0.14)", color: "#6ee7b7" }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> From your notes
-        </span>
-        <span className="text-[10px] text-zinc-500 font-medium">searched 31 answers</span>
-      </div>
-
-      <p className="text-sm text-zinc-200 leading-relaxed pl-3 border-l-2" style={{ borderColor: "rgb(var(--td-accent-rgb) / 0.45)" }}>
-        <strong className="text-white">Volume, Velocity, Variety, Veracity and Value</strong> — the five properties that make data &ldquo;big&rdquo; in your Unit 1 notes.
-      </p>
-
-      <div className="flex flex-wrap gap-1.5">
-        <span className="bg-white/[0.06] border border-white/10 rounded-xl px-2.5 py-1.5 text-[11px] text-zinc-400 max-w-full truncate">
-          <span className="td-accent-text font-bold">U1</span> · What is Big Data? Explain its characteristics
-        </span>
-      </div>
-    </div>,
-    /* SGPA mock — ring gauge + graded subjects + goal line */
-    <div key="tools" className="w-full">
-      <div className="flex items-center justify-center gap-6">
-        <div className="relative w-28 h-28 shrink-0">
-          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
-            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--td-accent)" strokeWidth="9" strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 42} strokeDashoffset={2 * Math.PI * 42 * (1 - 0.87)} />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold text-white leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>8.7</span>
-            <span className="text-[9px] font-bold tracking-[0.2em] text-zinc-500 uppercase mt-1">SGPA</span>
-          </div>
-        </div>
-        <div className="min-w-0">
-          <span className="td-accent-bg inline-block px-2.5 py-1 rounded-full text-[11px] font-bold">Excellent</span>
-          <p className="text-zinc-500 text-xs mt-2.5">Predicted this semester</p>
-          <p className="text-zinc-300 text-xs mt-1">Need <strong className="text-white">9.2 avg</strong> for a 9.0 CGPA</p>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-3.5">
-        {([["DBMS", "O", 92, "#34d399"], ["COA", "A+", 78, "var(--td-accent)"], ["FLAT", "B+", 64, "#f59e0b"]] as const).map(([n, g, v, c]) => (
-          <div key={n}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="flex items-center gap-2 text-xs text-zinc-300 font-semibold">
-                <span className="w-6 h-6 rounded-md text-[10px] font-black text-white flex items-center justify-center" style={{ background: c }}>{g}</span>
-                {n}
-              </span>
-              <span className="text-xs text-zinc-500" style={{ fontVariantNumeric: "tabular-nums" }}>{v}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${v}%`, background: c }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>,
-  ];
-
-  return (
-    <section className="relative z-10 bg-[#F6F4EF] rounded-[44px] mx-3 sm:mx-5 my-12 text-black">
-      <div className="max-w-6xl mx-auto px-5">
-      {/* Desktop: pinned panel + scrolling steps (one continuous scroll) */}
-      <div className="hidden lg:grid grid-cols-2 gap-16">
-        {/* steps — normal flow, drive the active state */}
-        <div>
-          {SHOW.map((s, i) => (
-            <div key={s.eyebrow} ref={register(i)}
-              className="min-h-[88vh] flex flex-col justify-center">
-              <p className="text-[12px] font-black tracking-[0.28em] uppercase mb-4" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
-              <h2 className={`text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05] transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-40"}`}>{s.title}</h2>
-              <p className="text-zinc-600 text-lg leading-relaxed max-w-md mt-5">{s.desc}</p>
-              <div className="flex flex-wrap gap-2.5 mt-7">
-                {s.ctas.map((c) => (
-                  <button key={c.to} onClick={() => navigate(c.to)} className="bg-black text-white rounded-full h-11 px-6 text-sm font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform">
-                    {c.label} <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        {/* pinned mock panel */}
-        <div className="relative">
-          <div className="sticky top-0 h-screen flex items-center">
-            <div className="w-full bg-[#131316] border border-white/10 rounded-[32px] p-8 min-h-[420px] flex items-center shadow-[0_40px_100px_-30px_rgba(0,0,0,0.8)] relative overflow-hidden">
-              {mocks.map((m, i) => (
-                <div key={i} className="absolute inset-8 flex items-center transition-all duration-500"
-                  style={{ opacity: active === i ? 1 : 0, transform: active === i ? "translateY(0)" : "translateY(16px)", pointerEvents: active === i ? "auto" : "none" }}>
-                  {m}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile: SAME pinned experience — mock panel sticks under the header, steps scroll beneath and swap it */}
-      <div className="lg:hidden py-4">
-        <div className="sticky top-[4.6rem] z-20 -mx-5 px-4 pb-3" style={{ background: "#F6F4EF" }}>
-          <div className="bg-[#131316] border border-white/10 rounded-[24px] p-5 min-h-[300px] shadow-[0_30px_70px_-25px_rgba(0,0,0,0.6)] relative overflow-hidden flex items-center">
-            {mocks.map((m, i) => (
-              <div key={i} className="absolute inset-5 flex items-center transition-all duration-500"
-                style={{ opacity: active === i ? 1 : 0, transform: active === i ? "translateY(0)" : "translateY(14px)", pointerEvents: active === i ? "auto" : "none" }}>
-                {m}
-              </div>
-            ))}
-          </div>
-          {/* step dots */}
-          <div className="flex items-center justify-center gap-1.5 mt-2.5">
-            {SHOW.map((_, i) => (
-              <span key={i} className="h-1.5 rounded-full transition-all duration-300"
-                style={{ width: active === i ? 20 : 6, background: active === i ? "var(--td-accent-strong)" : "rgba(0,0,0,0.18)" }} />
-            ))}
-          </div>
-        </div>
-
-        {SHOW.map((s, i) => (
-          <div key={s.eyebrow} ref={register(i)} className="min-h-[62vh] flex flex-col justify-center py-8">
-            <p className="text-[11px] font-black tracking-[0.25em] uppercase mb-2" style={{ color: "var(--td-accent-strong)" }}>{s.eyebrow}</p>
-            <h2 className={`text-[1.7rem] font-extrabold tracking-tight leading-tight transition-opacity duration-300 ${active === i ? "opacity-100" : "opacity-45"}`}>{s.title}</h2>
-            <p className="text-zinc-600 leading-relaxed mt-2.5">{s.desc}</p>
-            <div className="flex flex-wrap gap-2 mt-5">
-              {s.ctas.map((c) => (
-                <button key={c.to} onClick={() => navigate(c.to)} className="bg-black text-white rounded-full h-10 px-5 text-[13px] font-bold flex items-center gap-1.5 active:scale-[0.98] transition-transform">
-                  {c.label} <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── Page ───────────────────────────────────────────────────── */
 export default function LandingPage() {
   const navigate = useNavigate();
   const [faqOpen, setFaqOpen] = useState<number | null>(0);
@@ -561,54 +239,21 @@ export default function LandingPage() {
         <CurvedGallery items={[...MARQUEE, ...MARQUEE].map((m, i) => ({ title: m, sub: "5 units · PYQs", ...SHELF[i % SHELF.length] }))} onPick={() => goAuth()} />
       </section>
 
-      {/* ── Pinned showcase — one continuous scroll, panel swaps in place ── */}
-      <PinnedShowcase />
+      {/* ── What's inside — horizontal 3D card tour ── */}
+      <HorizontalShowcase onStart={goAuth} />
 
       {/* ── Testimonials ── */}
       <Section eyebrow="Student voices" title="Don't take our word for it.">
         <div className="grid md:grid-cols-3 gap-4">
           {QUOTES.map((q) => (
             <figure key={q.who} className="bg-[#131316] border border-white/8 rounded-[24px] p-7 flex flex-col">
-              <Sparkles className="w-4 h-4 mb-4" style={{ color: "var(--td-accent-soft)" }} />
+              <Quote className="w-4 h-4 mb-4" style={{ color: "var(--td-accent-soft)" }} />
               <blockquote className="text-zinc-200 text-[15px] leading-relaxed flex-1">"{q.text}"</blockquote>
               <figcaption className="text-zinc-600 text-xs font-semibold mt-5">{q.who}</figcaption>
             </figure>
           ))}
         </div>
       </Section>
-
-      {/* ── Stacked-scroll cards (Fluently-style pile-up) — white band ── */}
-      <section className="relative z-10 bg-[#F6F4EF] rounded-[44px] mx-3 sm:mx-5 my-12 py-16 text-black">
-        <div className="max-w-4xl mx-auto px-5">
-        <div className="text-center mb-10">
-          <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-500 mb-2">Built for results</p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black">With TeamDino<br />you can finally</h2>
-        </div>
-        {STACK.map((c, i) => (
-          <div key={c.title} className="sticky mb-6" style={{ top: `${84 + i * 14}px`, zIndex: i + 1 }}>
-            <div
-              className={`relative rounded-[28px] sm:rounded-[32px] overflow-hidden min-h-[300px] sm:min-h-[380px] shadow-[0_30px_80px_-25px_rgba(0,0,0,0.45)] ${c.bg === "#ffffff" ? "border border-zinc-200" : ""}`}
-              style={{ background: c.bg, color: c.dark ? "#ffffff" : "#0a0a0a" }}
-            >
-              <StackArt i={i} />
-
-              <div className="relative z-10 p-6 sm:p-12 min-h-[300px] sm:min-h-[380px] flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${c.dark ? "bg-white/10 border-white/15" : "bg-black/8 border-black/10"}`}>
-                    <c.icon className="w-5 h-5" />
-                  </span>
-                  <span className={`text-[13px] font-black tracking-widest ${c.dark ? "text-white/40" : "text-black/35"}`}>0{i + 1} / 0{STACK.length}</span>
-                </div>
-                <div className="md:max-w-[54%]">
-                  <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">{c.title}</h3>
-                  <p className={`text-base leading-relaxed mt-3 ${c.dark ? "text-white/70" : "text-black/65"}`}>{c.desc}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-        </div>
-      </section>
 
       {/* ── Also from us: Agent Coder (the headline) + FolioFYX ── */}
       <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">

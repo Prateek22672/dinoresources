@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  BarChart3, Plus, Trash2, Save, X, ChevronDown, RefreshCw,
-  MessageSquare, Power, Sparkles, GripVertical,
-} from "lucide-react";
+import { BarChart3, Plus, Trash2, Save, X, ChevronDown, RefreshCw, MessageSquare, Power, GripVertical, LayoutTemplate } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   tbl, rpc, pollOptions, pollIsOpen,
@@ -297,7 +294,7 @@ export default function AdminPolls() {
           </button>
           {TEMPLATES.map((t) => (
             <button key={t.name} onClick={() => setDraft(t.make())} className="td-btn-ghost px-3.5 py-2.5 rounded-full text-[12px] font-semibold inline-flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 td-accent-text" /> {t.name}
+              <LayoutTemplate className="w-3.5 h-3.5 td-accent-text" /> {t.name}
             </button>
           ))}
           <button onClick={load} className="td-btn-ghost px-3 py-2.5 rounded-full text-[12px] font-semibold inline-flex items-center gap-1.5 ml-auto">

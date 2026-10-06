@@ -3,10 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
-import {
-  Sparkles, FileText, FileQuestion, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
-  Lock, Gift, Check, Plus, ArrowRight, MessageSquare, Target, PenLine, Star,
-} from "lucide-react";
+import { FileText, FileQuestion, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw, Lock, Gift, Check, Plus, ArrowRight, MessageSquare, Target, PenLine, Star, Search } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
 import { markStudied, ReadinessSection } from "@/lib/readiness";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -432,7 +429,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     // white artwork and disappear into it.
     { id: "resources", label: "Resources", icon: Layers },
     { id: "videos", label: "Videos", icon: Clapperboard, badge: "Free" },
-    { id: "ai", label: "Study with AI", icon: AiIcon, brand: true },
+    { id: "ai", label: "Study with AI", icon: AiIcon },
   ];
 
   return (
@@ -484,7 +481,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
           {tabs.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors ${tab === t.id ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}>
-              <t.icon className={`w-3.5 h-3.5 ${t.brand && tab === t.id ? "td-icon-on-light" : ""}`} /> {t.label}
+              <t.icon className="w-3.5 h-3.5" /> {t.label}
               {t.badge && (
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? "bg-black/10 text-black" : "td-accent-bg"}`}>{t.badge}</span>
               )}
@@ -734,7 +731,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2"><AiIcon className="w-4 h-4" /> Similar videos</h3>
               <button onClick={() => loadRelated(relatedTried)} disabled={relatedLoading} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 disabled:opacity-50">
-                {relatedLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} {relatedTried ? "Refresh" : "Find with AI"}
+                {relatedLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />} {relatedTried ? "Refresh" : "Find with AI"}
               </button>
             </div>
             {/* in-site player when a real video is picked */}

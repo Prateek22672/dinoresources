@@ -107,7 +107,7 @@ export default function Footer() {
           <span className="inline-flex items-center gap-1.5">Made with <Heart className="w-3 h-3 fill-current" /> for students</span>
           <button onClick={scrollToTop} aria-label="Back to top"
             className="td-surface-2 group inline-flex items-center gap-1.5 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold text-zinc-300 hover:text-white transition-colors">
-            <span className="w-5 h-5 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center group-hover:-translate-y-0.5 transition-transform dark:bg-white dark:text-black">
+            <span className="w-5 h-5 rounded-full td-ink-disc flex items-center justify-center group-hover:-translate-y-0.5 transition-transform">
               <ArrowUp className="w-3 h-3" />
             </span>
             Top

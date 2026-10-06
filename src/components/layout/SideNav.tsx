@@ -2,10 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import dinoLogo from "@/assets/dinosaurWhite.png";
-import {
-  LayoutDashboard, Store, Library, Receipt, Briefcase, PenSquare, Shield, Settings, Info, Bug, Sparkles,
-  ChevronsLeft, ChevronsRight,
-} from "lucide-react";
+import { LayoutDashboard, Store, Library, Receipt, Briefcase, PenSquare, Shield, Settings, Info, Bug, ChevronsLeft, ChevronsRight, Megaphone, Rocket } from "lucide-react";
 
 /**
  * Global primary navigation on xl+ (dark rounded rail, reference layout).
@@ -24,6 +21,7 @@ export default function SideNav({
     { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
     { label: "Store", icon: Store, to: "/store" },
     { label: "My Library", icon: Library, to: "/library" },
+    ...(isOn("showcase") ? [{ label: "Showcase", icon: Rocket, to: "/showcase" }] : []),
     ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
     ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),
     ...((isContributor || isAdmin) ? [{ label: "Issues", icon: Bug, to: "/issues" }] : []),
@@ -31,7 +29,7 @@ export default function SideNav({
   ];
 
   const bottom = [
-    { label: "What's new", icon: Sparkles, onClick: () => navigate("/whats-new") },
+    { label: "What's new", icon: Megaphone, onClick: () => navigate("/whats-new") },
     { label: "Settings", icon: Settings, onClick: () => navigate("/setup?edit=true") },
     { label: "About us", icon: Info, onClick: () => navigate("/about") },
     // "Report an issue" lived here and fired td:open-issue-reporter — the exact

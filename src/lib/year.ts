@@ -70,7 +70,11 @@ export function matchProfileYear(sem: string | null | undefined, years: YearRow[
   const byNumber = years.find((y) => yearNumberOf(y) === n);
   if (byNumber) return byNumber.id;
 
-  // 5) Last resort: the nth numbered year in display order.
+  // 5) Last resort: the nth numbered year in display order — but only when no
+  // row names its year at all. If some rows do (and theirs isn't among them,
+  // e.g. only 1st and 3rd are open), counting positions would hand a 2nd-year
+  // student 3rd Year; better to report no match and let the caller fall back.
+  if (years.some((y) => yearNumberOf(y) !== null)) return null;
   const ordered = years
     .filter((y) => !isSupplementary(rowText(y)))
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));

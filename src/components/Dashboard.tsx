@@ -21,12 +21,13 @@ import { AnnouncementsSection } from "./AnnouncementsSection";
 import Footer from "./Footer";
 
 import {
-  BookOpen, Store, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator, CalendarDays, Megaphone, Globe, Briefcase,
+  BookOpen, Store, Check, Rocket, ArrowRight, ArrowLeft, ArrowUpRight, Calculator, CalendarDays, Megaphone, Globe, Briefcase,
 } from "lucide-react";
 import fyxLogo from "@/assets/fyx.png";
 import { openAgentCoder } from "@/lib/links";
 import { AgentCoderGlyph } from "@/components/brand/AgentCoderMock";
 import AgentCoderFeature from "@/components/brand/AgentCoderFeature";
+import ShowcaseStrip from "@/components/showcase/ShowcaseStrip";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
 
@@ -54,6 +55,7 @@ const QA_TONES: Record<string, [string, string]> = {
   library: ["#6f8fe0", "#1b2350"],
   store: ["#7fc4ad", "#1d4038"],
   agentcoder: ["#f29a6b", "#5a2414"],
+  showcase: ["#5fb3d9", "#163a52"],
   jobs: ["#e6c25e", "#6b4a12"],
   calcs: ["#8b7fd8", "#2c2363"],
   foliofyx: ["#e07a8e", "#4a1830"],
@@ -164,6 +166,8 @@ export default function Dashboard() {
       accent: "#7c6cf0", icon: BookOpen, onClick: () => navigate("/library") },
     { key: "store", overline: "Subjects", title: "Explore subjects", desc: "Unlock your subjects & full-year packs.", cta: "Explore subjects",
       accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
+    ...(isOn("showcase") ? [{ key: "showcase", overline: "New · Campus", title: "Campus Showcase", desc: "See what GITAM students are building — and post yours.", cta: "Explore projects",
+      accent: "#e07a8e", icon: Rocket, onClick: () => navigate("/showcase") }] : []),
     { key: "agentcoder", overline: "Free · VS Code · No card", title: "Agent Coder", desc: "Free Claude Code alternative — it builds, runs & tests your code.", cta: "Open in VS Code",
       accent: "#d97757", icon: AgentCoderGlyph, onClick: openAgentCoder },
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
@@ -349,7 +353,7 @@ export default function Dashboard() {
                   <p className="td-qa-soft text-[13px] mt-1.5 leading-relaxed line-clamp-2">{b.desc}</p>
                 </div>
                 <span className="relative z-10 td-qa-cta td-banner-cta self-start inline-flex items-center gap-2 rounded-full pl-4 pr-1.5 py-1.5 text-[12.5px] font-bold">
-                  {b.cta} <span className="w-6 h-6 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center"><ArrowRight className="w-3 h-3" /></span>
+                  {b.cta} <span className="w-6 h-6 rounded-full td-ink-disc flex items-center justify-center"><ArrowRight className="w-3 h-3" /></span>
                 </span>
                 <b.icon aria-hidden className="td-banner-icon absolute -bottom-7 -right-6 w-36 h-36" style={{ opacity: 0.12 }} strokeWidth={1} />
               </button>
@@ -391,7 +395,7 @@ export default function Dashboard() {
                     <span className="td-bento-ghost rounded-full px-3 py-1 text-[11px] font-bold">
                       {resume && (lead.slug ?? String(lead.id)) === resume.slug ? "Continue" : "Start here"}
                     </span>
-                    <span className="w-10 h-10 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center"><ArrowUpRight className="w-4 h-4" /></span>
+                    <span className="w-10 h-10 rounded-full td-ink-disc flex items-center justify-center"><ArrowUpRight className="w-4 h-4" /></span>
                   </span>
                   <span className="relative z-10 max-w-[80%]">
                     <span className="block text-[11px] font-semibold opacity-65">{yearName(lead.year_id) ?? "Subject"}</span>
@@ -405,7 +409,7 @@ export default function Dashboard() {
                     <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
                       className="td-bento td-surface td-card-click group p-4 flex flex-col justify-between gap-4 text-left min-h-[150px]">
                       <span className="flex items-start justify-between">
-                        <span className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-extrabold shrink-0"
+                        <span className="w-11 h-11 rounded-full flex items-center justify-center td-on-dark text-[15px] font-extrabold shrink-0"
                           style={{ background: `linear-gradient(160deg, ${from}, ${to})`, textShadow: "0 1px 2px rgba(0,0,0,0.35)" }}>
                           {s.name.trim().charAt(0).toUpperCase()}
                         </span>
@@ -434,9 +438,12 @@ export default function Dashboard() {
         )}
       </section>
 
+      {/* ── Campus Showcase — what classmates are building ── */}
+      {isOn("showcase") && <ShowcaseStrip />}
+
       {/* ── Agent Coder — last in the page flow, after the student's own
           things, so it's found while scrolling and never in the way ── */}
-      <section className="mt-10" style={{ order: 3 }}>
+      <section className="mt-10" style={{ order: 4 }}>
         <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500 mb-3 px-0.5">Free from the Dino universe</p>
         <AgentCoderFeature variant="app" />
       </section>

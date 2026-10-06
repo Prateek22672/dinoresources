@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, User, Phone, MailCheck, FileText, Star, BrainCircuit, Calculator } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, ArrowLeft, User, Phone, MailCheck, FileText, Star, BrainCircuit, Calculator, GraduationCap } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 
 /**
@@ -206,7 +206,7 @@ export default function AuthPage() {
             <div {...tilt} className="td-tilt td-bento td-bento-accent col-span-6 p-7 min-h-[230px] flex flex-col justify-between">
               <span aria-hidden className="absolute -right-10 -bottom-16 w-[200px] h-[200px] rounded-full td-bento-sphere" />
               <span className="relative z-10 td-bento-ghost inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold w-fit">
-                <Sparkles className="w-3.5 h-3.5" /> Your study companion
+                <GraduationCap className="w-3.5 h-3.5" /> Built for GITAM students
               </span>
               <h1 className="relative z-10 text-[2.5rem] xl:text-[2.8rem] font-extrabold tracking-tight leading-[1.02] max-w-[78%]">
                 Every exam, every subject, covered.
@@ -231,7 +231,7 @@ export default function AuthPage() {
             <div {...tilt} className="td-tilt td-bento td-bento-accent col-span-2 p-5 min-h-[128px] flex flex-col justify-between">
               <div className="flex -space-x-2">
                 {["A", "R", "S"].map((l) => (
-                  <span key={l} className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white border-2 border-white/40 flex items-center justify-center text-[11px] font-bold">{l}</span>
+                  <span key={l} className="w-8 h-8 rounded-full td-ink-disc border-2 border-white/40 flex items-center justify-center text-[11px] font-bold">{l}</span>
                 ))}
               </div>
               <span>
@@ -410,7 +410,7 @@ export default function AuthPage() {
 
               <div className="h-px bg-white/[0.06] my-4" />
               <p className="text-center text-[11px] text-zinc-600 flex items-center justify-center gap-1.5">
-                <Sparkles className="w-3 h-3" /> By continuing, you agree to our Terms &amp; Privacy Policy
+                <ShieldCheck className="w-3 h-3" /> By continuing, you agree to our Terms &amp; Privacy Policy
               </p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Database, HardDrive, Trash2, Sparkles, RefreshCw, Check } from "lucide-react";
+import { Database, HardDrive, Trash2, RefreshCw, Check, Wrench } from "lucide-react";
 
 const FREE_LIMIT = 500 * 1024 * 1024; // Supabase free tier: 500 MB
 
@@ -68,7 +68,7 @@ export default function AdminDatabase() {
 
       {/* Smart cleanup suggestions */}
       <section>
-        <h3 className="text-white font-semibold mb-1 flex items-center gap-2"><Sparkles className="w-4 h-4 td-accent-text" /> Smart cleanup</h3>
+        <h3 className="text-white font-semibold mb-1 flex items-center gap-2"><Wrench className="w-4 h-4 td-accent-text" /> Smart cleanup</h3>
         <p className="text-zinc-500 text-xs mb-3 leading-relaxed">
           Only disposable data is ever suggested — unpaid checkouts, old logs, expired notices, old help-bot chats.
           <span className="text-zinc-300"> Paid orders, user access, subjects, notes and coupons can never be deleted from here.</span>

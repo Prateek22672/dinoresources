@@ -21,6 +21,7 @@ import SessionGuard from "./components/layout/SessionGuard";
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPassword = lazy(() => import("./components/ResetPassword"));
 const AboutPage = lazy(() => import("./components/AboutPage"));
+const Showcase = lazy(() => import("./pages/Showcase"));
 const Store = lazy(() => import("./pages/Store"));
 const Library = lazy(() => import("./pages/Library"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -147,6 +148,7 @@ const App = () => (
             <Route path="/dashboard" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/showcase" element={<FeatureRoute flag="showcase"><Showcase /></FeatureRoute>} />
 
             {/* Public tools — no login required (unified calc with toggle) */}
             <Route path="/sgpa-calc" element={<Calc initial="sgpa" />} />

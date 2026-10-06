@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  CalendarDays, Target, BookOpen, ClipboardCheck, RefreshCw, AlertTriangle, Sparkles,
-} from "lucide-react";
+import { CalendarDays, Target, BookOpen, ClipboardCheck, RefreshCw, AlertTriangle } from "lucide-react";
 import TutorOrb from "./TutorOrb";
 import {
   buildExamPlan, scoreBand,
@@ -136,7 +134,7 @@ export default function TutorExam({
               >
                 {busy
                   ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Building…</>
-                  : <><Sparkles className="w-3.5 h-3.5" /> {plan ? "Rebuild" : "Build my plan"}</>}
+                  : <><ClipboardCheck className="w-3.5 h-3.5" /> {plan ? "Rebuild" : "Build my plan"}</>}
               </button>
             </div>
           </div>

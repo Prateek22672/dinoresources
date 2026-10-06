@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Sparkles, RefreshCw, AlertCircle } from "lucide-react";
+import { Lock, RefreshCw, AlertCircle, Unlock } from "lucide-react";
 import { useSubjectUnlock } from "@/hooks/useSubjectUnlock";
 
 interface SubjectUnlockDialogProps {
@@ -98,7 +98,7 @@ export function SubjectUnlockDialog({
             {(paymentState === "verifying" || paymentState === "creating_order") ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <Unlock className="w-4 h-4" />
             )}
             {buttonLabel[paymentState]}
           </Button>

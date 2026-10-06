@@ -3,7 +3,7 @@ import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import { FEATURES, FEATURE_CATEGORIES, Role } from "@/data/features";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Sparkles, PlayCircle } from "lucide-react";
+import { PlayCircle, Megaphone } from "lucide-react";
 
 const ROLE_LABEL: Record<Role, { label: string; cls: string }> = {
   student: { label: "Students", cls: "bg-white/10 text-zinc-300" },
@@ -25,7 +25,7 @@ export default function WhatsNewPage() {
     <AppShell>
       <PageHero
         eyebrow="#TheNewTeamDino"
-        eyebrowIcon={Sparkles}
+        eyebrowIcon={Megaphone}
         title="Everything TeamDino can do"
         subtitle="A quick tour of every feature — what it is and where to find it. New here? You've got more tools than you think."
         book={{ cover: "#7c6cf0", spine: "#5b4fc4", title: "NEW" }}

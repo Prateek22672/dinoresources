@@ -74,6 +74,8 @@ export interface OrderRow {
   status: OrderStatus;
   discount_paise: number;
   coupon_code: string | null;
+  /** bundle-offer saving ("buy 3 save X%"); 0 when none applied */
+  bundle_discount_paise?: number;
   charges_paise: number;
   charges_detail: OrderChargeDetail[] | null;
   gateway: string;

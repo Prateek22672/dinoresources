@@ -747,3 +747,11 @@ iframe[src*="razorpay"] {
   .td-qa-half { transition: background .2s; }
   .td-qa-half:hover { background: rgba(255,255,255,0.08); }
 }
+
+/* Fixed-colour bits that must ignore the theme's text remaps. They avoid the
+   .text-white class on purpose: the light theme turns .text-white dark, and
+   accent tiles re-ink it to --td-accent-ink (dark on teal/sapphire/rose/lime). */
+@layer utilities {
+  .td-ink-disc { background: #0d0d0d; color: #ffffff !important; }
+  .td-on-dark  { color: #ffffff !important; }
+}

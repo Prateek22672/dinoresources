@@ -237,7 +237,7 @@ export default function Cart() {
               {/* Bundle offer — what's applied, and what one more subject unlocks */}
               {bundle.enabled && (bundleDiscount > 0 || nextTier) && (
                 <div className="td-bento-accent rounded-2xl p-3.5 mb-4 flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center shrink-0"><Gift className="w-4 h-4" /></span>
+                  <span className="w-9 h-9 rounded-full td-ink-disc flex items-center justify-center shrink-0"><Gift className="w-4 h-4" /></span>
                   <span className="flex-1 min-w-0">
                     {bundleDiscount > 0 ? (
                       <>
@@ -451,12 +451,16 @@ export default function Cart() {
 
               <button
                 onClick={() => start(applied?.code, [...selected])}
-                disabled={busy || state === "success"}
+                // the server refuses a paid order under ₹1 — don't offer one
+                disabled={busy || state === "success" || (totalPaise > 0 && finalTotal < 100)}
                 className="w-full td-btn-primary py-4 mt-5 flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {(state === "verifying" || state === "creating_order") && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {checkoutLabel[state]}
               </button>
+              {totalPaise > 0 && finalTotal < 100 && (
+                <p className="text-center text-[11px] text-amber-400 mt-3">The total has to be at least ₹1 — remove the coupon or add a subject.</p>
+              )}
               <p className="text-center text-[11px] text-zinc-500 mt-3">
                 {validityDays > 0 && <>Access valid for {validityDays} days · </>}Secure payment via Razorpay
               </p>

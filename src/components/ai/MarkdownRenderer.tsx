@@ -1,16 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Lightbulb,
-  AlertTriangle,
-  Info,
-  Sparkles,
-  BookOpen,
-  Copy,
-  Check,
-  Pin,
-  ExternalLink,
-  ImageOff,
-} from "lucide-react";
+import { Lightbulb, AlertTriangle, Info, BookOpen, Copy, Check, Pin, ExternalLink, ImageOff } from "lucide-react";
 
 function Cursor() {
   return (
@@ -327,7 +316,7 @@ const CALLOUTS: Record<string, { icon: any; tint: string; label: string }> = {
   warning: { icon: AlertTriangle, tint: "#f59e0b", label: "Warning" },
   remember: { icon: Pin, tint: "#34d399", label: "Remember" },
   example: { icon: BookOpen, tint: "#a78bfa", label: "Example" },
-  definition: { icon: Sparkles, tint: "#34d399", label: "Definition" },
+  definition: { icon: Lightbulb, tint: "#34d399", label: "Definition" },
 };
 
 function Callout({ kind, text }: { kind: string; text: string }) {

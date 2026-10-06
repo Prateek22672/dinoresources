@@ -4,7 +4,7 @@ import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import { toast } from "sonner";
-import { Send, RefreshCw, Mail, Sparkles, FileText, Lock } from "lucide-react";
+import { Send, RefreshCw, Mail, FileText, Lock, Lightbulb } from "lucide-react";
 import { GenAiIcon } from "@/components/BrandIcons";
 
 interface Msg { role: "user" | "assistant"; content: string; }
@@ -12,7 +12,7 @@ interface Msg { role: "user" | "assistant"; content: string; }
 const PRESETS = [
   { label: "Summarize an email", icon: Mail, prompt: "Summarize this email — key points, action items, deadlines:\n\n" },
   { label: "Draft a reply", icon: FileText, prompt: "Draft a short, polite reply to this email:\n\n" },
-  { label: "Explain simply", icon: Sparkles, prompt: "Explain this simply with an example:\n\n" },
+  { label: "Explain simply", icon: Lightbulb, prompt: "Explain this simply with an example:\n\n" },
 ];
 
 export default function Agent() {

@@ -1,9 +1,6 @@
 import { ReactNode, useState, useEffect, lazy, Suspense } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog,
-  Zap, Menu, X, Briefcase, Sparkles,
-} from "lucide-react";
+import { LayoutDashboard, Store, Library, ShoppingCart, Receipt, Shield, PenSquare, LogOut, UserCog, Zap, Menu, X, Briefcase, Megaphone, Rocket } from "lucide-react";
 import HelpDialog from "@/components/HelpDialog";
 // DinoBot + the issue reporter ship as their own chunks — loaded on first use.
 const HelpBot = lazy(() => import("@/components/HelpBot"));
@@ -64,6 +61,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
 
   const links = [
     ...navItems,
+    ...(isOn("showcase") ? [{ to: "/showcase", label: "Showcase", icon: Rocket }] : []),
     ...(isOn("jobs") ? [{ to: "/jobs", label: "Jobs", icon: Briefcase }] : []),
     ...(isContributor ? [{ to: "/contributor", label: "Contribute", icon: PenSquare }] : []),
     ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
@@ -72,7 +70,7 @@ export default function AppShell({ children, hideHeader = false }: { children: R
   const mobileItems: MobileNavItem[] = [
     ...links.map((l) => ({ label: l.label, icon: l.icon, active: isActive(l.to), onClick: () => navigate(l.to) })),
     { label: "Cart", icon: ShoppingCart, active: isActive("/cart"), onClick: () => navigate("/cart") },
-    { label: "What's new", icon: Sparkles, bottom: true, onClick: () => navigate("/whats-new") },
+    { label: "What's new", icon: Megaphone, bottom: true, onClick: () => navigate("/whats-new") },
     // Same de-duplication as the rail: Instant Help already opens the bug
     // reporter from its own "Report a bug", so a second row for it here was
     // the same action under a different name.

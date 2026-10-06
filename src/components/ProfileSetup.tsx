@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, LibraryBig, Sparkles, Check, ArrowUpRight } from "lucide-react";
+import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, LibraryBig, Check, ArrowUpRight, Megaphone } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 
 const DEPARTMENTS = ["CSE", "ECE", "Mechanical Engineering"];
@@ -19,6 +19,13 @@ interface ProfileSetupProps {
 /** The saved values, so we can tell whether anything actually changed. */
 interface Snapshot { fullName: string; username: string; department: string; semester: string }
 const EMPTY: Snapshot = { fullName: "", username: "", department: "", semester: "" };
+
+/** What the year Select shows for a saved year: itself, or the open year it falls back to. */
+function semesterShown(saved: string, active: YearRow[]): string {
+  if (!saved || !active.length) return saved;
+  const r = resolveStudentYear(saved, active);
+  return r.fallback ? active.find((y) => y.id === r.id)?.name ?? saved : saved;
+}
 
 export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
   const navigate = useNavigate();
@@ -35,6 +42,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
   // fixed list is only a fallback if they can't be read.
   const [yearOptions, setYearOptions] = useState<string[]>(academicOptions);
   const [closedYear, setClosedYear] = useState<string | null>(null);
+  const [yearTouched, setYearTouched] = useState(false);
 
   useEffect(() => { loadCurrentProfile(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
@@ -73,7 +81,9 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
       }
       setFullName(snap.fullName);
       setUsername(snap.username);
-      setSaved(snap);
+      // The prefill isn't an edit: compare against what's on screen so the
+      // form doesn't start "dirty", and save the real year unless they pick.
+      setSaved({ ...snap, semester: semesterShown(snap.semester, active) });
     }
     setIsLoading(false);
   };
@@ -93,7 +103,8 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
       .from("profiles")
       .update({
         department,
-        semester,
+        // untouched prefill → keep their real (closed) year on file
+        semester: closedYear && !yearTouched ? closedYear : semester,
         full_name: fullName.trim() || null,
         username: cleanUsername || null,
       } as any)
@@ -156,7 +167,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
           <div className="td-bento td-bento-accent relative overflow-hidden col-span-2 lg:col-span-6 lg:row-span-2 p-6 sm:p-7 flex flex-col justify-between gap-6 min-h-[200px]">
             <span aria-hidden className="absolute -right-12 -bottom-16 w-[190px] h-[190px] rounded-full td-bento-sphere hidden sm:block" />
             <div className="relative z-10 flex items-start justify-between gap-3">
-              <div className="w-14 h-14 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center text-xl font-black shrink-0">
+              <div className="w-14 h-14 rounded-full td-ink-disc flex items-center justify-center text-xl font-black shrink-0">
                 {initial}
               </div>
               <button onClick={signOut} className="td-btn-ghost px-4 py-2.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5 shrink-0">
@@ -176,7 +187,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
           {[
             { label: "My unlocks", desc: "Orders & receipts", icon: Receipt, to: "/purchases", cls: "td-bento-deep", chip: "bg-white/15" },
             { label: "My Library", desc: "Subjects you own", icon: LibraryBig, to: "/library", cls: "td-bento-ink td-force-dark", chip: "bg-white/10" },
-            { label: "What's new", desc: "Latest features", icon: Sparkles, to: "/whats-new", cls: "td-surface", chip: "td-accent-bg" },
+            { label: "What's new", desc: "Latest features", icon: Megaphone, to: "/whats-new", cls: "td-surface", chip: "td-accent-bg" },
           ].map((q, i) => (
             <button key={q.to} onClick={() => navigate(q.to)}
               className={`td-bento ${q.cls} td-card-click p-4 sm:p-5 flex flex-col items-start justify-between gap-4 text-left min-h-[112px] ${i === 2 ? "col-span-2 lg:col-span-6" : "col-span-1 lg:col-span-3"}`}>
@@ -257,7 +268,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
                 <Label htmlFor="semester" className={labelCls}>Academic year</Label>
                 <div className="relative">
                   <GraduationCap className={iconCls} />
-                  <Select value={semester} onValueChange={setSemester} required>
+                  <Select value={semester} onValueChange={(v) => { setSemester(v); setYearTouched(true); }} required>
                     <SelectTrigger id="semester" className="td-surface-2 td-field-focus border-0 text-white h-12 pl-10 rounded-xl">
                       <SelectValue placeholder="Select your year" />
                     </SelectTrigger>

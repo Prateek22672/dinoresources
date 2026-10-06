@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Check, X, ArrowRight, RefreshCw, Sparkles, BookOpen, Flame, RotateCcw, AlertCircle, ChevronDown,
-} from "lucide-react";
+import { Check, X, ArrowRight, RefreshCw, BookOpen, Flame, RotateCcw, AlertCircle, ChevronDown, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
@@ -241,7 +239,7 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
           disabled={busy}
           className="td-btn-primary w-full py-3.5 rounded-full text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
         >
-          {busy ? <><RefreshCw className="w-4 h-4 animate-spin" /> Building…</> : <><Sparkles className="w-4 h-4" /> Start drill</>}
+          {busy ? <><RefreshCw className="w-4 h-4 animate-spin" /> Building…</> : <><Play className="w-4 h-4" /> Start drill</>}
         </button>
       </div>
     );
@@ -312,7 +310,7 @@ export default function TutorDrill({ ctx }: { ctx: TutorContext }) {
             onClick={() => setPhase("setup")}
             className="flex-1 td-btn-primary py-3 rounded-full text-[13px] font-bold inline-flex items-center justify-center gap-1.5"
           >
-            <Sparkles className="w-3.5 h-3.5" /> New drill
+            <Play className="w-3.5 h-3.5" /> New drill
           </button>
         </div>
       </div>

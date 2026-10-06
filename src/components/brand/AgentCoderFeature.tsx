@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import AgentCoderMock, { AgentCoderMark } from "./AgentCoderMock";
-import { AGENTCODER_PAGE, openAgentCoder } from "@/lib/links";
+import { AGENTCODER_HOME, openAgentCoder } from "@/lib/links";
 
 /**
  * FreeAgentCoder promo — copy and actions on the left, the extension panel
@@ -48,7 +48,7 @@ export default function AgentCoderFeature({ variant = "landing" }: { variant?: "
             className={`${app ? "td-btn-primary" : "bg-black text-white"} flex-1 min-w-[150px] rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform`}>
             Open in VS Code <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
-          <a href={AGENTCODER_PAGE} target="_blank" rel="noopener noreferrer"
+          <a href={AGENTCODER_HOME} target="_blank" rel="noopener noreferrer"
             className={`${app ? "td-btn-ghost" : "bg-black/[0.06] border border-black/10 text-black hover:bg-black/[0.1]"} flex-1 min-w-[130px] rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors`}>
             See what it does
           </a>

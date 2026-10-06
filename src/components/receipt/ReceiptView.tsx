@@ -75,6 +75,9 @@ const ReceiptView = forwardRef<HTMLDivElement, { data: ReceiptData }>(({ data },
         {/* totals */}
         <div className="ml-auto mt-3" style={{ width: 260 }}>
           <TotalRow label="Subtotal" value={formatPaise(data.subtotal_paise)} />
+          {(data.bundle_discount_paise ?? 0) > 0 && (
+            <TotalRow label="Bundle offer" value={`−${formatPaise(data.bundle_discount_paise!)}`} className="text-emerald-600" />
+          )}
           {data.discount_paise > 0 && (
             <TotalRow
               label={`Discount${data.couponCode ? ` (${data.couponCode})` : ""}`}

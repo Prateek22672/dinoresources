@@ -13,6 +13,8 @@ export const AGENTFURY_WEB = "https://agentfury.foliofyx.in/";
 /** FreeAgentCoder (by Codeloft) — the free AI coding agent for VS Code. */
 export const AGENTCODER_ID = "PrateekKoratala.freeagentcoder";
 export const AGENTCODER_PAGE = "https://brain-rho-roan.vercel.app/install";
+/** The product page — what "See what it does" opens. */
+export const AGENTCODER_HOME = "https://brain-rho-roan.vercel.app/";
 export const AGENTCODER_VSCODE = `vscode:extension/${AGENTCODER_ID}`;
 
 /**

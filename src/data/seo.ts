@@ -49,6 +49,10 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     title: "Store — Unlock GITAM Subjects & Full-Year Packs | Team Dino",
     desc: "Notes, important questions, PYQs and the Rex AI tutor for every subject. Unlock one subject or the whole year — one payment, no subscription.",
   },
+  "/showcase": {
+    title: "Campus Showcase — Projects Built by GITAM Students | Team Dino",
+    desc: "Projects, startups, research and designs built by GITAM students. Browse what campus is building, like your favourites, and share your own.",
+  },
   "/jobs": {
     title: "Placement Prep — Company Patterns, Materials & Questions | Team Dino",
     desc: "Crack your dream company with exam patterns, curated materials and previous questions — organised company by company.",

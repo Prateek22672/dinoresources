@@ -78,7 +78,7 @@ export default function DashboardBento({
               <ChevronDown className="w-4 h-4 -rotate-90 opacity-60 shrink-0" />
             </button>
             <button onClick={() => navigate(resumeTo)} aria-label="Go"
-              className="w-11 h-11 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center shrink-0 hover:scale-105 transition-transform">
+              className="w-11 h-11 rounded-full td-ink-disc flex items-center justify-center shrink-0 hover:scale-105 transition-transform">
               <ArrowUpRight className="w-4 h-4" />
             </button>
           </div>
@@ -125,12 +125,12 @@ export default function DashboardBento({
           </h2>
           {comboYear && !comboOwned ? (
             <button onClick={comboInCart ? () => navigate("/cart") : onAddCombo}
-              className="rounded-full bg-[#0d0d0d] text-white h-9 px-3.5 text-[12px] font-bold flex items-center gap-1.5 shrink-0">
+              className="rounded-full td-ink-disc h-9 px-3.5 text-[12px] font-bold flex items-center gap-1.5 shrink-0">
               {comboInCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Full year · {formatPaise(comboYear.combo_price_paise)}</>}
             </button>
           ) : (
             <button onClick={() => navigate("/library")}
-              className="rounded-full bg-[#0d0d0d] text-white h-9 px-3.5 text-[12px] font-bold flex items-center gap-1.5 shrink-0">
+              className="rounded-full td-ink-disc h-9 px-3.5 text-[12px] font-bold flex items-center gap-1.5 shrink-0">
               <BookOpen className="w-3.5 h-3.5" /> My Library
             </button>
           )}
@@ -147,7 +147,7 @@ export default function DashboardBento({
               // each bar is stepped in like a timeline row, but never past the card edge
               style={{ marginLeft: `${i * 6}%`, width: `min(${Math.max(46, total ? (r.n / total) * 100 : 50)}%, ${100 - i * 6}%)` }}>
               <span className="truncate">{r.label}</span>
-              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-extrabold shrink-0 ${r.hot ? "bg-[#0d0d0d] text-white" : "td-surface text-white"}`}>{r.n}</span>
+              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-extrabold shrink-0 ${r.hot ? "td-ink-disc" : "td-surface text-white"}`}>{r.n}</span>
             </button>
           ))}
         </div>
@@ -159,7 +159,7 @@ export default function DashboardBento({
 
       {/* ── Today ── */}
       <section className="td-bento td-surface col-span-1 lg:col-span-3 p-4 sm:p-5 flex items-center gap-3">
-        <span className="w-11 h-11 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center text-[15px] font-extrabold shrink-0">{today.getDate()}</span>
+        <span className="w-11 h-11 rounded-full td-ink-disc flex items-center justify-center text-[15px] font-extrabold shrink-0">{today.getDate()}</span>
         <span className="min-w-0">
           <span className="block text-white text-[14px] font-bold leading-tight">{today.toLocaleDateString(undefined, { weekday: "short" })},</span>
           <span className="block text-zinc-500 text-[12px] font-medium">{today.toLocaleDateString(undefined, { month: "long" })}</span>
@@ -195,7 +195,7 @@ export default function DashboardBento({
       {/* ── Rex / Store (accent fill + sphere) ── */}
       <button onClick={() => navigate(studyAi ? resumeTo : "/store")}
         className="td-bento td-bento-accent col-span-2 sm:col-span-1 lg:col-span-4 p-4 sm:p-5 relative overflow-hidden min-h-[170px] flex flex-col justify-between text-left">
-        <span className="w-9 h-9 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center relative z-10"><ArrowUpRight className="w-4 h-4" /></span>
+        <span className="w-9 h-9 rounded-full td-ink-disc flex items-center justify-center relative z-10"><ArrowUpRight className="w-4 h-4" /></span>
         <span aria-hidden className="absolute -right-8 -bottom-12 w-[190px] h-[190px] rounded-full td-bento-sphere" />
         <span className="relative z-10">
           {studyAi ? (
