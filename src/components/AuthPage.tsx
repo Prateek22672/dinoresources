@@ -8,8 +8,30 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, Check, User, Phone, MailCheck } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, User, Phone, MailCheck, FileText, Star, BrainCircuit, Calculator } from "lucide-react";
 import dinoLogo from "@/assets/dinosaurWhite.png";
+
+/**
+ * Hover movement for the brand tiles: each tile leans a few degrees toward
+ * the pointer and lifts, with a soft light following it. Written to CSS
+ * variables so the motion runs on the compositor; .td-tilt in the page
+ * styles does the rest (and is switched off under reduced motion).
+ */
+const tilt = {
+  onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    e.currentTarget.style.setProperty("--rx", `${(-y * 7).toFixed(2)}deg`);
+    e.currentTarget.style.setProperty("--ry", `${(x * 9).toFixed(2)}deg`);
+    e.currentTarget.style.setProperty("--mx", `${((x + 0.5) * 100).toFixed(1)}%`);
+    e.currentTarget.style.setProperty("--my", `${((y + 0.5) * 100).toFixed(1)}%`);
+  },
+  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.setProperty("--rx", "0deg");
+    e.currentTarget.style.setProperty("--ry", "0deg");
+  },
+};
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -101,7 +123,7 @@ export default function AuthPage() {
   };
 
   const field =
-    "w-full h-10 rounded-xl bg-white/[0.03] border border-white/10 pl-10 pr-3 text-[13px] text-white " +
+    "w-full h-11 rounded-2xl bg-white/[0.03] border border-white/10 pl-10 pr-3 text-[13px] text-white hover:border-white/20 " +
     "placeholder:text-zinc-600 outline-none transition-shadow td-auth-field";
 
   return (
@@ -122,6 +144,25 @@ export default function AuthPage() {
           transition: background-color 99999s ease-in-out 0s;
         }
         @keyframes tdAuthIn { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+        /* bento tiles that lean toward the pointer, with a light that follows it */
+        .td-tilt {
+          transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
+          transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease;
+          will-change: transform; position: relative; overflow: hidden;
+        }
+        .td-tilt:hover { --ty: -6px; box-shadow: 0 30px 60px -28px rgba(0,0,0,0.85); transition-duration: .2s, .45s; }
+        .td-tilt::after {
+          content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s;
+          background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.16), transparent 60%);
+        }
+        .td-tilt:hover::after { opacity: 1; }
+        /* drifting accent light behind everything */
+        @keyframes tdBlob { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.12); } }
+        .td-auth-blob { position: absolute; border-radius: 9999px; filter: blur(70px); animation: tdBlob 16s ease-in-out infinite; }
+        /* the form card glows in the accent while you type in it */
+        .td-auth-card { transition: box-shadow .4s ease, border-color .4s ease; }
+        .td-auth-card:focus-within { border-color: rgb(var(--td-accent-rgb) / 0.4); box-shadow: 0 0 0 1px rgb(var(--td-accent-rgb) / 0.25), 0 30px 90px -25px rgb(var(--td-accent-rgb) / 0.35); }
+        @media (prefers-reduced-motion: reduce) { .td-tilt, .td-auth-blob { animation: none; transform: none !important; transition: none; } }
         .td-auth-in  { animation: tdAuthIn .6s cubic-bezier(.22,1,.36,1) both; }
         .td-auth-in2 { animation: tdAuthIn .6s cubic-bezier(.22,1,.36,1) both; animation-delay:.1s; }
       `}</style>
@@ -135,6 +176,13 @@ export default function AuthPage() {
         maskImage: "radial-gradient(ellipse 75% 70% at 50% 35%, black 25%, transparent 100%)",
         WebkitMaskImage: "radial-gradient(ellipse 75% 70% at 50% 35%, black 25%, transparent 100%)",
       }} />
+
+      {/* drifting accent light */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <span className="td-auth-blob w-[460px] h-[460px] -top-40 -left-24" style={{ background: "rgb(var(--td-accent-rgb) / 0.22)" }} />
+        <span className="td-auth-blob w-[380px] h-[380px] bottom-[-140px] right-[-80px]" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", animationDelay: "-6s" }} />
+        <span className="td-auth-blob w-[260px] h-[260px] top-1/3 left-1/2" style={{ background: "rgba(242,191,156,0.10)", animationDelay: "-11s" }} />
+      </div>
 
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 h-14 shrink-0">
@@ -153,49 +201,49 @@ export default function AuthPage() {
       <main className="relative z-10 flex-1 min-h-0 overflow-y-auto">
         <div className="min-h-full flex items-center justify-center px-4 py-6">
         <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left — brand (desktop) */}
-          <div className="hidden lg:flex flex-col gap-5 td-auth-in">
-            <span className="td-glass inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-zinc-300 w-fit">
-              <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--td-accent-soft)" }} /> Your study companion
-            </span>
-            <h1 className="text-4xl xl:text-[2.7rem] font-extrabold tracking-tight leading-[1.06]">
-              Every exam,<br />
-              <span style={{ color: "var(--td-accent-soft)" }}>every subject,</span><br />
-              <span className="text-zinc-600">covered.</span>
-            </h1>
-            <p className="text-zinc-400 leading-relaxed max-w-sm">
-              Everything a GITAM student actually needs, in one place.
-            </p>
+          {/* Left — brand as a bento (desktop). Every tile leans toward the pointer. */}
+          <div className="hidden lg:grid grid-cols-6 gap-3 td-auth-in">
+            <div {...tilt} className="td-tilt td-bento td-bento-accent col-span-6 p-7 min-h-[230px] flex flex-col justify-between">
+              <span aria-hidden className="absolute -right-10 -bottom-16 w-[200px] h-[200px] rounded-full td-bento-sphere" />
+              <span className="relative z-10 td-bento-ghost inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold w-fit">
+                <Sparkles className="w-3.5 h-3.5" /> Your study companion
+              </span>
+              <h1 className="relative z-10 text-[2.5rem] xl:text-[2.8rem] font-extrabold tracking-tight leading-[1.02] max-w-[78%]">
+                Every exam, every subject, covered.
+              </h1>
+            </div>
 
-            {/* what's inside */}
-            <ul className="space-y-2.5">
-              {[
-                "Notes, PYQs & Study-With-AI for every subject",
-                "Free SGPA, CGPA & attendance calculators"
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2.5 text-sm text-zinc-300">
-                  <span className="w-5 h-5 rounded-full td-accent-bg flex items-center justify-center shrink-0">
-                    <Check className="w-3 h-3" strokeWidth={3} />
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            <div className="flex items-center gap-3 mt-1">
-              <div className="flex -space-x-2">
-                {["A", "R", "S", "K"].map((l) => (
-                  <span key={l} className="w-8 h-8 rounded-full bg-white/[0.07] border-2 border-[#0b0b0e] flex items-center justify-center text-[11px] font-bold text-zinc-300">{l}</span>
-                ))}
-                <span className="w-8 h-8 rounded-full td-accent-badge border-2 border-[#0b0b0e] flex items-center justify-center text-[9px] font-black">1.5k</span>
+            {[
+              { t: "Notes & material", d: "Unit-wise, for every subject", icon: FileText, cls: "td-bento-deep", span: "col-span-3" },
+              { t: "Important Qs & PYQs", d: "What actually gets asked", icon: Star, cls: "bg-[#17171c] border border-white/10", span: "col-span-3" },
+              { t: "Rex, the AI tutor", d: "Explains from your own material", icon: BrainCircuit, cls: "bg-[#17171c] border border-white/10", span: "col-span-2" },
+              { t: "Free calculators", d: "SGPA · CGPA · attendance", icon: Calculator, cls: "td-bento-ink", span: "col-span-2" },
+            ].map((f) => (
+              <div key={f.t} {...tilt} className={`td-tilt td-bento ${f.cls} ${f.span} p-5 min-h-[128px] flex flex-col justify-between`}>
+                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center"><f.icon className="w-4 h-4" /></span>
+                <span>
+                  <span className="block text-[15px] font-bold leading-tight">{f.t}</span>
+                  <span className="block text-[12px] opacity-60 mt-0.5">{f.d}</span>
+                </span>
               </div>
-              <span className="text-sm text-zinc-500 font-medium">1500+ signups already inside</span>
+            ))}
+
+            <div {...tilt} className="td-tilt td-bento td-bento-accent col-span-2 p-5 min-h-[128px] flex flex-col justify-between">
+              <div className="flex -space-x-2">
+                {["A", "R", "S"].map((l) => (
+                  <span key={l} className="w-8 h-8 rounded-full bg-[#0d0d0d] text-white border-2 border-white/40 flex items-center justify-center text-[11px] font-bold">{l}</span>
+                ))}
+              </div>
+              <span>
+                <span className="block text-[1.6rem] font-extrabold leading-none">1500+</span>
+                <span className="block text-[12px] opacity-70 mt-1">students already inside</span>
+              </span>
             </div>
           </div>
 
           {/* Right — form card */}
           <div className="td-auth-in2 w-full max-w-md mx-auto lg:mx-0 lg:justify-self-end">
-            <div className="rounded-[28px] bg-[#121216] border border-white/10 p-6 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
+            <div className="td-auth-card rounded-[28px] bg-[#121216]/90 backdrop-blur-xl border border-white/10 p-6 sm:p-7 shadow-[0_30px_90px_-25px_rgba(0,0,0,0.9)]">
               {alreadyRegistered ? (
                 /* No email is on its way for this address, so don't send them to
                    wait at an empty inbox — give them the two routes that work. */
@@ -249,10 +297,16 @@ export default function AuthPage() {
                 </div>
                 <h1 className="text-2xl font-extrabold tracking-tight">TeamDino</h1>
                 <p className="text-zinc-500 text-sm mt-1">Your last-minute study survival kit</p>
+                <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+                  {["Notes", "Important Qs", "PYQs", "AI tutor", "Free calculators"].map((c) => (
+                    <span key={c} className="rounded-full px-2.5 py-1 text-[11px] font-semibold bg-white/[0.06] border border-white/10 text-zinc-300">{c}</span>
+                  ))}
+                </div>
               </div>
 
               <div className="mb-5">
-                <h2 className="text-xl font-bold tracking-tight">Sign in to your workspace</h2>
+                <h2 className="text-[1.4rem] font-extrabold tracking-tight">Welcome to TeamDino</h2>
+                <p className="text-zinc-500 text-[13px] mt-1">Log in, or create a free account in under a minute.</p>
               </div>
 
               <Tabs defaultValue="signin" className="w-full">

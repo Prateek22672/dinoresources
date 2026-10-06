@@ -30,10 +30,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" />
     
-    <title>Team Dino | The Ultimate Student Workspace</title>
-    <meta name="title" content="Team Dino | The Ultimate Student Workspace" />
-    <meta name="description" content="Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking. Stop searching for notes, start mastering your subjects." />
-    <meta name="keywords" content="student workspace, AI tutoring, SGPA calculator, attendance tracker, study materials, college resources, Team Dino, student dashboard" />
+    <title>Team Dino — GITAM Notes, PYQs, Important Questions &amp; AI Tutor</title>
+    <meta name="title" content="Team Dino — GITAM Notes, PYQs, Important Questions &amp; AI Tutor" />
+    <meta name="description" content="Unit-wise notes, important questions, previous year papers and Rex, an AI tutor that explains from your own syllabus — plus free SGPA, CGPA and attendance calculators for GITAM students." />
+    <meta name="keywords" content="GITAM notes, GITAM PYQs, GITAM previous year papers, GITAM important questions, GITAM SGPA calculator, CGPA calculator, attendance calculator, AI tutor, study material, Team Dino" />
     <meta name="author" content="Team Dino" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     
@@ -42,8 +42,8 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://teamdino.in/" />
     <meta property="og:site_name" content="Team Dino" />
-    <meta property="og:title" content="Team Dino | The Ultimate Student Workspace" />
-    <meta property="og:description" content="Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking. Stop searching for notes, start mastering your subjects." />
+    <meta property="og:title" content="Team Dino — GITAM Notes, PYQs, Important Questions &amp; AI Tutor" />
+    <meta property="og:description" content="Unit-wise notes, important questions, previous year papers and Rex, an AI tutor that explains from your own syllabus — plus free SGPA, CGPA and attendance calculators for GITAM students." />
     <meta property="og:image" content="https://teamdino.in/og-teamdino.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -52,8 +52,8 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://teamdino.in/" />
-    <meta name="twitter:title" content="Team Dino | The Ultimate Student Workspace" />
-    <meta name="twitter:description" content="Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking." />
+    <meta name="twitter:title" content="Team Dino — GITAM Notes, PYQs, Important Questions &amp; AI Tutor" />
+    <meta name="twitter:description" content="Unit-wise notes, important questions, previous year papers and Rex, an AI tutor that explains from your own syllabus — plus free SGPA, CGPA and attendance calculators for GITAM students." />
     <meta name="twitter:image" content="https://teamdino.in/og-teamdino.png" />
     <meta name="twitter:image:alt" content="Team Dino — Make. Exams. Easy. Notes, PYQs and Study with AI." />
 
@@ -64,15 +64,23 @@
       "@graph": [
         {
           "@type": "Organization",
+          "@id": "https://teamdino.in/#org",
           "name": "Team Dino",
+          "alternateName": "TeamDino",
           "url": "https://teamdino.in/",
-          "logo": "https://teamdino.in/favicon.png"
+          "logo": "https://teamdino.in/favicon.png",
+          "description": "A study platform built by GITAM students: unit-wise notes, important questions, previous year papers, an AI tutor and free academic calculators.",
+          "areaServed": "IN",
+          "knowsAbout": ["GITAM University", "Engineering notes", "Previous year question papers", "SGPA calculation", "AI tutoring"]
         },
         {
           "@type": "WebSite",
+          "@id": "https://teamdino.in/#website",
           "name": "Team Dino",
           "url": "https://teamdino.in/",
-          "description": "The ultimate student workspace — notes, PYQs, Study-With-AI, placement prep and free calculators."
+          "inLanguage": "en-IN",
+          "publisher": { "@id": "https://teamdino.in/#org" },
+          "description": "GITAM notes, important questions, previous year papers, the Rex AI tutor and free SGPA, CGPA and attendance calculators."
         },
         {
           "@type": "WebApplication",

@@ -9,8 +9,8 @@ import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 import fyxLogo from "@/assets/fyx.png";
-import { AGENTCODER_PAGE, openAgentCoder } from "@/lib/links";
-import AgentCoderMock, { AgentCoderMark } from "@/components/brand/AgentCoderMock";
+import AgentCoderFeature from "@/components/brand/AgentCoderFeature";
+import { HOME_FAQ as FAQS } from "@/data/seo";
 
 
 /* Cursor-follow: elements drift toward/away from the mouse at their own
@@ -135,13 +135,6 @@ const QUOTES = [
   { text: "Full year, every subject, for less than one photocopy run. I checked the price twice.", who: "Sneha · CSE, 4th year" },
 ];
 
-const FAQS = [
-  { q: "Is TeamDino free?", a: "The calculators (SGPA, CGPA predictor, attendance) are 100% free with no login. Subject packs — notes, PYQs, Study-With-AI — start at ₹11, with full-year packs that cost less than a plate of biryani." },
-  { q: "What's inside a subject pack?", a: "Syllabus, 5 units of curated notes, previous year questions and Study-With-AI answers organised topic by topic. Curated videos are free for everyone — no purchase needed. Access unlocks instantly after payment." },
-  { q: "What's a full-year pack?", a: "Every subject in your year for one price. If you'll need more than two subjects, the full-year pack always wins." },
-  { q: "I paid but can't access — what now?", a: "Tap Instant Help inside the app — DinoBot files a support ticket for you and the team resolves it within 24 hours." },
-  { q: "Which college is this for?", a: "Built by and for GITAM students — the grade chart, units and PYQs match GITAM's actual pattern." },
-];
 
 /* Cover tones for the curved subject wall — muted, dusk-lit, never neon */
 const SHELF = [
@@ -620,40 +613,7 @@ export default function LandingPage() {
       {/* ── Also from us: Agent Coder (the headline) + FolioFYX ── */}
       <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
         <div className="grid md:grid-cols-[1.35fr_1fr] gap-5 max-w-5xl mx-auto">
-          <div className="rounded-[28px] p-6 sm:p-8 bg-white text-black shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)] grid lg:grid-cols-[1fr_250px] gap-6 items-center">
-            <div className="min-w-0 flex flex-col">
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {["100% free", "No credit card", "VS Code"].map((t) => (
-                  <span key={t} className="text-[10px] font-black tracking-[0.12em] uppercase px-2.5 py-1 rounded-full bg-black/[0.06] border border-black/10">{t}</span>
-                ))}
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="w-12 h-12 rounded-2xl bg-[#141414] flex items-center justify-center shrink-0"><AgentCoderMark className="w-6 h-6" /></span>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black tracking-[0.18em] uppercase text-black/45">FreeAgentCoder · by Codeloft</p>
-                  <h3 className="font-extrabold text-2xl sm:text-3xl tracking-tight leading-none mt-0.5">Agent Coder</h3>
-                </div>
-              </div>
-              <p className="text-black/70 text-[15px] leading-relaxed mt-4">
-                The free <b className="text-black">Claude Code alternative</b>. Tell it what to build — it plans, writes, runs and tests the code right in your project.
-              </p>
-              <p className="text-black/50 text-[13px] leading-relaxed mt-2">
-                Runs on free Gemini, Groq and OpenRouter keys. No subscription, ever.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-6">
-                <button onClick={openAgentCoder}
-                  className="flex-1 min-w-[150px] bg-black text-white rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform">
-                  Open in VS Code <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
-                <a href={AGENTCODER_PAGE} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 min-w-[130px] bg-black/[0.06] border border-black/10 text-black rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:bg-black/[0.1] transition-colors">
-                  See what it does
-                </a>
-              </div>
-            </div>
-            {/* the extension doing a real task, on loop */}
-            <AgentCoderMock className="w-full max-w-[280px] mx-auto lg:max-w-none" />
-          </div>
+          <AgentCoderFeature />
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"
             className="group rounded-[28px] p-8 sm:p-10 bg-white/[0.04] backdrop-blur-xl border-2 border-white/25 text-white hover:-translate-y-1.5 hover:border-white/50 transition-all shadow-[0_30px_70px_-28px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col">

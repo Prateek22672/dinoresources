@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { SITE, metaFor, jsonLdFor } from "@/data/seo";
 import { useFeatureFlags } from "./hooks/useFeatureFlags";
 import { lazyWithReload as lazy } from "./lib/lazyWithReload";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -50,44 +51,14 @@ const FeatureRoute = ({ flag, children }: { flag: string; children: JSX.Element 
   return children;
 };
 
-// Route-aware SEO — per-page title, description, canonical and social tags.
-const ROUTE_META: Record<string, { title: string; desc: string }> = {
-  "/": {
-    title: "Team Dino | The Ultimate Student Workspace",
-    desc: "Empowering students with centralized resources, intelligent AI tutoring, and seamless performance tracking. Stop searching for notes, start mastering your subjects.",
-  },
-  "/sgpa-calc": {
-    title: "Free SGPA Calculator (GITAM) — WGP, Grades & CGPA | Team Dino",
-    desc: "Calculate your SGPA & CGPA in seconds with the GITAM grade chart — Sessional 1 (30%), Sessional 2 (45%) and Lab/External (25%) weights. Free, no login needed.",
-  },
-  "/calc": {
-    title: "Free SGPA, CGPA & Attendance Calculators | Team Dino",
-    desc: "GITAM grade calculator, What-If CGPA predictor and attendance planner in one place. Free, no login needed.",
-  },
-  "/attendance-calc": {
-    title: "Attendance Calculator — How Many Classes Can You Miss? | Team Dino",
-    desc: "Check how many classes you can skip and still keep 75% attendance. Plan smart — free, no login needed.",
-  },
-  "/store": {
-    title: "Store — Unlock Subjects & Year Combos | Team Dino",
-    desc: "Notes, PYQs and Study-With-AI for every subject. Buy a single subject or save with a full-year combo — one payment, no subscription.",
-  },
-  "/jobs": {
-    title: "Placement Prep — Company Patterns, Materials & Questions | Team Dino",
-    desc: "Crack your dream company with exam patterns, curated materials and previous questions — organised company by company.",
-  },
-  "/about": {
-    title: "About Us | Team Dino",
-    desc: "Meet the team behind Team Dino — the student workspace crafted for the student community.",
-  },
-};
-
+// Route-aware SEO — per-page title, description, canonical, robots, social
+// tags and structured data. The data lives in src/data/seo.ts.
 const SEO = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const meta = ROUTE_META[pathname] ?? ROUTE_META["/"];
-    const url = `https://teamdino.in${pathname === "/" ? "/" : pathname}`;
+    const meta = metaFor(pathname);
+    const url = `${SITE}${pathname === "/" ? "/" : pathname}`;
 
     document.title = meta.title;
 
@@ -103,6 +74,8 @@ const SEO = () => {
 
     upsert("name", "title", meta.title);
     upsert("name", "description", meta.desc);
+    // private pages stay out of search results; links on them still count
+    upsert("name", "robots", meta.noindex ? "noindex, follow" : "index, follow, max-image-preview:large");
     upsert("property", "og:title", meta.title);
     upsert("property", "og:description", meta.desc);
     upsert("property", "og:url", url);
@@ -117,6 +90,17 @@ const SEO = () => {
       document.head.appendChild(canonical);
     }
     canonical.href = url;
+
+    // per-route JSON-LD (FAQ, About, breadcrumbs) beside the site-wide graph
+    document.getElementById("route-jsonld")?.remove();
+    const ld = jsonLdFor(pathname);
+    if (ld) {
+      const tag = document.createElement("script");
+      tag.type = "application/ld+json";
+      tag.id = "route-jsonld";
+      tag.textContent = JSON.stringify(ld);
+      document.head.appendChild(tag);
+    }
   }, [pathname]);
 
   return null;

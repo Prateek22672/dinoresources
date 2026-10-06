@@ -1,16 +1,24 @@
+import type React from "react";
 import { useEffect, useState } from "react";
 import { Check, Plus, History, Settings, Paperclip, ArrowUp, Sparkles, Zap } from "lucide-react";
 
-const ORANGE = "#e2733f";
+const ORANGE = "#d97757";
 
-/** FreeAgentCoder's mark — two offset squares. */
-export function AgentCoderMark({ className = "w-4 h-4" }: { className?: string }) {
+/** FreeAgentCoder's logo (same path as public/freeagentcoder.svg). */
+export function AgentCoderMark({ className = "w-4 h-4", mono = false, style }: { className?: string; mono?: boolean; style?: React.CSSProperties }) {
+  // width/height are the fallback when no size class applies (e.g. "w-4.5",
+  // which this Tailwind config doesn't define) — without them the SVG grows
+  // to fill its container.
   return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden>
-      <rect x="2" y="2" width="11" height="11" rx="1.5" fill="none" stroke={ORANGE} strokeWidth="2.6" />
-      <rect x="8" y="8" width="10" height="10" rx="1.5" fill={ORANGE} />
+    <svg viewBox="0 0 24 24" width={24} height={24} className={className} style={style} aria-hidden>
+      <path fill={mono ? "currentColor" : ORANGE} fillRule="evenodd" d="M3 3h13v4H7v9H3zM21 21H8v-4h9V8h4zM10 10h4v4h-4z" />
     </svg>
   );
+}
+
+/** The logo in the current text colour — for icon slots on coloured fills. */
+export function AgentCoderGlyph({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <AgentCoderMark className={className} style={style} mono />;
 }
 
 // The agent's run, played back on a loop: plan → write files → preview → test.
@@ -44,7 +52,7 @@ export default function AgentCoderMock({ className = "" }: { className?: string 
   return (
     <div className={`rounded-[22px] bg-[#141414] border border-white/10 text-white overflow-hidden shadow-[0_30px_70px_-30px_rgba(0,0,0,0.8)] ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
-        <AgentCoderMark className="w-4.5 h-4.5" />
+        <AgentCoderMark className="w-[18px] h-[18px]" />
         <span className="text-[14px] font-bold">FreeAgentCoder</span>
         <span className="ml-auto flex items-center gap-2.5 text-white/40"><Plus className="w-3.5 h-3.5" /><History className="w-3.5 h-3.5" /><Settings className="w-3.5 h-3.5" /></span>
       </div>

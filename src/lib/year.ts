@@ -76,3 +76,28 @@ export function matchProfileYear(sem: string | null | undefined, years: YearRow[
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
   return ordered[n - 1]?.id ?? null;
 }
+
+/**
+ * The year a student is actually shown, given only the years that are ON.
+ *
+ * Their own year when it's active. When it isn't — the admin has switched it
+ * off, e.g. every year except Supplementary during supply exams — they are
+ * moved onto the year that is still open instead of landing on an empty
+ * "isn't open yet" page: the only active year if there is just one, otherwise
+ * the Supplementary track, which is where off-season students belong.
+ *
+ * Nothing is written back to the profile: if their year is switched on again
+ * they go straight back to it. `fallback` says whether this happened, so the
+ * UI can explain the switch.
+ */
+export function resolveStudentYear(
+  sem: string | null | undefined,
+  activeYears: YearRow[],
+): { id: string | null; fallback: boolean } {
+  if (!sem || activeYears.length === 0) return { id: null, fallback: false };
+  const own = matchProfileYear(sem, activeYears);
+  if (own) return { id: own, fallback: false };
+  if (activeYears.length === 1) return { id: activeYears[0].id, fallback: true };
+  const supp = activeYears.find((y) => isSupplementary(rowText(y)));
+  return supp ? { id: supp.id, fallback: true } : { id: null, fallback: false };
+}

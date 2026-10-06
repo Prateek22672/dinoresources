@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import { useCart } from "@/context/CartContext";
 import { formatPaise } from "@/lib/money";
-import { matchProfileYear } from "@/lib/year";
+import { resolveStudentYear } from "@/lib/year";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import SubjectFolderCard, { tone as subjectTone } from "@/components/stacks/SubjectFolderCard";
@@ -26,6 +26,7 @@ export default function Store() {
   // Raw profile value, so we can tell "no year set" apart from "year set but the
   // matching years row is missing/inactive" — very different messages to show.
   const [profileYearLabel, setProfileYearLabel] = useState<string | null>(null);
+  const [yearFallback, setYearFallback] = useState(false);
   const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
@@ -69,10 +70,13 @@ export default function Store() {
     // empty state shows instead). The only way to see a different year is to
     // change it in Settings, which changes what "opted year" means.
     const profSem = (profRes.data as any)?.semester ?? null;
-    const matchedYear = matchProfileYear(profSem, years);
-    const myYear = matchedYear ? years.find((y) => y.id === matchedYear) ?? null : null;
+    // If their year has been switched off (e.g. only Supplementary is open),
+    // they're moved onto the open year rather than shown an empty page.
+    const resolved = resolveStudentYear(profSem, years);
+    const myYear = resolved.id ? years.find((y) => y.id === resolved.id) ?? null : null;
     setProfileYearLabel(profSem);
     setStudentYear(myYear);
+    setYearFallback(resolved.fallback);
 
     setLoading(false);
   }, []);
@@ -149,7 +153,7 @@ export default function Store() {
               {yearLabel && (
                 <span className="td-glass px-3.5 py-2 rounded-full text-[13px] font-semibold text-white flex items-center gap-1.5">
                   <GraduationCap className="w-3.5 h-3.5 td-accent-text" /> {yearLabel}
-                  <span className="text-[10px] font-bold text-zinc-500">· your year</span>
+                  <span className="text-[10px] font-bold text-zinc-500">· {yearFallback ? `${profileYearLabel} is closed` : "your year"}</span>
                 </span>
               )}
               <button onClick={() => navigate("/setup?edit=true")}

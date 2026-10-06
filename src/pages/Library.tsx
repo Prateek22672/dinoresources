@@ -103,38 +103,6 @@ export default function Library() {
         </div>
       )}
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-64 rounded-3xl td-surface animate-pulse" />)}
-        </div>
-      ) : subjects.length === 0 ? (
-        <div className="py-24 text-center td-surface rounded-[32px] td-in">
-          <BookOpen className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-          <h3 className="text-white font-semibold text-lg">Your library is empty</h3>
-          <p className="text-zinc-500 text-sm mt-1 mb-6">Unlock a subject or your whole year to get started.</p>
-          <Link to="/store" className="td-btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
-            Go to Store <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {subjects.map((s) => (
-            <Link
-              key={s.id}
-              to={`/subject/${s.slug ?? s.id}`}
-              className="td-surface rounded-3xl p-5 hover:border-white/15 transition-colors group td-in"
-            >
-              <div className="w-10 h-10 rounded-2xl td-surface-2 flex items-center justify-center mb-3">
-                <BookOpen className="w-4.5 h-4.5 text-zinc-300" />
-              </div>
-              <h3 className="text-white font-semibold leading-snug line-clamp-2">{s.name}</h3>
-              <p className="text-zinc-500 text-xs mt-2 flex items-center gap-1 group-hover:text-zinc-300 transition-colors">
-                Open <ArrowRight className="w-3 h-3" />
-              </p>
-            </Link>
-          ))}
-        </div>
-      )}
     </AppShell>
   );
 }

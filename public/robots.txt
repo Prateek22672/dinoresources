@@ -1,20 +1,14 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+# Signed-in and transactional pages — no search value, kept out of the index
 Disallow: /admin
 Disallow: /contributor
+Disallow: /issues
 Disallow: /cart
 Disallow: /purchases
+Disallow: /dashboard
+Disallow: /library
+Disallow: /setup
+Disallow: /reset-password
 
 Sitemap: https://teamdino.in/sitemap.xml

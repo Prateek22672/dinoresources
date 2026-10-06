@@ -7,7 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { formatPaise } from "@/lib/money";
 import { getRecentSubject, bumpStreak, logActivity, type RecentSubject } from "@/lib/recent";
-import { matchProfileYear } from "@/lib/year";
+import { resolveStudentYear } from "@/lib/year";
 
 import AppShell from "@/components/layout/AppShell";
 import PollCard from "@/components/polls/PollCard";
@@ -21,10 +21,12 @@ import { AnnouncementsSection } from "./AnnouncementsSection";
 import Footer from "./Footer";
 
 import {
-  BookOpen, Store, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator, CalendarDays, Megaphone, Globe, Briefcase, Code2,
+  BookOpen, Store, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator, CalendarDays, Megaphone, Globe, Briefcase,
 } from "lucide-react";
 import fyxLogo from "@/assets/fyx.png";
 import { openAgentCoder } from "@/lib/links";
+import { AgentCoderGlyph } from "@/components/brand/AgentCoderMock";
+import AgentCoderFeature from "@/components/brand/AgentCoderFeature";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
 
@@ -163,7 +165,7 @@ export default function Dashboard() {
     { key: "store", overline: "Subjects", title: "Explore subjects", desc: "Unlock your subjects & full-year packs.", cta: "Explore subjects",
       accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
     { key: "agentcoder", overline: "Free · VS Code · No card", title: "Agent Coder", desc: "Free Claude Code alternative — it builds, runs & tests your code.", cta: "Open in VS Code",
-      accent: "#e2733f", icon: Code2, onClick: openAgentCoder },
+      accent: "#d97757", icon: AgentCoderGlyph, onClick: openAgentCoder },
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
     // SGPA + Attendance share one tile, split into two tappable halves
@@ -183,7 +185,8 @@ export default function Dashboard() {
   // Owning it no longer removes the strip: buying the pack used to make the
   // whole row disappear, which reads as "did that work?" rather than as
   // confirmation. It stays and says it is unlocked, the way the store does.
-  const studentYearId = matchProfileYear(profile?.semester ?? null, years);
+  // their own year, or the open one if theirs has been switched off
+  const studentYearId = resolveStudentYear(profile?.semester ?? null, years).id;
   const comboYear = years.find((y) =>
     y.id === studentYearId && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id),
   );
@@ -429,6 +432,13 @@ export default function Dashboard() {
             );
           })()
         )}
+      </section>
+
+      {/* ── Agent Coder — last in the page flow, after the student's own
+          things, so it's found while scrolling and never in the way ── */}
+      <section className="mt-10" style={{ order: 3 }}>
+        <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500 mb-3 px-0.5">Free from the Dino universe</p>
+        <AgentCoderFeature variant="app" />
       </section>
       </div>
 
