@@ -25,7 +25,7 @@ const ReceiptView = forwardRef<HTMLDivElement, { data: ReceiptData }>(({ data },
 
   return (
     <div ref={ref} className="bg-white text-zinc-900 rounded-2xl overflow-hidden shadow-2xl" style={{ width: 680, maxWidth: "100%" }}>
-      <div className="h-1.5" style={{ background: "var(--td-accent, #7c6cf0)" }} />
+      <div className="h-1.5" style={{ background: "var(--td-accent, #2563eb)" }} />
       <div className="p-8 sm:p-10">
         {/* header */}
         <div className="flex items-start justify-between mb-9 gap-4">

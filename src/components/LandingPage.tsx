@@ -4,15 +4,14 @@ import {
   ArrowRight, ArrowUpRight, Calculator, MessageSquare, ChevronDown, Check, Sparkles, BookOpen,
 } from "lucide-react";
 import Footer from "./Footer";
+import CurvedGallery from "@/components/stacks/CurvedGallery";
 import { AiIcon } from "@/components/BrandIcons";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
-import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
-import { AGENTFURY_EXT, AGENTFURY_WEB } from "@/lib/links";
+import { AGENTCODER_PAGE, openAgentCoder } from "@/lib/links";
+import AgentCoderMock, { AgentCoderMark } from "@/components/brand/AgentCoderMock";
 
-// Agent Fury is published — the store listing is live.
-const AGENTFURY_EXT_LIVE = true;
 
 /* Cursor-follow: elements drift toward/away from the mouse at their own
  * strengths, smoothly lerped (springy, 60fps, transform-only). */
@@ -144,6 +143,18 @@ const FAQS = [
   { q: "Which college is this for?", a: "Built by and for GITAM students — the grade chart, units and PYQs match GITAM's actual pattern." },
 ];
 
+/* Cover tones for the curved subject wall — muted, dusk-lit, never neon */
+const SHELF = [
+  { from: "#8b7fd8", to: "#2c2363" }, // monsoon
+  { from: "#a6d8c6", to: "#22463f" }, // neon bay
+  { from: "#e0896a", to: "#5a1f17" }, // ashline
+  { from: "#d9dbe3", to: "#2f3138" }, // granite
+  { from: "#efcf6e", to: "#6b4a12" }, // amberlight
+  { from: "#b8cbe8", to: "#30477a" }, // northwind
+  { from: "#e0a874", to: "#4e2a22" }, // skyline
+  { from: "#6f8fe0", to: "#1b2350" }, // undertow
+];
+
 /* Pinned showcase steps (Fluently-style: one scroll, panel swaps in place) */
 const SHOW = [
   {
@@ -193,7 +204,7 @@ const STACK = [
     title: "Ask Rex at 2am when you're stuck",
     desc: "He's read your unit's answers and explains from those — then quizzes you until it sticks. No queue, no judgement.",
     icon: MessageSquare,
-    bg: "#7c6cf0",
+    bg: "var(--td-accent-strong)",
     dark: true,
   },
 ];
@@ -255,13 +266,13 @@ function StackArt({ i }: { i: number }) {
     );
   return (
     <>
-      {/* violet card: Rex mid-answer, with the badge that makes the claim */}
-      <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56" style={{ background: "#6d5fe0", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
+      {/* accent card: Rex mid-answer, with the badge that makes the claim */}
+      <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56" style={{ background: "var(--td-accent)", opacity: 0.6, borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%" }} />
       <div aria-hidden className="absolute right-8 sm:right-12 top-1/2 -translate-y-1/2 hidden md:block w-[258px]">
         <div className="bg-white text-black rounded-[22px] p-4 -rotate-2 shadow-2xl">
           <div className="flex items-center gap-2">
             <span className="relative w-7 h-7 shrink-0">
-              <span className="absolute inset-0" style={{ background: "#7c6cf0", borderRadius: "54% 46% 58% 42% / 52% 58% 42% 48%" }} />
+              <span className="absolute inset-0" style={{ background: "var(--td-accent)", borderRadius: "54% 46% 58% 42% / 52% 58% 42% 48%" }} />
               <span className="absolute top-1.5 left-2 w-1.5 h-1.5 rounded-full bg-white/60" />
             </span>
             <span className="text-[13px] font-extrabold">Rex</span>
@@ -549,16 +560,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Subjects strip — press-logo style wordmarks ── */}
-      <section className="relative z-10 pb-16 overflow-hidden">
-        <div className="flex w-max items-center" style={{ animation: "ld-marquee 38s linear infinite", maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}>
-          {[...MARQUEE, ...MARQUEE].map((m, i) => (
-            <span key={i} className="flex items-center shrink-0">
-              <span className="text-lg sm:text-[1.7rem] font-extrabold tracking-tight text-zinc-700 whitespace-nowrap hover:text-zinc-400 transition-colors">{m}</span>
-              <span className="mx-4 sm:mx-7 w-1.5 h-1.5 rounded-full td-accent-solid opacity-40 inline-block shrink-0" />
-            </span>
-          ))}
+      {/* ── Subjects — a curved wall of covers, drag to spin ── */}
+      <section className="relative z-10 pb-16">
+        <div className="max-w-5xl mx-auto px-5 text-center mb-2">
+          <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-500">Every subject, one shelf</p>
         </div>
+        <CurvedGallery items={[...MARQUEE, ...MARQUEE].map((m, i) => ({ title: m, sub: "5 units · PYQs", ...SHELF[i % SHELF.length] }))} onPick={() => goAuth()} />
       </section>
 
       {/* ── Pinned showcase — one continuous scroll, panel swaps in place ── */}
@@ -610,56 +617,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Also from us: Agent Fury + FolioFYX — full-width B&W boxes ── */}
+      {/* ── Also from us: Agent Coder (the headline) + FolioFYX ── */}
       <Section eyebrow="Also from us" title="The Dino universe doesn't stop at exams.">
-        <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto">
-          <div className="rounded-[28px] p-6 sm:p-8 bg-white text-black shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)] flex flex-col">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="w-12 h-12 rounded-2xl bg-black/[0.05] border border-black/10 flex items-center justify-center shrink-0">
-                <img src={agentFuryLogo} alt="Agent Fury" className="w-8 h-8 rounded-lg" draggable={false} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-black tracking-[0.18em] uppercase text-black/45">AI assistant · Chrome + Web</p>
-                <h3 className="font-extrabold text-2xl tracking-tight leading-none mt-0.5">Agent Fury</h3>
-              </div>
-            </div>
-            <p className="text-black/60 text-[15px] leading-relaxed">
-              Your AI in Gmail, your browser, and your reminders — one assistant, everywhere you work.
-            </p>
-
-            {/* Illustrated preview of the "Ask AgentFury" popup (what it looks like in the wild) */}
-            <div className="mt-5 rounded-2xl bg-[#0e0e11] p-3.5 relative overflow-hidden">
-              <div className="flex items-center gap-2 mb-2.5">
-                <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center shrink-0">
-                  <img src={agentFuryLogo} alt="" className="w-4 h-4" />
-                </span>
-                <span className="text-white/50 text-[13px]">Ask AgentFury about this…</span>
-                <span className="ml-auto w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"><ArrowRight className="w-3 h-3 text-white/70" /></span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {["Explain", "Summarize", "Remind", "Note"].map((c, i) => (
-                  <span key={c} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${i === 2 ? "text-white" : "bg-white/10 text-white/80"}`} style={i === 2 ? { background: "#6b5bf0" } : undefined}>{c}</span>
+        <div className="grid md:grid-cols-[1.35fr_1fr] gap-5 max-w-5xl mx-auto">
+          <div className="rounded-[28px] p-6 sm:p-8 bg-white text-black shadow-[0_30px_70px_-28px_rgba(255,255,255,0.35)] grid lg:grid-cols-[1fr_250px] gap-6 items-center">
+            <div className="min-w-0 flex flex-col">
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {["100% free", "No credit card", "VS Code"].map((t) => (
+                  <span key={t} className="text-[10px] font-black tracking-[0.12em] uppercase px-2.5 py-1 rounded-full bg-black/[0.06] border border-black/10">{t}</span>
                 ))}
               </div>
-            </div>
-
-            {/* Two redirects: web app + Chrome extension */}
-            <div className="flex flex-wrap gap-2 mt-5">
-              <a href={AGENTFURY_WEB} target="_blank" rel="noopener noreferrer"
-                className="flex-1 min-w-[130px] bg-black text-white rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform">
-                Open web app <ArrowUpRight className="w-3.5 h-3.5" />
-              </a>
-              {AGENTFURY_EXT_LIVE ? (
-                <a href={AGENTFURY_EXT} target="_blank" rel="noopener noreferrer"
+              <div className="flex items-center gap-3">
+                <span className="w-12 h-12 rounded-2xl bg-[#141414] flex items-center justify-center shrink-0"><AgentCoderMark className="w-6 h-6" /></span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black tracking-[0.18em] uppercase text-black/45">FreeAgentCoder · by Codeloft</p>
+                  <h3 className="font-extrabold text-2xl sm:text-3xl tracking-tight leading-none mt-0.5">Agent Coder</h3>
+                </div>
+              </div>
+              <p className="text-black/70 text-[15px] leading-relaxed mt-4">
+                The free <b className="text-black">Claude Code alternative</b>. Tell it what to build — it plans, writes, runs and tests the code right in your project.
+              </p>
+              <p className="text-black/50 text-[13px] leading-relaxed mt-2">
+                Runs on free Gemini, Groq and OpenRouter keys. No subscription, ever.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-6">
+                <button onClick={openAgentCoder}
+                  className="flex-1 min-w-[150px] bg-black text-white rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform">
+                  Open in VS Code <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+                <a href={AGENTCODER_PAGE} target="_blank" rel="noopener noreferrer"
                   className="flex-1 min-w-[130px] bg-black/[0.06] border border-black/10 text-black rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 hover:bg-black/[0.1] transition-colors">
-                  Chrome extension <ArrowUpRight className="w-3.5 h-3.5" />
+                  See what it does
                 </a>
-              ) : (
-                <span className="flex-1 min-w-[130px] bg-black/[0.04] border border-black/10 text-black/45 rounded-full h-11 px-4 text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-default">
-                  Chrome extension · Soon
-                </span>
-              )}
+              </div>
             </div>
+            {/* the extension doing a real task, on loop */}
+            <AgentCoderMock className="w-full max-w-[280px] mx-auto lg:max-w-none" />
           </div>
 
           <a href="https://www.foliofyx.in" target="_blank" rel="noopener noreferrer"

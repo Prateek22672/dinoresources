@@ -117,7 +117,7 @@ export default function ThemePicker() {
                   }`}
                   style={{ background: a.color, boxShadow: accent === a.id ? `0 0 0 2px ${a.color}` : undefined }}
                 >
-                  {accent === a.id && <Check className="w-4 h-4 text-white" />}
+                  {accent === a.id && <Check className="w-4 h-4" style={{ color: a.ink ?? "#fff" }} />}
                 </button>
               ))}
             </div>

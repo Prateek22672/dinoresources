@@ -97,10 +97,15 @@ interface QaRow {
   answer_md: string | null;
   is_free: boolean;
   rank: number;
+  /** set when the row is a chunk of uploaded material, not a written answer */
+  resource_id?: string;
+  page?: number | null;
 }
 
 interface Passage {
   qaId: string;
+  resourceId?: string;
+  page?: number | null;
   unit: number;
   topic: string | null;
   question: string;
@@ -138,7 +143,7 @@ function toPassages(row: QaRow): Passage[] {
   const push = (h: string, text: string) => {
     const t = text.trim();
     if (t.length > 24) {
-      out.push({ qaId: row.id, unit: row.unit_number, topic: row.topic_title, question: row.question, heading: h, text: t, score: 0 });
+      out.push({ qaId: row.id, resourceId: row.resource_id, page: row.page, unit: row.unit_number, topic: row.topic_title, question: row.question, heading: h, text: t, score: 0 });
     }
   };
   for (const s of sections) {
@@ -206,7 +211,7 @@ function selectPassages(rows: QaRow[], query: string): Retrieved {
   const coverage = qTerms.length ? found / qTerms.length : 0;
 
   const contextText = picked
-    .map((p, i) => `[S${i + 1}] Unit ${p.unit}${p.topic ? ` · ${p.topic}` : ""} — ${p.question}${p.heading ? `\n(${p.heading})` : ""}\n${p.text}`)
+    .map((p, i) => `[S${i + 1}] ${p.unit ? `Unit ${p.unit}` : "Course material"}${p.topic ? ` · ${p.topic}` : ""} — ${p.question}${p.heading ? `\n(${p.heading})` : ""}\n${p.text}`)
     .join("\n\n---\n\n");
 
   return {
@@ -236,14 +241,17 @@ function bandOf(r: Retrieved): Grounding {
   return "beyond";
 }
 
-/** Sources shown as chips under the reply — deduped to one per Q&A row. */
+/** Sources shown as chips under the reply — one per Q&A row or per document. */
 function sourceList(r: Retrieved) {
   const seen = new Set<string>();
-  const out: { id: string; question: string; unit: number; topic: string | null }[] = [];
+  const out: { id: string; question: string; unit: number; topic: string | null; kind?: "material"; resource_id?: string; page?: number | null }[] = [];
   for (const p of r.passages) {
-    if (seen.has(p.qaId)) continue;
-    seen.add(p.qaId);
-    out.push({ id: p.qaId, question: p.question, unit: p.unit, topic: p.topic });
+    const key = p.resourceId ?? p.qaId;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p.resourceId
+      ? { id: p.resourceId, question: p.question, unit: p.unit, topic: p.topic, kind: "material", resource_id: p.resourceId, page: p.page }
+      : { id: p.qaId, question: p.question, unit: p.unit, topic: p.topic });
     if (out.length >= 4) break;
   }
   return out;
@@ -289,14 +297,74 @@ function chatSystem(band: Grounding, name: string, scope: string, context: strin
   }
 
   if (band === "locked") {
-    return `${VOICE}\n\n${who}\n\nThe answers for this question exist in their subject but are locked — they have not unlocked this subject yet.\nRULES\n- Give a short, genuinely useful explanation from general knowledge (about 120 words) so they still learn something.\n- Then tell them, in one friendly line, that the full worked answer for this exact question is in their subject's Study-With-AI and unlocks with the subject. No pressure, no sales language.`;
+    return `${VOICE}\n\n${who}\n\nThe material and answers for this question exist in their subject but are locked — they have not unlocked this subject yet.\nRULES\n- Give a short, genuinely useful explanation from general knowledge (about 120 words) so they still learn something.\n- Then tell them, in one friendly line, that the notes and material covering this exact question unlock with the subject. No pressure, no sales language.`;
   }
 
   return `${VOICE}\n\n${who}\n\nSYLLABUS OUTLINE (what their notes actually cover):\n${outline}\n\nRULES\n- Their notes do NOT cover this question. Open with one short line saying so plainly, e.g. "This one's outside your unit, but here's the short version:".\n- Then answer it correctly from your own knowledge, briefly.\n- Close by connecting it back to the closest thing that IS in their syllabus outline above, so the detour earns its place.\n- Do not pretend anything here came from their notes.`;
 }
 
 // ── Handlers ───────────────────────────────────────────────────────────────
+/**
+ * Material first. Students come for the uploaded notes and important
+ * questions, so Rex answers from the text of those files (indexed by
+ * ingest-material). The AI-written answers in subject_qa are only a fallback
+ * for units whose material isn't readable yet — never mixed in, so a reply is
+ * grounded in one kind of source and its citations mean what they say.
+ */
 async function retrieve(
+  db: ReturnType<typeof createClient>,
+  subjectId: string,
+  query: string,
+  unit: number | null,
+  limit: number,
+): Promise<Retrieved> {
+  const mat = await retrieveMaterial(db, subjectId, query, unit, limit + 2);
+  if (mat.passages.length > 0) return mat;
+  const qa = await retrieveQa(db, subjectId, query, unit, limit);
+  if (qa.passages.length > 0) return qa;
+  // neither readable: prefer whichever explains why (locked material beats an empty Q&A)
+  return mat.lockedCount > 0 ? mat : qa;
+}
+
+async function retrieveMaterial(
+  db: ReturnType<typeof createClient>,
+  subjectId: string,
+  query: string,
+  unit: number | null,
+  limit: number,
+): Promise<Retrieved> {
+  const { data, error } = await db.rpc("search_subject_material", {
+    _subject_id: subjectId,
+    _query: query.slice(0, 500),
+    _unit: unit,
+    _limit: limit,
+  });
+  // Before the migration is applied the RPC doesn't exist — that is "no
+  // material", not a failure worth surfacing; the Q&A path still answers.
+  if (error) {
+    console.error("study-buddy material retrieval failed:", error.message);
+    return { passages: [], rows: [], coverage: 0, bestRank: 0, contextText: "", lockedCount: 0 };
+  }
+  const rows: QaRow[] = ((data ?? []) as {
+    id: string; resource_id: string; title: string; unit_number: number | null; topic_id: string | null;
+    topic_title: string | null; page: number | null; content: string | null; rank: number;
+  }[]).map((c) => ({
+    id: c.id,
+    resource_id: c.resource_id,
+    page: c.page,
+    unit_number: c.unit_number ?? unit ?? 0,
+    topic_id: c.topic_id,
+    topic_title: c.topic_title,
+    // the "question" slot carries the citation: document title and page
+    question: `${c.title}${c.page ? ` (p. ${c.page})` : ""}`,
+    answer_md: c.content,
+    is_free: false,
+    rank: c.rank,
+  }));
+  return selectPassages(rows, query);
+}
+
+async function retrieveQa(
   db: ReturnType<typeof createClient>,
   subjectId: string,
   query: string,
@@ -860,7 +928,7 @@ Rules:
     if (SMALL_TALK.test(last)) {
       const who = await studentName(user);
       return jsonResponse({
-        reply: `Hey ${who}! I've read the Study-With-AI answers for ${scope}. Ask me anything from it — or say **quiz me** and I'll test you on it instead.`,
+        reply: `Hey ${who}! I've read the uploaded material for ${scope}. Ask me anything from it — or say **quiz me** and I'll test you on it instead.`,
         grounding: "chat" as Grounding,
         sources: [],
         followups: ["What are the main topics here?", "Quiz me on this unit", "What should I revise first?"],

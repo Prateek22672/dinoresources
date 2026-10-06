@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -11,7 +11,9 @@ import { matchProfileYear } from "@/lib/year";
 
 import AppShell from "@/components/layout/AppShell";
 import PollCard from "@/components/polls/PollCard";
-import FloatingBook from "@/components/brand/FloatingBook";
+import DashboardBento from "@/components/dashboard/DashboardBento";
+import FanCarousel from "@/components/stacks/FanCarousel";
+import SubjectFolderCard, { tone as subjectTone } from "@/components/stacks/SubjectFolderCard";
 import SplashScreen, { useMinSplash } from "@/components/layout/SplashScreen";
 import AttendanceCalculator from "./AttendanceCalculator";
 import SGPACalculator from "./SGPACalculator";
@@ -19,15 +21,10 @@ import { AnnouncementsSection } from "./AnnouncementsSection";
 import Footer from "./Footer";
 
 import {
-  BookOpen, Store, Plus, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator,
-  CalendarDays, Megaphone, Globe, Package, GraduationCap, Briefcase, Bot,
-  Play, TrendingUp, ChevronLeft, ChevronRight, Eye, MessageSquare, Target, PenLine,
+  BookOpen, Store, Check, ArrowRight, ArrowLeft, ArrowUpRight, Calculator, CalendarDays, Megaphone, Globe, Briefcase, Code2,
 } from "lucide-react";
-import { GenAiIcon } from "@/components/BrandIcons";
-import TutorOrb from "@/components/ai/tutor/TutorOrb";
-import agentFuryLogo from "@/assets/icon-192.png";
 import fyxLogo from "@/assets/fyx.png";
-import { AGENTFURY_EXT } from "@/lib/links";
+import { openAgentCoder } from "@/lib/links";
 
 type ToolView = null | "sgpa" | "attendance" | "announcements";
 
@@ -48,10 +45,22 @@ interface Banner {
   logo?: string;
 }
 
-// Deterministic colorful thumbnails for subject cards — SOLID colors only.
-const GRADS = ["#7c6cf0", "#f472b6", "#34d399", "#f59e0b", "#6b8afd", "#a78bfa"];
-const grad = (name: string) =>
-  GRADS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % GRADS.length];
+
+// Quick-access card fills — muted dusk gradients, one per destination, so the
+// fan reads as a set of distinct places rather than a stack of white tiles.
+const QA_TONES: Record<string, [string, string]> = {
+  library: ["#6f8fe0", "#1b2350"],
+  store: ["#7fc4ad", "#1d4038"],
+  agentcoder: ["#f29a6b", "#5a2414"],
+  jobs: ["#e6c25e", "#6b4a12"],
+  calcs: ["#8b7fd8", "#2c2363"],
+  foliofyx: ["#e07a8e", "#4a1830"],
+  announcements: ["#9fb6d9", "#2b3f6b"],
+};
+const qaBg = (key: string) => {
+  const [from, to] = QA_TONES[key] ?? ["#7a7f8c", "#22252c"];
+  return { background: `linear-gradient(155deg, ${from} 0%, ${to} 100%)` };
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -69,14 +78,6 @@ export default function Dashboard() {
   const [ownedYearIds, setOwnedYearIds] = useState<Set<string>>(new Set());
   const [tool, setTool] = useState<ToolView>(null);
   const [recent, setRecent] = useState<RecentSubject | null>(null);
-
-  // quick-access carousel — arrow buttons step by roughly one card
-  const quickRef = useRef<HTMLDivElement>(null);
-  const scrollQuick = (dir: 1 | -1) => {
-    const el = quickRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * (el.clientWidth * 0.8), behavior: "smooth" });
-  };
 
   // bumpStreak/logActivity are kept for their local tracking side effects; the
   // dashboard no longer surfaces streak or activity counters.
@@ -161,8 +162,8 @@ export default function Dashboard() {
       accent: "#7c6cf0", icon: BookOpen, onClick: () => navigate("/library") },
     { key: "store", overline: "Subjects", title: "Explore subjects", desc: "Unlock your subjects & full-year packs.", cta: "Explore subjects",
       accent: "#6b8afd", icon: Store, onClick: () => navigate("/store") },
-    ...(isOn("agent") ? [{ key: "agent", overline: "Assistant · Chrome + Web", title: "Agent Fury", desc: "Your AI in Gmail, your browser & reminders.", cta: "Open Agent Fury",
-      accent: "#7c6cf0", icon: GenAiIcon, img: agentFuryLogo, onClick: () => window.open(AGENTFURY_EXT, "_blank") }] : []),
+    { key: "agentcoder", overline: "Free · VS Code · No card", title: "Agent Coder", desc: "Free Claude Code alternative — it builds, runs & tests your code.", cta: "Open in VS Code",
+      accent: "#e2733f", icon: Code2, onClick: openAgentCoder },
     ...(isOn("jobs") ? [{ key: "jobs", overline: "Careers", title: "Placement Prep", desc: "Patterns, materials & questions.", cta: "Open Jobs",
       accent: "#34d399", icon: Briefcase, onClick: () => navigate("/jobs") }] : []),
     // SGPA + Attendance share one tile, split into two tappable halves
@@ -187,6 +188,9 @@ export default function Dashboard() {
     y.id === studentYearId && y.combo_price_paise > 0 && subjects.some((s) => s.year_id === y.id),
   );
   const comboOwned = !!comboYear && ownedYearIds.has(comboYear.id);
+  // The bento talks about "your year", so it counts only that year's subjects.
+  // Counting every year read "14 of 31" beside "every subject is open to you".
+  const mine = (list: SubjectRow[]) => (studentYearId ? list.filter((s) => s.year_id === studentYearId) : list);
 
   return (
     <AppShell>
@@ -194,147 +198,20 @@ export default function Dashboard() {
 
       {/* SideNav rail comes from AppShell (global on xl+) */}
       <div className="min-w-0">
-          {/* greeting hero — accent energy + a floating book (landing vibe) */}
-          <div className="td-hero relative overflow-hidden rounded-[28px] p-6 sm:p-7 mb-8">
-            <div aria-hidden className="absolute -top-16 -left-12 w-72 h-64 opacity-[0.5] pointer-events-none"
-              style={{ background: "rgb(var(--td-accent-rgb) / 0.24)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(6px)" }} />
-            <div aria-hidden className="absolute -bottom-24 right-[26%] w-64 h-60 opacity-[0.4] pointer-events-none hidden sm:block"
-              style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%", filter: "blur(8px)" }} />
-            <FloatingBook cover="#1E2B7A" spine="#E0559B" title="DBMS" rot={9} float={1}
-              className="absolute -right-5 -bottom-12 w-[150px] lg:w-[180px] z-[1] hidden sm:block pointer-events-none" />
-
-            <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="td-accent-text text-[13px] font-semibold">{greeting} <span aria-hidden>👋</span>
-                  <span className="text-zinc-500 font-medium ml-2"><GraduationCap className="w-3.5 h-3.5 inline -mt-0.5" /> {profile?.department} · {profile?.semester}</span>
-                </p>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">Hey {profile?.name}.</h1>
-                <p className="text-zinc-400 text-[13px] mt-1.5">
-                  {owned.length > 0
-                    ? <>You've unlocked <span className="text-white font-semibold">{owned.length}</span> of {subjects.length} subjects in your year.</>
-                    : <>Your notes, PYQs and Study-With-AI live here — unlock a subject to get started.</>}
-                </p>
-              </div>
-              {/* Always give the hero a right-hand action — it used to sit empty
-                  whenever there was nothing to resume. */}
-              {resume ? (
-                <button onClick={() => navigate(`/subject/${resume.slug}`)}
-                  className="group td-glass td-card-click rounded-full pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
-                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
-                    <Play className="w-4 h-4" fill="currentColor" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">Continue learning</span>
-                    <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{resume.name}</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </button>
-              ) : (
-                <button onClick={() => navigate(owned.length > 0 ? "/library" : "/store")}
-                  className="group td-glass td-card-click rounded-full pl-3 pr-4 py-2.5 flex items-center gap-3 text-left">
-                  <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", color: "var(--td-accent-soft)" }}>
-                    {owned.length > 0 ? <BookOpen className="w-4 h-4" /> : <Store className="w-4 h-4" />}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[9px] font-bold tracking-[0.18em] uppercase text-zinc-500">{owned.length > 0 ? "Jump back in" : "Get started"}</span>
-                    <span className="block text-white text-sm font-semibold truncate max-w-[180px]">{owned.length > 0 ? "My Library" : "Explore subjects"}</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* ── Study-With-AI tutor ──
-              Given its own band directly under the greeting because it lives
-              two clicks deep (subject → unit → Study With AI) and nobody finds
-              a feature they don't know to look for. Lands them on the subject
-              they were last reading, where the tutor actually is. */}
-          {isOn("studyai") && (
-            <button
-              onClick={() => navigate(resume ? `/subject/${resume.slug}` : owned.length > 0 ? "/library" : "/store")}
-              className="td-hero td-card-click rounded-[28px] p-5 sm:p-6 mb-8 w-full text-left relative overflow-hidden"
-            >
-              <div className="td-aurora" aria-hidden><i /><i /><i /></div>
-              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
-                <TutorOrb size={56} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 flex items-center gap-2">
-                    Study with AI
-                    <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-normal">NEW</span>
-                  </p>
-                  <p className="text-white font-bold text-lg sm:text-xl leading-tight mt-1">Meet Rex, your study tutor</p>
-                  <p className="text-zinc-400 text-[13px] mt-1.5 leading-relaxed max-w-[54ch]">
-                    He reads the real answers inside your units and explains from those — not from the internet — then drills you until they stick.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mt-3.5">
-                    {[
-                      { label: "Explain", icon: MessageSquare, sub: "Ask anything" },
-                      { label: "Drill", icon: Target, sub: "Quiz me" },
-                      { label: "Recall", icon: PenLine, sub: "Mark my answer" },
-                    ].map((m) => (
-                      <span key={m.label} className="td-surface-2 rounded-full pl-2.5 pr-3 py-1.5 flex items-center gap-1.5">
-                        <m.icon className="w-3.5 h-3.5 td-accent-text" />
-                        <span className="text-[11.5px] font-semibold text-zinc-200">{m.label}</span>
-                        <span className="text-[11px] text-zinc-600 hidden sm:inline">· {m.sub}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <span className="td-btn-primary px-5 py-2.5 rounded-full text-[13px] font-bold inline-flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
-                  Try it <ArrowRight className="w-4 h-4" />
-                </span>
-              </div>
-            </button>
-          )}
-
-          {/* combo strip — only ever the student's OWN year (see comboYear above) */}
-          {comboYear && (
-            <div className="td-hero rounded-3xl p-5 mb-8 flex items-center justify-between gap-4 flex-wrap">
-              <div className="relative z-10 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center"><Package className="w-5 h-5" /></div>
-                <div className="min-w-0">
-                  <p className="text-white font-semibold flex items-center gap-2 flex-wrap">
-                    {comboYear.name} — Complete Access
-                    {comboOwned && (
-                      <span className="td-accent-bg text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0">
-                        <Check className="w-3 h-3" /> Unlocked
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-zinc-400 text-sm">
-                    {comboOwned
-                      ? `Every ${comboYear.name} subject is open to you.`
-                      : `Unlock every ${comboYear.name} subject at once.`}
-                  </p>
-                  {/* Changing year is an offer to buy a different pack — pointless
-                      once this one is owned, and alarming next to "Unlocked". */}
-                  {!comboOwned && (
-                    <button onClick={() => navigate("/setup?edit=true")}
-                      className="text-zinc-500 hover:text-white text-xs font-medium mt-1 inline-flex items-center gap-1">
-                      <GraduationCap className="w-3 h-3" /> Not your year? Change here
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="relative z-10 flex items-center gap-3">
-                {comboOwned ? (
-                  <button onClick={() => navigate("/library")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4" /> Open My Library
-                  </button>
-                ) : (
-                  <>
-                    <span className="text-white font-bold text-lg">{formatPaise(comboYear.combo_price_paise)}</span>
-                    {isInCart("combo", comboYear.id) ? (
-                      <button onClick={() => navigate("/cart")} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Check className="w-4 h-4" /> In cart</button>
-                    ) : (
-                      <button onClick={() => addCombo(comboYear.id, comboYear.name)} className="td-btn-primary px-4 py-2.5 text-sm flex items-center gap-1.5"><Plus className="w-4 h-4" /> Add combo</button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Bento opening grid — greeting, shelf, year roadmap, today, tools, Rex */}
+          <DashboardBento
+            profile={profile}
+            greeting={greeting}
+            owned={mine(owned)}
+            available={mine(available)}
+            total={mine(subjects).length}
+            resume={resume}
+            comboYear={comboYear}
+            comboOwned={comboOwned}
+            comboInCart={!!comboYear && isInCart("combo", comboYear.id)}
+            onAddCombo={() => comboYear && addCombo(comboYear.id, comboYear.name)}
+            studyAi={isOn("studyai")}
+          />
 
           {/* ── A slice of the Store, right here ──
               Same cards as Explore Subjects (preview + add to cart) rather than
@@ -382,51 +259,16 @@ export default function Dashboard() {
                 </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {available.slice(0, 3).map((s) => {
-                  const inCart = isInCart("subject", s.id);
-                  return (
-                    <div
-                      key={s.id}
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
-                      onKeyDown={(e) => { if (e.key === "Enter") navigate(`/subject/${s.slug ?? s.id}`); }}
-                      className="td-surface td-card-click rounded-3xl p-5 flex flex-col justify-between cursor-pointer"
-                    >
-                      <div>
-                        <div className="flex items-start justify-between">
-                          <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center mb-3">
-                            <BookOpen className="w-4.5 h-4.5 text-black" />
-                          </div>
-                          <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
-                        </div>
-                        <h3 className="text-white font-semibold leading-snug line-clamp-2">{s.name}</h3>
-                        {s.description
-                          ? <p className="text-zinc-500 text-xs mt-1.5 line-clamp-2">{s.description}</p>
-                          : <p className="text-zinc-500 text-xs mt-1.5">Syllabus, 5 units, PYQs &amp; Study-With-AI.</p>}
-                        <span className="inline-flex items-center gap-1.5 mt-2.5 td-accent-bg text-[10px] font-bold px-2 py-1 rounded-full">
-                          <Eye className="w-3 h-3" /> Free preview inside
-                        </span>
-                      </div>
-
-                      <div className="mt-4 space-y-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/subject/${s.slug ?? s.id}`); }}
-                          className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> Preview free
-                        </button>
-                        <button
-                          disabled={inCart}
-                          onClick={(e) => { e.stopPropagation(); addSubject(s.id, s.name); }}
-                          className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
-                        >
-                          {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add · {formatPaise(s.price_paise)}</>}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {available.slice(0, 3).map((s, i) => (
+                  <SubjectFolderCard
+                    key={s.id}
+                    subject={s}
+                    index={i}
+                    owned={false}
+                    inCart={isInCart("subject", s.id)}
+                    onAdd={() => addSubject(s.id, s.name)}
+                  />
+                ))}
 
                 {/* the door to the rest */}
                 <button
@@ -454,82 +296,66 @@ export default function Dashboard() {
       <div className="flex flex-col">
       {/* ── Quick access carousel ── */}
       <div className="mt-8" style={{ order: owned.length > 0 ? 2 : 1 }}>
-          <div className="flex items-center justify-between mb-3 px-0.5">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => scrollQuick(-1)} aria-label="Scroll left"
-                className="w-8 h-8 rounded-full td-surface-2 hover:bg-white/10 flex items-center justify-center text-zinc-300 transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => scrollQuick(1)} aria-label="Scroll right"
-                className="w-8 h-8 rounded-full td-surface-2 hover:bg-white/10 flex items-center justify-center text-zinc-300 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <div ref={quickRef} className="flex gap-4 overflow-x-auto pt-3 pb-5 pl-2 -mr-4 pr-4 mb-2 snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden">
-            {banners.map((b) => (
+          {/* A fanned hand of tiles — the front one is live, tap a side one to
+              bring it forward. Starts on the second tile so there is a card
+              peeking out on both sides from the first frame. */}
+          <FanCarousel
+            count={banners.length}
+            initial={1}
+            label={<p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-zinc-500">Quick access</p>}
+            renderCard={(i) => {
+              const b = banners[i];
+              return (
               b.split ? (
                 /* one tile, two independently-tappable halves */
-                <div
-                  key={b.key}
-                  className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[268px] h-[248px] sm:h-[268px] rounded-[26px] overflow-hidden flex flex-col text-left"
-                >
+                <div key={b.key} className="td-banner td-qa w-full h-full flex flex-col text-left" style={qaBg(b.key)}>
                   {b.split.map((s, si) => (
                     <button
                       key={s.title}
                       onClick={s.onClick}
-                      /* each half owns exactly 50% of the tile; divider uses currentColor
-                         so it stays visible whichever way the card inverts */
-                      className="td-bw-half relative z-10 h-1/2 px-5 flex items-center gap-3.5 text-left transition-colors"
-                      style={si === 0 ? { borderBottom: "1px solid currentColor" } : undefined}
+                      className={`td-qa-half relative z-10 h-1/2 px-5 flex items-center gap-3.5 text-left ${si === 0 ? "border-b border-white/20" : ""}`}
                     >
-                      <span className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center shrink-0">
-                        <s.icon className="w-4.5 h-4.5" strokeWidth={1.7} />
+                      <span className="td-qa-chip w-11 h-11 rounded-full flex items-center justify-center shrink-0">
+                        <s.icon className="w-4.5 h-4.5" strokeWidth={1.8} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="td-bw-soft block text-[9px] font-semibold tracking-[0.22em] uppercase">{s.overline}</span>
-                        <span className="block text-[17px] font-semibold leading-tight tracking-tight truncate">{s.title}</span>
+                        <span className="td-qa-soft block text-[9px] font-bold tracking-[0.22em] uppercase">{s.overline}</span>
+                        <span className="block text-[18px] font-bold leading-tight tracking-tight truncate">{s.title}</span>
                       </span>
-                      <span className="td-banner-cta td-bw-chip w-6 h-6 rounded-full flex items-center justify-center shrink-0">
-                        <ArrowRight className="w-3 h-3" />
+                      <span className="td-qa-cta w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </button>
                   ))}
                 </div>
               ) : (
-              <button
-                key={b.key}
-                onClick={b.onClick}
-                className="td-banner td-banner-bw snap-start shrink-0 w-[248px] sm:w-[268px] h-[248px] sm:h-[268px] rounded-[26px] p-5 flex flex-col justify-between text-left"
-              >
+              <button key={b.key} onClick={b.onClick}
+                className="td-banner td-qa w-full h-full p-5 flex flex-col justify-between text-left" style={qaBg(b.key)}>
                 <div className="relative z-10">
-                  {b.img ? (
-                    <img src={b.img} alt="" className="td-bw-mark w-10 h-10 rounded-2xl mb-4 object-contain" draggable={false} />
-                  ) : (
-                    <div className="td-bw-chip w-10 h-10 rounded-2xl flex items-center justify-center mb-4">
-                      <b.icon className="w-4.5 h-4.5" strokeWidth={1.7} />
-                    </div>
-                  )}
-                  <p className="td-bw-soft text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5">{b.overline}</p>
+                  <div className="flex items-start justify-between">
+                    <span className="td-qa-chip w-11 h-11 rounded-full flex items-center justify-center">
+                      <b.icon className="w-4.5 h-4.5" strokeWidth={1.8} />
+                    </span>
+                    <span className="td-qa-chip rounded-full px-2.5 py-1 text-[9px] font-bold tracking-[0.16em] uppercase max-w-[60%] truncate">{b.overline}</span>
+                  </div>
                   {b.logo ? (
-                    <img src={b.logo} alt={b.title} className="td-bw-word h-6 w-auto max-w-[150px] object-contain object-left my-1" draggable={false} />
+                    <img src={b.logo} alt={b.title} className="h-6 w-auto max-w-[150px] object-contain object-left mt-5 mb-1" style={{ filter: "brightness(0) invert(1)" }} draggable={false} />
                   ) : (
-                    <h3 className="text-[20px] font-semibold leading-tight tracking-tight">{b.title}</h3>
+                    <h3 className="text-[22px] font-extrabold leading-tight tracking-tight mt-5">{b.title}</h3>
                   )}
-                  <p className="td-bw-soft text-[13px] mt-1.5 leading-relaxed">{b.desc}</p>
+                  <p className="td-qa-soft text-[13px] mt-1.5 leading-relaxed line-clamp-2">{b.desc}</p>
                 </div>
-                <div className="relative z-10 td-banner-cta inline-flex items-center gap-2 text-[13px] font-semibold">
-                  {b.cta} <span className="td-bw-chip w-6 h-6 rounded-full flex items-center justify-center"><ArrowRight className="w-3 h-3" /></span>
-                </div>
-                <b.icon className="td-banner-icon absolute -bottom-6 -right-5 w-32 h-32" style={{ opacity: 0.05 }} strokeWidth={1} />
+                <span className="relative z-10 td-qa-cta td-banner-cta self-start inline-flex items-center gap-2 rounded-full pl-4 pr-1.5 py-1.5 text-[12.5px] font-bold">
+                  {b.cta} <span className="w-6 h-6 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center"><ArrowRight className="w-3 h-3" /></span>
+                </span>
+                <b.icon aria-hidden className="td-banner-icon absolute -bottom-7 -right-6 w-36 h-36" style={{ opacity: 0.12 }} strokeWidth={1} />
               </button>
-              )
-            ))}
-          </div>
+              ));
+            }}
+          />
       </div>
 
-      {/* ── My subjects (reference: "My Courses" rows) ── */}
+      {/* ── My subjects — bento: last-opened subject large, the rest as tiles ── */}
       <section className="mt-8" style={{ order: owned.length > 0 ? 1 : 2 }}>
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-white font-bold">My subjects</h2>
@@ -545,21 +371,63 @@ export default function Dashboard() {
             <button onClick={() => navigate("/store")} className="td-btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5">Explore the Store <ArrowRight className="w-4 h-4" /></button>
           </div>
         ) : (
-          <div className="td-surface rounded-[24px] overflow-hidden">
-            {owned.slice(0, 6).map((s) => (
-              <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors group">
-                <span className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-white/60 font-black" style={{ background: grad(s.name) }}>
-                  {s.name.trim().charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-white text-sm font-semibold truncate">{s.name}</span>
-                  <span className="block text-zinc-600 text-[11px]">{yearName(s.year_id) ?? "Subject"}</span>
-                </span>
-                <ArrowUpRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors shrink-0" />
-              </button>
-            ))}
-          </div>
+          (() => {
+            // Bento: the subject you were last in (or your first) as a large
+            // accent tile, then up to four more. If there are more than that,
+            // the last slot becomes a "+N more" door to the library.
+            const lead = owned.find((s) => resume && (s.slug ?? String(s.id)) === resume.slug) ?? owned[0];
+            const rest = owned.filter((s) => s.id !== lead.id);
+            const more = rest.length > 4 ? rest.length - 3 : 0;
+            const small = more ? rest.slice(0, 3) : rest.slice(0, 4);
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <button onClick={() => navigate(`/subject/${lead.slug ?? lead.id}`)}
+                  className="td-bento td-bento-accent td-card-click col-span-2 md:row-span-2 relative overflow-hidden p-5 sm:p-6 flex flex-col justify-between text-left min-h-[220px]">
+                  <span aria-hidden className="absolute -right-10 -bottom-14 w-[180px] h-[180px] rounded-full td-bento-sphere" />
+                  <span className="relative z-10 flex items-center justify-between">
+                    <span className="td-bento-ghost rounded-full px-3 py-1 text-[11px] font-bold">
+                      {resume && (lead.slug ?? String(lead.id)) === resume.slug ? "Continue" : "Start here"}
+                    </span>
+                    <span className="w-10 h-10 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center"><ArrowUpRight className="w-4 h-4" /></span>
+                  </span>
+                  <span className="relative z-10 max-w-[80%]">
+                    <span className="block text-[11px] font-semibold opacity-65">{yearName(lead.year_id) ?? "Subject"}</span>
+                    <span className="block text-[1.6rem] sm:text-[2rem] font-extrabold tracking-tight leading-[1.05] mt-1 break-words">{lead.name}</span>
+                    <span className="block text-[12px] font-medium opacity-70 mt-2">Notes · PYQs · Study with AI</span>
+                  </span>
+                </button>
+                {small.map((s) => {
+                  const [from, to] = subjectTone(s.name);
+                  return (
+                    <button key={s.id} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
+                      className="td-bento td-surface td-card-click group p-4 flex flex-col justify-between gap-4 text-left min-h-[150px]">
+                      <span className="flex items-start justify-between">
+                        <span className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-extrabold shrink-0"
+                          style={{ background: `linear-gradient(160deg, ${from}, ${to})`, textShadow: "0 1px 2px rgba(0,0,0,0.35)" }}>
+                          {s.name.trim().charAt(0).toUpperCase()}
+                        </span>
+                        <ArrowUpRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-white text-[14px] font-semibold leading-snug line-clamp-2">{s.name}</span>
+                        <span className="block text-zinc-500 text-[11px] mt-0.5">{yearName(s.year_id) ?? "Subject"}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+                {more > 0 && (
+                  <button onClick={() => navigate("/library")}
+                    className="td-bento td-bento-ink td-force-dark td-card-click p-4 flex flex-col justify-between text-left min-h-[150px]">
+                    <span className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center"><BookOpen className="w-4 h-4" /></span>
+                    <span>
+                      <span className="block text-[1.6rem] font-semibold leading-none">+{more}</span>
+                      <span className="block text-[12px] opacity-60 mt-1">more in your library</span>
+                    </span>
+                  </button>
+                )}
+              </div>
+            );
+          })()
         )}
       </section>
       </div>

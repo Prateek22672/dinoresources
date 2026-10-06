@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, invokeFn, SubjectRow, SubjectQARow, EditorialRow, TopicRow, YearRow } from "@/integrations/supabase/revamp";
+import { indexMaterial } from "@/lib/materialIndex";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
@@ -48,7 +49,7 @@ const TABS: { id: CTab; label: string; unitScoped: boolean }[] = [
   { id: "videos", label: "Videos", unitScoped: true },
   { id: "syllabus", label: "Syllabus & PYQs", unitScoped: false },
 ];
-const RES_CATEGORIES = ["Syllabus", "Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Previous Papers", "Additional Resources"];
+const RES_CATEGORIES = ["Syllabus", "Unit 1", "Unit 2", "Unit 3", "Unit 4", "Unit 5", "Important Questions", "Previous Papers", "Additional Resources"];
 
 function appendMarkdownBlock(current: string, block: string) {
   const trimmed = current.trimEnd();
@@ -231,7 +232,7 @@ export default function Contributor() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("resources").insert({
+    const { data: added, error } = await supabase.from("resources").insert({
       subject_id: subjectId,
       title: title.trim() || category,
       url: url.trim(),
@@ -239,7 +240,7 @@ export default function Contributor() {
       category,
       unit_number: null,
       created_by: user?.id,
-    } as any);
+    } as any).select("id").single();
 
     if (error) {
       toast.error(error.message);
@@ -247,6 +248,7 @@ export default function Contributor() {
     }
 
     toast.success(`${category} added`);
+    if (added?.id) void indexMaterial(added.id);
     loadMaterials();
     return true;
   };
@@ -503,7 +505,7 @@ export default function Contributor() {
     const { data: { user } } = await supabase.auth.getUser();
     const unitNum = /^Unit (\d)/.exec(mCat)?.[1];
 
-    const { error } = await supabase.from("resources").insert({
+    const { data: added, error } = await supabase.from("resources").insert({
       subject_id: subjectId,
       title: mTitle.trim(),
       url: mUrl.trim(),
@@ -512,7 +514,7 @@ export default function Contributor() {
       unit_number: unitNum ? Number(unitNum) : null,
       created_by: user?.id,
       topic_id: mCat === `Unit ${unit}` && mTopic ? mTopic : null,
-    } as any);
+    } as any).select("id").single();
 
     if (error) {
       toast.error(error.message);
@@ -520,6 +522,8 @@ export default function Contributor() {
     }
 
     toast.success("Material added");
+    // index it for Rex in the background — the toast reports whether he can read it
+    if (added?.id) void indexMaterial(added.id);
     setMTitle("");
     setMUrl("");
     loadMaterials();
@@ -660,7 +664,7 @@ export default function Contributor() {
           <FileText className="w-4 h-4 td-accent-text" /> Syllabus &amp; PYQs <span className="text-zinc-600 text-xs font-normal">- whole subject</span>
         </h3>
 
-        <p className="text-zinc-500 text-xs mb-4">Paste a Google Drive / PDF link. The syllabus is one combined document; add previous-year papers as separate links.</p>
+        <p className="text-zinc-500 text-xs mb-4">Paste a Google Drive / PDF link, shared as “Anyone with the link can view” so Rex can read it. The syllabus is one combined document; add previous-year papers as separate links.</p>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
@@ -920,7 +924,7 @@ export default function Contributor() {
             )}
 
             <p className="text-zinc-600 text-xs mt-2 flex items-center gap-1">
-              <ExternalLink className="w-3 h-3" /> Upload files to Supabase Storage / Drive and paste the link here.
+              <ExternalLink className="w-3 h-3" /> Upload to Drive, share as “Anyone with the link can view”, and paste the link — Rex reads PDFs and Google Docs/Slides automatically.
             </p>
 
             {materials.length > 0 && (

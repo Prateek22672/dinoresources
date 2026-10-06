@@ -6,21 +6,25 @@ import { useCallback, useState } from "react";
 // and white-on-gold measured 2.25:1 — both under the 4.5:1 needed to be read at
 // these sizes, and the worst of the five on every measure. A muddy accent that
 // is also the least legible is not a choice worth offering.
-export const ACCENTS = [
+// Cobalt is the default — a clean commerce-dashboard blue on a cool grey wash.
+export const ACCENTS: readonly { id: string; label: string; color: string; ink?: string }[] = [
+  { id: "cobalt", label: "Cobalt", color: "#2563eb" },
   { id: "violet", label: "Violet", color: "#7c6cf0" },
   { id: "emerald", label: "Teal", color: "#14b8a6" },
   { id: "blue", label: "Sapphire", color: "#5b8def" },
   { id: "rose", label: "Rose", color: "#d962a8" },
-] as const;
+  // Lime is the one light fill — its swatch check is drawn dark, not white.
+  { id: "lime", label: "Lime", color: "#c8e64a", ink: "#1a1f05" },
+];
 
-export type AccentId = (typeof ACCENTS)[number]["id"];
+export type AccentId = "cobalt" | "violet" | "emerald" | "blue" | "rose" | "lime";
 
 const KEY = "td:accent";
 
 const isAccent = (id: string) => ACCENTS.some((a) => a.id === id);
 
 function apply(id: string) {
-  if (id === "violet") delete document.documentElement.dataset.accent;
+  if (id === "cobalt") delete document.documentElement.dataset.accent;
   else document.documentElement.dataset.accent = id;
 }
 
@@ -28,15 +32,15 @@ function apply(id: string) {
 export function useAccent() {
   // Anyone still on a retired accent is moved to the default and the stored
   // value rewritten. main.tsx will already have set data-accent to it, but no
-  // rule matches so the page is showing violet regardless — without this the
+  // rule matches so the page is showing cobalt regardless — without this the
   // picker would show nothing selected and never explain why.
   const [accent, setAccentState] = useState<string>(() => {
     try {
       const saved = localStorage.getItem(KEY);
       if (saved && isAccent(saved)) return saved;
-      if (saved) { localStorage.setItem(KEY, "violet"); delete document.documentElement.dataset.accent; }
+      if (saved) { localStorage.setItem(KEY, "cobalt"); delete document.documentElement.dataset.accent; }
     } catch { /* unreadable storage — the default is already correct */ }
-    return "violet";
+    return "cobalt";
   });
 
   const setAccent = useCallback((id: string) => {

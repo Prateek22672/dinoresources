@@ -63,7 +63,7 @@ export function useCheckout(onSuccess?: () => void | Promise<void>) {
         currency: data.currency ?? "INR",
         name: "Team Dino",
         description: "TeamDino purchase",
-        theme: { color: getComputedStyle(document.documentElement).getPropertyValue("--td-accent").trim() || "#7c6cf0" },
+        theme: { color: getComputedStyle(document.documentElement).getPropertyValue("--td-accent").trim() || "#2563eb" },
         handler: async (response: any) => {
           restore();
           setState("verifying");

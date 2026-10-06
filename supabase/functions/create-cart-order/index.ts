@@ -113,16 +113,35 @@ Deno.serve(async (req) => {
       ? body.charge_ids.filter((x: unknown) => typeof x === "string")
       : [];
 
-    // 2b) Validate + apply coupon SERVER-SIDE (never trust a client discount)
+    // 2a) Bundle offer ("buy 3 save X%") — recomputed here from server prices
+    // through the same bundle_quote() the cart displays. Only individual
+    // subjects count; full-year packs are already discounted.
+    const subjectPaise = items.filter((i) => i.item_type === "subject").reduce((s, i) => s + i.price_paise, 0);
+    const subjectCount = items.filter((i) => i.item_type === "subject").length;
+    let bundleDiscount = 0;
+    let bundleStacks = true;
+    {
+      const { data: bq } = await db.rpc("bundle_quote", { _subject_count: subjectCount, _subject_paise: subjectPaise });
+      const b = Array.isArray(bq) ? bq[0] : bq;
+      if (b?.percent) {
+        bundleDiscount = Math.max(0, Math.min(subjectPaise, Number(b.discount_paise) || 0));
+        bundleStacks = b.stacks !== false;
+      }
+    }
+    const afterBundle = subtotal - bundleDiscount;
+
+    // 2b) Validate + apply coupon SERVER-SIDE (never trust a client discount),
+    // on what's left after the bundle — or not at all when the admin has
+    // turned stacking off and a bundle tier applies.
     let couponCode: string | null = null;
     let discount = 0;
-    if (rawCoupon && typeof rawCoupon === "string" && rawCoupon.trim()) {
-      const { data: quote } = await db.rpc("coupon_quote", { _code: rawCoupon.trim(), _amount_paise: subtotal });
+    if (rawCoupon && typeof rawCoupon === "string" && rawCoupon.trim() && (bundleDiscount === 0 || bundleStacks)) {
+      const { data: quote } = await db.rpc("coupon_quote", { _code: rawCoupon.trim(), _amount_paise: afterBundle });
       const q = Array.isArray(quote) ? quote[0] : quote;
-      if (q?.valid) { discount = Math.max(0, Math.min(subtotal, q.discount_paise ?? 0)); couponCode = rawCoupon.trim().toUpperCase(); }
+      if (q?.valid) { discount = Math.max(0, Math.min(afterBundle, q.discount_paise ?? 0)); couponCode = rawCoupon.trim().toUpperCase(); }
     }
 
-    const taxable = Math.max(0, subtotal - discount);
+    const taxable = Math.max(0, afterBundle - discount);
 
     // 2c) Apply cart charges SERVER-SIDE. Mandatory charges are always added;
     // optional ones only when the client selected them. Amounts recomputed here.
@@ -170,6 +189,7 @@ Deno.serve(async (req) => {
         amount_paise: total,
         discount_paise: discount,
         coupon_code: couponCode,
+        bundle_discount_paise: bundleDiscount,
         charges_paise: chargesTotal,
         charges_detail: chargeDetail.length ? chargeDetail : null,
         currency: "INR",

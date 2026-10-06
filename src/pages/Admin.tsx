@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
+import SearchBox, { type SearchItem } from "@/components/ui/SearchBox";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminSubjects from "@/components/admin/AdminSubjects";
@@ -16,18 +17,20 @@ import AdminSharing from "@/components/admin/AdminSharing";
 import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminFeatures from "@/components/admin/AdminFeatures";
 import AdminCharges from "@/components/admin/AdminCharges";
+import AdminOffers from "@/components/admin/AdminOffers";
 import AdminNotices from "@/components/admin/AdminNotices";
 import AdminSocial from "@/components/admin/AdminSocial";
 import AdminPolls from "@/components/admin/AdminPolls";
-import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Search, X, Bot, Sparkles } from "lucide-react";
+import { BarChart3, Users, BookOpen, CreditCard, ScrollText, Shield, LifeBuoy, UsersRound, Lock, ShieldAlert, Ticket, UserX, Database, LayoutGrid, ChevronLeft, ChevronRight, Receipt, Bell, Bot, Sparkles, Percent } from "lucide-react";
 
-type Tab = "analytics" | "users" | "subjects" | "coupons" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth" | "social" | "polls";
+type Tab = "analytics" | "users" | "subjects" | "coupons" | "offers" | "charges" | "notices" | "features" | "tickets" | "team" | "payments" | "audit" | "security" | "access" | "sharing" | "database" | "aihealth" | "social" | "polls";
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "users", label: "Users & Access", icon: Users },
   { id: "subjects", label: "Subjects & Pricing", icon: BookOpen },
   { id: "coupons", label: "Coupons", icon: Ticket },
+  { id: "offers", label: "Bundle Offers", icon: Percent },
   { id: "charges", label: "Charges & GST", icon: Receipt },
   { id: "notices", label: "Notices", icon: Bell },
   { id: "features", label: "Cards & Features", icon: LayoutGrid },
@@ -50,6 +53,7 @@ const TAB_KEYWORDS: Record<string, string> = {
   users: "grant revoke access role admin contributor",
   subjects: "pricing price combo full year add subject",
   coupons: "discount promo code spin wheel",
+  offers: "bundle buy 3 4 multi subject discount tier offer percent",
   charges: "gst tax donation cart fees",
   notices: "alert message announcement send user",
   features: "flags cards toggle jobs agent enable disable",
@@ -84,13 +88,17 @@ export default function Admin() {
   const [canL, setCanL] = useState(false);
   const [canR, setCanR] = useState(false);
   const [search, setSearch] = useState("");
-  const [searchFocus, setSearchFocus] = useState(false);
 
   const q = search.trim().toLowerCase();
   const matches = q
     ? tabs.filter((t) => t.label.toLowerCase().includes(q) || (TAB_KEYWORDS[t.id] ?? "").includes(q))
     : [];
-  const jumpTo = (id: Tab) => { setTab(id); setSearch(""); setSearchFocus(false); };
+  const jumpTo = (id: Tab) => { setTab(id); setSearch(""); };
+  const asItem = (t: (typeof tabs)[number]): SearchItem => ({
+    id: t.id, label: t.label, icon: t.icon,
+    meta: tab === t.id ? <span className="td-accent-text">current</span> : undefined,
+    onSelect: () => jumpTo(t.id),
+  });
 
   const updateArrows = () => {
     const el = stripRef.current;
@@ -131,39 +139,17 @@ export default function Admin() {
       </div>
 
       {/* Search-to-jump — find any of the 15 admin sections fast */}
-      <div className="relative mb-4 max-w-md">
-        <div className="td-surface rounded-2xl flex items-center px-3 h-11">
-          <Search className="w-4 h-4 text-zinc-500 shrink-0" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onFocus={() => setSearchFocus(true)}
-            onBlur={() => setTimeout(() => setSearchFocus(false), 150)}
-            onKeyDown={(e) => { if (e.key === "Enter" && matches[0]) jumpTo(matches[0].id); if (e.key === "Escape") setSearch(""); }}
-            placeholder="Search admin sections… (e.g. refunds, storage, coupons)"
-            className="flex-1 bg-transparent border-none outline-none text-sm px-3 text-white placeholder:text-zinc-500"
-          />
-          {search && (
-            <button onMouseDown={(e) => e.preventDefault()} onClick={() => setSearch("")} className="w-7 h-7 rounded-full td-surface-2 flex items-center justify-center text-zinc-400">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-        {searchFocus && q && (
-          <div className="absolute top-[calc(100%+8px)] left-0 right-0 td-surface rounded-2xl overflow-hidden z-30 shadow-2xl max-h-72 overflow-y-auto">
-            {matches.length === 0 ? (
-              <p className="px-4 py-3 text-zinc-500 text-sm">No section matches “{search}”.</p>
-            ) : matches.map((t) => (
-              <button key={t.id} onMouseDown={(e) => e.preventDefault()} onClick={() => jumpTo(t.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left border-b border-white/5 last:border-0">
-                <span className="w-8 h-8 rounded-lg td-surface-2 flex items-center justify-center shrink-0"><t.icon className="w-4 h-4 text-zinc-300" /></span>
-                <span className="text-white text-sm font-medium">{t.label}</span>
-                {tab === t.id && <span className="ml-auto text-[11px] td-accent-text font-semibold">current</span>}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <SearchBox
+        className="mb-4 max-w-md"
+        value={search}
+        onChange={setSearch}
+        placeholder="Search admin sections… (e.g. refunds, storage, coupons)"
+        items={matches.map(asItem)}
+        idleItems={tabs.map(asItem)}
+        idleTitle="All sections"
+        maxItems={8}
+        emptyText="No section matches"
+      />
 
       {/* Scrollable tab strip with left/right controls + edge fades */}
       <div className="relative mb-8">
@@ -207,6 +193,7 @@ export default function Admin() {
       {tab === "tickets" && <AdminTickets />}
       {tab === "team" && <AdminTeam />}
       {tab === "coupons" && <AdminCoupons />}
+      {tab === "offers" && <AdminOffers />}
       {tab === "charges" && <AdminCharges />}
       {tab === "notices" && <AdminNotices />}
       {tab === "features" && <AdminFeatures />}

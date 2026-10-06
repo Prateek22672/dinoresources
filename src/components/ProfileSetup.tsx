@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, LibraryBig, Sparkles, Check } from "lucide-react";
+import { BookOpen, GraduationCap, ArrowRight, User, AtSign, Mail, LogOut, Receipt, LibraryBig, Sparkles, Check, ArrowUpRight } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 
 const DEPARTMENTS = ["CSE", "ECE", "Mechanical Engineering"];
@@ -103,7 +103,7 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
   const inputCls =
     "w-full h-12 td-surface-2 rounded-xl pl-10 pr-3 text-sm text-white outline-none placeholder:text-zinc-600 td-field-focus";
   const labelCls = "text-zinc-400 text-xs font-medium pl-1";
-  const cardCls = "td-surface rounded-[28px] p-6 sm:p-7 space-y-4";
+  const cardCls = "td-surface td-bento p-6 sm:p-7 space-y-4";
   const sectionCls = "text-[11px] font-semibold tracking-[0.18em] uppercase text-zinc-500";
 
   if (isLoading) {
@@ -133,40 +133,42 @@ export default function ProfileSetup({ onProfileUpdated }: ProfileSetupProps) {
       `}</style>
 
       <div className="max-w-5xl">
-        {/* Identity hero — accent glow, like the rest of the app */}
-        <div className="td-hero td-in relative overflow-hidden rounded-[28px] p-6 sm:p-7 mb-5">
-          <div aria-hidden className="absolute -top-16 -left-12 w-64 h-56 opacity-50 pointer-events-none"
-            style={{ background: "rgb(var(--td-accent-rgb) / 0.24)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(6px)" }} />
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="w-16 h-16 rounded-[22px] td-accent-solid text-white flex items-center justify-center text-2xl font-black shrink-0">
-              {initial}
+        {/* Identity + quick links as one bento row, matching the dashboard */}
+        <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-5 td-in">
+          <div className="td-bento td-bento-accent relative overflow-hidden col-span-2 lg:col-span-6 lg:row-span-2 p-6 sm:p-7 flex flex-col justify-between gap-6 min-h-[200px]">
+            <span aria-hidden className="absolute -right-12 -bottom-16 w-[190px] h-[190px] rounded-full td-bento-sphere hidden sm:block" />
+            <div className="relative z-10 flex items-start justify-between gap-3">
+              <div className="w-14 h-14 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center text-xl font-black shrink-0">
+                {initial}
+              </div>
+              <button onClick={signOut} className="td-btn-ghost px-4 py-2.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5 shrink-0">
+                <LogOut className="w-3.5 h-3.5" /> Sign out
+              </button>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="td-accent-text text-[11px] font-bold tracking-[0.18em] uppercase">Your account</p>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5 truncate">
+            <div className="relative z-10 min-w-0">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase opacity-60">Your account</p>
+              <h1 className="text-2xl sm:text-[2rem] font-extrabold tracking-tight leading-tight mt-0.5 break-words">
                 {fullName || "Profile & Settings"}
               </h1>
-              <p className="text-zinc-400 text-sm mt-0.5 truncate">{email}</p>
+              <p className="text-sm mt-0.5 opacity-70 truncate">{email}</p>
             </div>
-            <button onClick={signOut} className="td-btn-ghost px-4 py-2.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 text-red-400 hover:text-red-300 shrink-0">
-              <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Sign out</span>
-            </button>
           </div>
-        </div>
 
-        {/* Quick links — a real settings hub, not just a form */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-5">
+          {/* Quick links — a real settings hub, not just a form */}
           {[
-            { label: "My unlocks", desc: "Orders & receipts", icon: Receipt, to: "/purchases" },
-            { label: "My Library", desc: "Subjects you own", icon: LibraryBig, to: "/library" },
-            { label: "What's new", desc: "Latest features", icon: Sparkles, to: "/whats-new" },
-          ].map((q) => (
+            { label: "My unlocks", desc: "Orders & receipts", icon: Receipt, to: "/purchases", cls: "td-bento-deep", chip: "bg-white/15" },
+            { label: "My Library", desc: "Subjects you own", icon: LibraryBig, to: "/library", cls: "td-bento-ink td-force-dark", chip: "bg-white/10" },
+            { label: "What's new", desc: "Latest features", icon: Sparkles, to: "/whats-new", cls: "td-surface", chip: "td-accent-bg" },
+          ].map((q, i) => (
             <button key={q.to} onClick={() => navigate(q.to)}
-              className="td-surface td-card-click rounded-2xl p-3.5 flex flex-col items-start gap-2 text-left">
-              <span className="w-9 h-9 rounded-xl td-accent-bg flex items-center justify-center"><q.icon className="w-4 h-4" /></span>
+              className={`td-bento ${q.cls} td-card-click p-4 sm:p-5 flex flex-col items-start justify-between gap-4 text-left min-h-[112px] ${i === 2 ? "col-span-2 lg:col-span-6" : "col-span-1 lg:col-span-3"}`}>
+              <span className="w-full flex items-center justify-between">
+                <span className={`w-9 h-9 rounded-full flex items-center justify-center ${q.chip}`}><q.icon className="w-4 h-4" /></span>
+                <ArrowUpRight className="w-4 h-4 opacity-60" />
+              </span>
               <span className="min-w-0">
-                <span className="block text-white text-[13px] font-semibold truncate">{q.label}</span>
-                <span className="block text-zinc-500 text-[11px] truncate">{q.desc}</span>
+                <span className={`block text-[15px] font-bold truncate ${q.cls === "td-surface" ? "text-white" : ""}`}>{q.label}</span>
+                <span className={`block text-[11px] truncate ${q.cls === "td-surface" ? "text-zinc-500" : "opacity-65"}`}>{q.desc}</span>
               </span>
             </button>
           ))}

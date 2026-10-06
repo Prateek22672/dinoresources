@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
+import SubjectFolderCard from "@/components/stacks/SubjectFolderCard";
 import { BookOpen, Library as LibraryIcon, ArrowRight, Package, Receipt } from "lucide-react";
 
 export default function Library() {
@@ -74,8 +75,8 @@ export default function Library() {
       {comboYears.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">
           {comboYears.map((y) => (
-            <span key={y.id} className="td-surface-2 rounded-full px-3 py-1.5 text-[13px] text-zinc-300 flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 td-accent-text" /> {y.name} — Full Access
+            <span key={y.id} className="td-bento-accent rounded-full pl-1.5 pr-3.5 py-1.5 text-[13px] font-semibold flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center"><Package className="w-3 h-3" /></span> {y.name} — Full Access
             </span>
           ))}
         </div>
@@ -83,7 +84,28 @@ export default function Library() {
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-36 rounded-3xl td-surface animate-pulse" />)}
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-64 rounded-3xl td-surface animate-pulse" />)}
+        </div>
+      ) : subjects.length === 0 ? (
+        <div className="py-24 text-center td-surface rounded-[32px] td-in">
+          <BookOpen className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+          <h3 className="text-white font-semibold text-lg">Your library is empty</h3>
+          <p className="text-zinc-500 text-sm mt-1 mb-6">Unlock a subject or your whole year to get started.</p>
+          <Link to="/store" className="td-btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
+            Go to Store <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {subjects.map((s, i) => (
+            <SubjectFolderCard key={s.id} subject={s} index={i} owned inCart={false} onAdd={() => {}} />
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-64 rounded-3xl td-surface animate-pulse" />)}
         </div>
       ) : subjects.length === 0 ? (
         <div className="py-24 text-center td-surface rounded-[32px] td-in">

@@ -71,7 +71,7 @@ function SourceChips({ sources }: { sources: TutorSource[] }) {
         >
           <BookOpen className="w-3 h-3 td-accent-text shrink-0" />
           <span className="text-[11px] text-zinc-400 truncate max-w-[15rem]">
-            <span className="td-accent-text font-bold">U{s.unit}</span> · {s.question}
+            <span className="td-accent-text font-bold">{s.kind === "material" ? "Notes" : `U${s.unit}`}</span> · {s.question}
           </span>
           <ArrowUpRight className="w-3 h-3 text-zinc-600 group-hover:text-zinc-300 shrink-0" />
         </button>

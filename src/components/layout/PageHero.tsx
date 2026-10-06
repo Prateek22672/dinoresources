@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import FloatingBook from "@/components/brand/FloatingBook";
 
 export interface HeroStat {
   label: string;
@@ -14,66 +13,72 @@ interface PageHeroProps {
   subtitle?: ReactNode;
   actions?: ReactNode;
   stats?: HeroStat[];
-  /** Decorative floating book on the right. Pass false to hide, or customise. */
+  /** Kept for callers that still pass it; the bento header has no book. */
   book?: false | { cover?: string; spine?: string; title?: string };
   className?: string;
+  /** Extra content at the foot of the accent tile (e.g. the Store's search). */
+  children?: ReactNode;
 }
 
+// Stat tiles cycle through the bento fills: deep accent, ink, plain surface.
+const TILE = [
+  { cls: "td-bento-deep", chip: "bg-white/15", label: "opacity-75", value: "" },
+  { cls: "td-bento-ink td-force-dark", chip: "bg-white/10", label: "opacity-60", value: "" },
+  { cls: "td-surface", chip: "td-accent-bg", label: "text-zinc-500", value: "text-white" },
+];
+
 /**
- * Engaging page header — the landing-page vibe brought into the app:
- * soft accent blobs + a floating, cursor-drifting subject book, with the
- * stats as inline chips so they sit alongside (not fighting) the artwork.
+ * Page header as a bento row, matching the dashboard: the copy and actions sit
+ * on an accent tile, and each stat gets a tile of its own beside it (stacked
+ * under it on phones). With no stats the accent tile simply spans the row.
+ * Children written for a neutral surface (text-white, td-btn-ghost…) are
+ * re-inked by the .td-bento-accent rules in index.css.
  */
 export default function PageHero({
-  eyebrow, eyebrowIcon: EyeIcon, title, subtitle, actions, stats, book, className = "",
+  eyebrow, eyebrowIcon: EyeIcon, title, subtitle, actions, stats, className = "", children,
 }: PageHeroProps) {
-  const bk = book === false ? null : { cover: "#1E2B7A", spine: "#E0559B", title: "DBMS", ...(book ?? {}) };
+  const hasStats = !!stats && stats.length > 0;
 
   return (
-    <section className={`td-hero td-in relative overflow-hidden rounded-[28px] p-6 sm:p-9 mb-7 ${className}`}>
-      {/* soft accent blobs — the landing's organic energy, themed to the accent */}
-      <div aria-hidden className="absolute -top-20 -left-16 w-80 h-72 opacity-[0.5] pointer-events-none"
-        style={{ background: "rgb(var(--td-accent-rgb) / 0.22)", borderRadius: "52% 48% 60% 40% / 55% 45% 55% 45%", filter: "blur(6px)" }} />
-      <div aria-hidden className="absolute -bottom-24 right-[24%] w-72 h-64 opacity-[0.4] pointer-events-none hidden sm:block"
-        style={{ background: "rgb(var(--td-accent-rgb) / 0.16)", borderRadius: "48% 52% 42% 58% / 50% 58% 42% 50%", filter: "blur(8px)" }} />
-
-      {/* floating book, peeking from the right */}
-      {bk && (
-        <FloatingBook
-          cover={bk.cover} spine={bk.spine} title={bk.title} rot={9} float={1}
-          className="absolute -right-6 -bottom-10 w-[150px] sm:w-[180px] lg:w-[210px] z-[1] hidden sm:block pointer-events-none"
-        />
-      )}
-
-      <div className="relative z-10 flex flex-col gap-5">
-        <div className="min-w-0 max-w-2xl">
+    <section className={`td-in grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-7 ${className}`}>
+      {/* z-20 + no overflow clip on the tile itself, so a dropdown from the
+          children (search suggestions) can hang over the content below; only
+          the sphere is clipped, inside its own rounded layer. */}
+      <div className={`td-bento td-bento-accent relative z-20 col-span-2 p-6 sm:p-8 ${hasStats ? "lg:col-span-8" : "lg:col-span-12"}`}>
+        <span aria-hidden className="absolute inset-0 overflow-hidden rounded-[28px] pointer-events-none hidden sm:block">
+          <span className="absolute -right-14 -bottom-20 w-[230px] h-[230px] rounded-full td-bento-sphere" />
+        </span>
+        <div className="relative z-10 min-w-0 sm:max-w-[78%]">
           {eyebrow && (
-            <span className="td-glass inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-zinc-300 mb-3">
-              {EyeIcon && <EyeIcon className="w-3.5 h-3.5" style={{ color: "var(--td-accent-soft)" }} />} {eyebrow}
+            <span className="td-glass inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold mb-3">
+              {EyeIcon && <EyeIcon className="w-3.5 h-3.5" />} {eyebrow}
             </span>
           )}
-          <h1 className="text-[1.9rem] sm:text-4xl font-extrabold tracking-tight leading-[1.06] text-white">{title}</h1>
-          {subtitle && <p className="text-zinc-400 mt-3 leading-relaxed">{subtitle}</p>}
+          <h1 className="text-[1.75rem] sm:text-4xl font-extrabold tracking-tight leading-[1.06] break-words">{title}</h1>
+          {subtitle && <p className="mt-3 leading-relaxed opacity-75 text-[15px]">{subtitle}</p>}
           {actions && <div className="flex flex-wrap items-center gap-2.5 mt-6">{actions}</div>}
+          {children}
         </div>
-
-        {/* stats as inline chips — sit under the copy, clear of the book */}
-        {stats && stats.length > 0 && (
-          <div className="flex flex-wrap gap-2.5 relative z-10">
-            {stats.map((s) => (
-              <div key={s.label} className="td-glass rounded-2xl pl-2.5 pr-4 py-2 flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 td-accent-bg">
-                  <s.icon className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-white font-bold leading-none text-lg" style={{ fontVariantNumeric: "tabular-nums" }}>{s.value}</p>
-                  <p className="text-[11px] text-zinc-500 mt-1 truncate">{s.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {hasStats && (
+        <div className={`col-span-2 lg:col-span-4 grid gap-3 sm:gap-4 ${stats!.length === 1 ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-1"}`}>
+          {stats!.map((s, i) => {
+            const t = TILE[i % TILE.length];
+            return (
+              <div key={s.label} className={`td-bento ${t.cls} p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[104px]`}>
+                <span className={`flex items-center gap-2 text-[11px] font-semibold ${t.label}`}>
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${t.chip}`}><s.icon className="w-3.5 h-3.5" /></span>
+                  <span className="leading-tight">{s.label}</span>
+                </span>
+                <span className={`text-[1.7rem] sm:text-[2rem] font-semibold leading-none tracking-tight ${t.value}`} style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {s.value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

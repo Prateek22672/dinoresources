@@ -33,7 +33,7 @@ export default function AccentPicker() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 td-glass border border-white/10 rounded-2xl p-3.5 w-52 shadow-2xl td-in">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-50 td-glass border border-white/10 rounded-2xl p-3.5 w-60 shadow-2xl td-in">
           {/* Theme */}
           <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 px-1 mb-2">Theme</p>
           <div className="grid grid-cols-2 gap-1 p-1 rounded-full td-surface-2 mb-4">
@@ -53,7 +53,7 @@ export default function AccentPicker() {
 
           {/* Accent */}
           <p className="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 px-1 mb-2">Accent color</p>
-          <div className="grid grid-cols-4 gap-2 px-1 pb-1">
+          <div className="grid grid-cols-6 gap-1.5 px-1 pb-1">
             {ACCENTS.map((a) => (
               <button
                 key={a.id}
@@ -63,7 +63,7 @@ export default function AccentPicker() {
                 aria-label={a.label}
                 title={a.label}
               >
-                {accent === a.id && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                {accent === a.id && <Check className="w-3.5 h-3.5" strokeWidth={3} style={{ color: a.ink ?? "#fff" }} />}
               </button>
             ))}
           </div>

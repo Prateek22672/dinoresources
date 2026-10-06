@@ -52,13 +52,20 @@ All colors MUST be HSL.
     --shadow-card: 0 4px 6px -1px hsl(217 91% 60% / 0.1), 0 2px 4px -1px hsl(217 91% 60% / 0.06);
     --shadow-hover: 0 10px 15px -3px hsl(217 91% 60% / 0.15), 0 4px 6px -2px hsl(217 91% 60% / 0.05);
 
-    /* TeamDino accent — swappable app-wide via [data-accent] (default: violet).
+    /* TeamDino accent — swappable app-wide via [data-accent] (default: cobalt).
        --td-accent = solid, --td-accent-soft = text-on-dark, --td-accent-strong = text-on-light,
-       --td-accent-rgb = space-separated triplet for rgb(... / alpha) usage. */
-    --td-accent: #7c6cf0;
-    --td-accent-soft: #a9a0f5;
-    --td-accent-strong: #6d5fe0;
-    --td-accent-rgb: 124 108 240;
+       --td-accent-rgb = space-separated triplet for rgb(... / alpha) usage.
+       --td-wash* = the light-mode page wash, inner panels and scroll-edge fades.
+       Cobalt is the one accent that also carries white text on its fill (5.2:1),
+       and it sits on a cool grey wash rather than the lavender the others use. */
+    --td-accent: #2563eb;
+    --td-accent-soft: #93b4fd;
+    --td-accent-strong: #1d4ed8;
+    --td-accent-rgb: 37 99 235;
+    --td-accent-ink: #ffffff; /* text drawn ON the accent fill */
+    --td-wash: #eef2f9;
+    --td-wash-2: #f4f6fb;
+    --td-wash-edge: #f1f4fa;
   }
 
   /* Curated accents — desaturated to sit calmly on the grey UI.
@@ -70,9 +77,20 @@ All colors MUST be HSL.
      darkened; the swatch and the solid fill are unchanged, so neither accent
      looks any different, it just stays readable where it is used as text.
      Gold was removed outright — see ACCENTS in hooks/useAccent.ts. */
-  :root[data-accent="emerald"] { --td-accent:#14b8a6; --td-accent-soft:#6ee7db; --td-accent-strong:#0f766e; --td-accent-rgb:20 184 166; }
-  :root[data-accent="blue"]    { --td-accent:#5b8def; --td-accent-soft:#a3c2ff; --td-accent-strong:#3f6ad8; --td-accent-rgb:91 141 239; }
-  :root[data-accent="rose"]    { --td-accent:#d962a8; --td-accent-soft:#f0a6d4; --td-accent-strong:#b03b80; --td-accent-rgb:217 98 168; }
+  :root:is([data-accent="violet"], [data-accent="emerald"], [data-accent="blue"], [data-accent="rose"]) {
+    --td-wash: #efecf7; --td-wash-2: #f5f2fb; --td-wash-edge: #f4f2f9;
+  }
+  :root[data-accent="violet"]  { --td-accent:#7c6cf0; --td-accent-soft:#a9a0f5; --td-accent-strong:#6d5fe0; --td-accent-rgb:124 108 240;  --td-accent-ink:#ffffff;}
+  :root[data-accent="emerald"] { --td-accent:#14b8a6; --td-accent-soft:#6ee7db; --td-accent-strong:#0f766e; --td-accent-rgb:20 184 166;  --td-accent-ink:#04201d;}
+  :root[data-accent="blue"]    { --td-accent:#5b8def; --td-accent-soft:#a3c2ff; --td-accent-strong:#3f6ad8; --td-accent-rgb:91 141 239;  --td-accent-ink:#0b1838;}
+  :root[data-accent="rose"]    { --td-accent:#d962a8; --td-accent-soft:#f0a6d4; --td-accent-strong:#b03b80; --td-accent-rgb:217 98 168;  --td-accent-ink:#2a0a1c;}
+  /* Lime on sage — a bright chartreuse fill on a muted grey-green wash. The
+     fill is too light to carry white, so anything written on it (the solid
+     chip, the unread count) switches to near-black ink; light-mode text uses
+     a deep olive (7.4:1 on white) rather than the lime itself (1.3:1). */
+  :root[data-accent="lime"]    { --td-accent:#c8e64a; --td-accent-soft:#d6f06a; --td-accent-strong:#4d5c12; --td-accent-rgb:200 230 74;
+                                 --td-accent-ink:#1a1f05; --td-wash:#dfe2d6; --td-wash-2:#eceee6; --td-wash-edge:#e3e6db; }
+  :root[data-accent="lime"] .td-accent-solid { color: #1a1f05 !important; }
 
   .dark {
     --background: 240 10% 4%;
@@ -301,14 +319,14 @@ iframe[src*="razorpay"] {
    and (scoped to .td-app) text colors so the app reads well on white.
    ===================================================================== */
 @layer utilities {
-  /* Light palette — e-learning lavender: flat wash, white cards,
+  /* Light palette — flat wash (cool grey for cobalt, lavender otherwise), white cards,
      accent-tinted borders & shadows (follows --td-accent). Solid only. */
-  :root:not(.dark) .td-base { background: #efecf7; }
+  :root:not(.dark) .td-base { background: var(--td-wash); }
   :root:not(.dark) .td-surface   {
     background: #ffffff; border-color: rgb(var(--td-accent-rgb) / 0.13);
     box-shadow: 0 2px 6px rgba(23,10,60,0.04), 0 12px 32px -16px rgb(var(--td-accent-rgb) / 0.30);
   }
-  :root:not(.dark) .td-surface-2 { background: #f5f2fb; border-color: rgb(var(--td-accent-rgb) / 0.10); }
+  :root:not(.dark) .td-surface-2 { background: var(--td-wash-2); border-color: rgb(var(--td-accent-rgb) / 0.10); }
   :root:not(.dark) .td-hairline  { border-color: rgb(var(--td-accent-rgb) / 0.14); }
   :root:not(.dark) .td-glass     {
     background: rgba(255,255,255,0.82); border-color: rgb(var(--td-accent-rgb) / 0.16);
@@ -321,8 +339,8 @@ iframe[src*="razorpay"] {
     box-shadow: 0 28px 52px -26px rgba(0,0,0,0.30) !important;
   }
   :root:not(.dark) .td-accent-text { color: var(--td-accent-strong); }
-  :root:not(.dark) .td-edge-l { background: linear-gradient(to right, #f4f2f9, transparent); }
-  :root:not(.dark) .td-edge-r { background: linear-gradient(to left,  #f4f2f9, transparent); }
+  :root:not(.dark) .td-edge-l { background: linear-gradient(to right, var(--td-wash-edge), transparent); }
+  :root:not(.dark) .td-edge-r { background: linear-gradient(to left,  var(--td-wash-edge), transparent); }
 
   :root:not(.dark) .td-btn-primary { background: #0d0d0d; color: #ffffff; }
   :root:not(.dark) .td-btn-primary:hover { background: #000; box-shadow: 0 10px 30px -12px rgba(0,0,0,0.35); }
@@ -638,4 +656,94 @@ iframe[src*="razorpay"] {
     .td-orb, .td-orb-ring, .td-aurora > i, .td-msg, .td-pop, .td-wrong, .td-score-in { animation: none !important; }
     .td-scan::after { animation: none !important; opacity: 0; }
   }
+}
+/* ── Folder cards (Store + dashboard store slice) ──
+   A tinted cover with the card body tucked over it like a file folder: the
+   body's left tab rises into the cover and carries the big index number.
+   --fold-bg must equal the body colour so the tab and its concave join read
+   as one sheet. */
+@layer utilities {
+  .td-folder { --fold-bg: #2a2a2a; box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 24px 48px -28px rgba(0,0,0,0.7); }
+  :root:not(.dark) .td-folder { --fold-bg: #ffffff; box-shadow: 0 2px 6px rgba(15,23,42,0.05), 0 18px 40px -22px rgb(var(--td-accent-rgb) / 0.35); }
+  .td-folder-body { background: var(--fold-bg); }
+  .td-folder-body::before {
+    content: ""; position: absolute; left: 0; top: -26px; width: 50%; height: 27px;
+    background: var(--fold-bg); border-radius: 22px 16px 0 0;
+  }
+  .td-folder-body::after {
+    content: ""; position: absolute; left: calc(50% - 1px); top: -16px; width: 16px; height: 16px;
+    background: radial-gradient(circle at 100% 0, transparent 15.5px, var(--fold-bg) 16px);
+  }
+  .td-folder-cover { transition: transform .5s cubic-bezier(.22,.8,.24,1); }
+  .td-folder:hover .td-folder-cover { transform: scale(1.04); }
+}
+
+/* ── Dashboard bento ──
+   Fills are the accent (with --td-accent-ink text), its deep shade, or ink.
+   Colours are set on the tile and inherited, never via text-white — the light
+   theme remaps text-white to near-black, which would sink text on ink tiles. */
+@layer utilities {
+  .td-bento { border-radius: 28px; }
+  .td-bento-accent {
+    background:
+      radial-gradient(120% 95% at 0% 0%, rgba(255,255,255,0.38), transparent 58%),
+      var(--td-accent);
+    color: var(--td-accent-ink);
+  }
+  .td-bento-deep { background: var(--td-accent-strong); color: #ffffff; }
+  .td-bento-ink  { background: #111214; color: #f4f4f5; border: 1px solid rgba(255,255,255,0.06); }
+  .td-bento-chip  { background: rgb(255 255 255 / 0.55); color: #0d0d0d; }
+  .td-bento-ghost { background: rgb(255 255 255 / 0.42); color: inherit; border: 1px solid rgb(255 255 255 / 0.45); transition: background .2s; }
+  .td-bento-ghost:hover { background: rgb(255 255 255 / 0.6); }
+  .td-bento-track { background: rgb(0 0 0 / 0.14); }
+  .td-bento-fill  { background: #0d0d0d; }
+  .td-bento-inkpill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #f4f4f5; }
+  .td-bento-inkpill:hover { background: rgba(255,255,255,0.14); }
+  /* peach sphere — a warm counterweight that sits well on every accent */
+  .td-bento-sphere {
+    background: radial-gradient(circle at 34% 30%, #fde6d3 0%, #f2bf9c 32%, #d48f6c 68%, #9c5d45 100%);
+    box-shadow: -18px -10px 40px rgba(0,0,0,0.12) inset;
+  }
+}
+
+/* Anything dropped into an accent tile — PageHero titles, page actions —
+   was written for a neutral surface. Re-ink it so it reads on the fill in
+   every theme. :is(:root:not(.dark), :root) only lifts specificity above the
+   light-theme .text-white remap (0,4,0); it matches in both modes. */
+@layer utilities {
+  :is(:root:not(.dark), :root) :is(.td-app, .td-portal) .td-bento-accent :is(.text-white, .td-accent-text):not(.td-surface *) { color: inherit !important; }
+  :is(:root:not(.dark), :root) :is(.td-app, .td-portal) .td-bento-accent :is(.text-zinc-300, .text-zinc-400, .text-zinc-500, .text-zinc-600):not(.td-surface *) { color: inherit !important; opacity: .68; }
+  .td-bento-accent input::placeholder { color: currentColor !important; opacity: .6; }
+  :is(:root:not(.dark), :root) .td-bento-accent :is(.td-glass, .td-btn-ghost) {
+    background: rgb(255 255 255 / 0.42); border-color: rgb(255 255 255 / 0.45); color: var(--td-accent-ink); box-shadow: none;
+  }
+  :is(:root:not(.dark), :root) .td-bento-accent .td-btn-primary { background: #0d0d0d; color: #ffffff; }
+  .td-bento-accent .td-accent-bg { background: rgb(255 255 255 / 0.5); color: var(--td-accent-ink); }
+}
+
+@keyframes td-fan-fill { from { width: 0%; } to { width: 100%; } }
+
+/* ── SearchBox suggestions ── */
+@layer utilities {
+  .td-search-pop { animation: td-search-in .16s cubic-bezier(.16,1,.3,1); transform-origin: top center; }
+  @keyframes td-search-in { from { opacity: 0; transform: translateY(-4px) scale(.985); } to { opacity: 1; transform: none; } }
+  .td-search-hi { background: rgb(var(--td-accent-rgb) / 0.14); }
+  .td-search-mark { background: transparent; color: inherit; font-weight: 800; text-decoration: underline; text-decoration-color: var(--td-accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+}
+@media (prefers-reduced-motion: reduce) { .td-search-pop { animation: none; } }
+
+/* ── Quick-access fan cards ──
+   Colour comes from the card's own gradient (QA_TONES in Dashboard); text is
+   white and inherited, never .text-white, so the light theme's remap can't
+   sink it. A soft glare in the top-left gives the fill some depth. */
+@layer utilities {
+  .td-qa { color: #ffffff; position: relative; overflow: hidden; border-radius: 26px;
+    box-shadow: 0 26px 50px -24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
+  .td-qa::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 80% at 0% 0%, rgba(255,255,255,0.28), transparent 55%); }
+  .td-qa-soft { opacity: .78; }
+  .td-qa-chip { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.28); backdrop-filter: blur(6px); }
+  .td-qa-cta { background: #ffffff; color: #0d0d0d; }
+  .td-qa-half { transition: background .2s; }
+  .td-qa-half:hover { background: rgba(255,255,255,0.08); }
 }

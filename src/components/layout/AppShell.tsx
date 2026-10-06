@@ -24,7 +24,7 @@ import dinoLogo from "@/assets/dinosaurWhite.png";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/store", label: "Subjects", icon: Store },
+  { to: "/store", label: "Store", icon: Store },
   { to: "/library", label: "My Library", icon: Library },
 ];
 

@@ -9,10 +9,10 @@ import { setRecentSubject } from "@/lib/recent";
 import AppShell from "@/components/layout/AppShell";
 import UnitView from "@/components/subject/UnitView";
 import {
-  FileText, Lock, BookOpen, FileQuestion, ChevronLeft, Plus, Check, Maximize2, Minimize2,
+  FileText, Lock, BookOpen, FileQuestion, Star, ChevronLeft, Plus, Check, Maximize2, Minimize2,
 } from "lucide-react";
 
-type Section = "syllabus" | "pyq" | number; // number = unit 1..5
+type Section = "syllabus" | "pyq" | "imp" | number; // number = unit 1..5
 
 const UNIT_NUMBERS = [1, 2, 3, 4, 5];
 
@@ -122,6 +122,8 @@ export default function SubjectPage() {
             {navButton("syllabus", "Syllabus", FileText)}
             <div className="px-3.5 py-1.5 text-[11px] uppercase tracking-wider text-zinc-600 font-semibold">Units</div>
             {UNIT_NUMBERS.map((n) => navButton(n, `Unit ${n}`, BookOpen))}
+            <div className="px-3.5 py-1.5 text-[11px] uppercase tracking-wider text-zinc-600 font-semibold">Exam prep</div>
+            {navButton("imp", "Important Questions", Star)}
             {navButton("pyq", "PYQs", FileQuestion)}
           </div>
         </aside>

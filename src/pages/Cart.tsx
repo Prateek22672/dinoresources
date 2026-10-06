@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useBundleOffer } from "@/hooks/useBundleOffer";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl } from "@/integrations/supabase/revamp";
@@ -99,8 +100,30 @@ export default function Cart() {
   const chargeAmount = (c: ChargeRow, base: number) =>
     c.kind === "percent" ? Math.round((base * c.amount) / 100) : Math.round(c.amount);
 
-  const discount = applied?.discount ?? 0;
-  const taxable = Math.max(0, totalPaise - discount);
+  // ── Bundle offer — quoted by the same RPC create-cart-order uses ──
+  const bundle = useBundleOffer();
+  const subjectItems = items.filter((i) => i.item_type === "subject");
+  const subjectCount = subjectItems.length;
+  const subjectPaise = subjectItems.reduce((s, i) => s + i.price_paise, 0);
+  const [bundleQ, setBundleQ] = useState<{ percent: number; discount: number; stacks: boolean } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (supabase as any).rpc("bundle_quote", { _subject_count: subjectCount, _subject_paise: subjectPaise })
+      .then(({ data, error }: any) => {
+        if (!alive) return;
+        const b = Array.isArray(data) ? data[0] : data;
+        setBundleQ(!error && b?.percent ? { percent: b.percent, discount: Math.min(subjectPaise, b.discount_paise ?? 0), stacks: b.stacks !== false } : null);
+      });
+    return () => { alive = false; };
+  }, [subjectCount, subjectPaise]);
+  const bundleDiscount = bundleQ?.discount ?? 0;
+  const afterBundle = totalPaise - bundleDiscount;
+  // with stacking off, a coupon is set aside while a bundle tier applies
+  const couponBlocked = bundleDiscount > 0 && bundleQ?.stacks === false;
+  const nextTier = bundle.enabled ? bundle.nextTier(subjectCount) : null;
+
+  const discount = couponBlocked ? 0 : (applied?.discount ?? 0);
+  const taxable = Math.max(0, afterBundle - discount);
   const appliedCharges = charges
     .filter((c) => c.mandatory || selected.has(c.id))
     .map((c) => ({ ...c, amt: chargeAmount(c, taxable) }))
@@ -116,12 +139,12 @@ export default function Cart() {
   });
 
   const quote = useCallback(async (code: string): Promise<Applied | null> => {
-    const { data } = await (supabase as any).rpc("coupon_quote", { _code: code, _amount_paise: totalPaise });
+    const { data } = await (supabase as any).rpc("coupon_quote", { _code: code, _amount_paise: afterBundle });
     const q = Array.isArray(data) ? data[0] : data;
     if (q?.valid) { setCouponMsg(null); return { code: code.trim().toUpperCase(), discount: q.discount_paise ?? 0 }; }
     setCouponMsg(q?.message ?? "Invalid coupon");
     return null;
-  }, [totalPaise]);
+  }, [afterBundle]);
 
   const applyCoupon = async (codeArg?: string) => {
     const code = (codeArg ?? couponInput).trim();
@@ -153,7 +176,7 @@ export default function Cart() {
     if (!applied) return;
     quote(applied.code).then((a) => { if (a) setApplied(a); else setApplied(null); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPaise]);
+  }, [afterBundle]);
 
   const removeCoupon = () => { setApplied(null); setCouponInput(""); setCouponMsg(null); };
 
@@ -210,6 +233,35 @@ export default function Cart() {
           <div className="lg:col-span-1 min-w-0">
             <div className="td-surface rounded-3xl p-5 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-white font-semibold mb-4">Order summary</h2>
+
+              {/* Bundle offer — what's applied, and what one more subject unlocks */}
+              {bundle.enabled && (bundleDiscount > 0 || nextTier) && (
+                <div className="td-bento-accent rounded-2xl p-3.5 mb-4 flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-full bg-[#0d0d0d] text-white flex items-center justify-center shrink-0"><Gift className="w-4 h-4" /></span>
+                  <span className="flex-1 min-w-0">
+                    {bundleDiscount > 0 ? (
+                      <>
+                        <span className="block text-[13px] font-extrabold leading-tight">Bundle offer: {bundleQ!.percent}% off your {subjectCount} subjects</span>
+                        <span className="block text-[11px] font-semibold opacity-70 mt-0.5">
+                          {nextTier ? `Add ${nextTier.min_subjects - subjectCount} more for ${nextTier.percent}% off` : `You're saving ${formatPaise(bundleDiscount)}`}
+                        </span>
+                      </>
+                    ) : nextTier && (
+                      <>
+                        <span className="block text-[13px] font-extrabold leading-tight">
+                          Add {nextTier.min_subjects - subjectCount} more subject{nextTier.min_subjects - subjectCount === 1 ? "" : "s"}, save {nextTier.percent}%
+                        </span>
+                        <span className="block text-[11px] font-semibold opacity-70 mt-0.5">
+                          {bundle.tiers.map((t) => `${t.min_subjects}${t === bundle.tiers[bundle.tiers.length - 1] ? "+" : ""} → ${t.percent}%`).join(" · ")}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                  {nextTier && (
+                    <button onClick={() => navigate("/store")} className="td-btn-primary px-3 py-1.5 rounded-full text-[11px] font-bold shrink-0">Add</button>
+                  )}
+                </div>
+              )}
 
               {/* An already-won prize that hasn't been applied yet. Shown until
                   it's used or expires, so a spin is never wasted by closing. */}
@@ -338,6 +390,15 @@ export default function Cart() {
                   <span>Items ({items.length})</span>
                   <span>{formatPaise(totalPaise)}</span>
                 </div>
+                {bundleDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-400">
+                    <span>Bundle offer ({bundleQ!.percent}% · {subjectCount} subjects)</span>
+                    <span>− {formatPaise(bundleDiscount)}</span>
+                  </div>
+                )}
+                {couponBlocked && applied && (
+                  <p className="text-[11px] text-zinc-500">Coupon {applied.code} can't be combined with the bundle offer, so the bundle discount is used instead.</p>
+                )}
                 {discount > 0 && (
                   <div className="flex justify-between text-emerald-400">
                     <span>Discount ({applied?.code})</span>

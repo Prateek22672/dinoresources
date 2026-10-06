@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { tbl, invokeFn } from "@/integrations/supabase/revamp";
 import { supabase } from "@/integrations/supabase/client";
+import MaterialIndexPanel from "./MaterialIndexPanel";
 import { RefreshCw, KeyRound, CheckCircle2, AlertTriangle, XCircle, Clock, Bot, ShieldCheck, Plus, Trash2 } from "lucide-react";
 
 interface KeyStatus {
@@ -94,6 +95,9 @@ export default function AdminAiHealth() {
 
   return (
     <div className="space-y-5">
+      {/* ── What Rex can read ── */}
+      <MaterialIndexPanel />
+
       {/* ── Keys ── */}
       <div className="td-surface rounded-3xl p-5">
         <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">

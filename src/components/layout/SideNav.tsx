@@ -22,7 +22,7 @@ export default function SideNav({
 
   const items = [
     { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
-    { label: "Subjects", icon: Store, to: "/store" },
+    { label: "Store", icon: Store, to: "/store" },
     { label: "My Library", icon: Library, to: "/library" },
     ...(isOn("jobs") ? [{ label: "Jobs", icon: Briefcase, to: "/jobs" }] : []),
     ...(isContributor ? [{ label: "Contribute", icon: PenSquare, to: "/contributor" }] : []),

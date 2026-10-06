@@ -46,9 +46,14 @@ export const hasUsableAnswer = (q: { answer_md: string | null }) =>
 
 export interface TutorSource {
   id: string;
+  /** for material: the document title and page, e.g. "Unit 2 notes (p. 4)" */
   question: string;
   unit: number;
   topic: string | null;
+  /** "material" when the source is an uploaded file, not a written answer */
+  kind?: "material";
+  resource_id?: string;
+  page?: number | null;
 }
 
 export interface TutorMessage {

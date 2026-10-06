@@ -5,7 +5,7 @@ import { tbl, invokeFn, SubjectQARow, EditorialRow, TopicRow } from "@/integrati
 import { MarkdownRenderer } from "@/components/ai/MarkdownRenderer";
 import {
   Sparkles, FileText, FileQuestion, ChevronDown, ExternalLink, Youtube, FileIcon, Layers, Eye, Clapperboard, Play, RefreshCw,
-  Lock, Gift, Check, Plus, ArrowRight, MessageSquare, Target, PenLine,
+  Lock, Gift, Check, Plus, ArrowRight, MessageSquare, Target, PenLine, Star,
 } from "lucide-react";
 import { AiIcon } from "@/components/BrandIcons";
 import { markStudied, ReadinessSection } from "@/lib/readiness";
@@ -27,7 +27,7 @@ interface ResourceRow {
   is_free?: boolean;
 }
 
-type Section = "syllabus" | "pyq" | number;
+type Section = "syllabus" | "pyq" | "imp" | number;
 type UnitTab = "ai" | "videos" | "resources";
 
 interface UnitViewProps {
@@ -75,7 +75,9 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   const navigate = useNavigate();
   const { isOn } = useFeatureFlags();
   const isUnit = typeof section === "number";
-  const [tab, setTab] = useState<UnitTab>("ai");
+  // Material leads: most students come for notes and important questions, so a
+  // unit opens on Resources and Study-with-AI is the last tab, not the first.
+  const [tab, setTab] = useState<UnitTab>("resources");
 
   // ── AI tutor ──
   const [tutorOpen, setTutorOpen] = useState(false);
@@ -100,7 +102,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
   // readiness section key for this view
   const readinessKey: ReadinessSection =
-    section === "syllabus" ? "syllabus" : section === "pyq" ? "pyq" : `unit-${section}`;
+    // important questions count toward the same exam-prep readiness as PYQs
+    section === "syllabus" ? "syllabus" : section === "pyq" || section === "imp" ? "pyq" : `unit-${section}`;
 
   const [qa, setQa] = useState<SubjectQARow[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
@@ -120,7 +123,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
   const load = useCallback(async () => {
     setLoading(true);
-    setTab("ai");
+    setTab("resources");
     setActiveTopic("all");
     if (isUnit) {
       const [qaRes, edRes, tpRes] = await Promise.all([
@@ -164,6 +167,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     setResources(all.filter((r) => {
       if (section === "syllabus") return r.category === "Syllabus";
       if (section === "pyq") return r.category === "Previous Papers" || r.category === "PYQs";
+      if (section === "imp") return r.category === "Important Questions";
       return r.category === `Unit ${section}` || r.unit_number === section;
     }));
     setRelated([]); setRelatedTried(false); setEdPlaying(null);
@@ -196,7 +200,19 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   useEffect(() => {
     const onJump = (e: Event) => {
       const id = (e as CustomEvent<{ qaId?: string }>).detail?.qaId;
-      if (!id || !qa.some((q) => q.id === id)) return;
+      if (!id) return;
+      // A material citation lands on the file itself, opened in place.
+      if (resources.some((r) => r.id === id)) {
+        setTab("resources");
+        setActiveTopic("all");
+        setOpenMaterial(id);
+        markStudied(subjectId, readinessKey);
+        requestAnimationFrame(() => {
+          document.getElementById(`res-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        return;
+      }
+      if (!qa.some((q) => q.id === id)) return;
       setTab("ai");
       setActiveTopic("all");
       setOpenId(id);
@@ -208,7 +224,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     };
     window.addEventListener("td:tutor-jump", onJump);
     return () => window.removeEventListener("td:tutor-jump", onJump);
-  }, [qa, subjectId, readinessKey]);
+  }, [qa, resources, subjectId, readinessKey]);
 
   // Rex offers help where it is actually wanted: a few seconds after a student
   // opens a long answer, which is exactly when "this is dense" sets in.
@@ -239,7 +255,9 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   // And once per unit per session, an opening offer — before they have started
   // reading, when a walkthrough is worth more than an explanation.
   useEffect(() => {
-    if (!tutorOn || tutorOpen || loading || openId || nudgesQuiet()) return;
+    // only on Rex's own tab — elsewhere an unprompted offer pulls students
+    // away from the material they opened the page for
+    if (!tutorOn || tutorOpen || loading || openId || tab !== "ai" || nudgesQuiet()) return;
     const readable = qa.filter(hasUsableAnswer).length;
     if (readable === 0) return;
     const key = `u:${subjectId}:${section}`;
@@ -258,7 +276,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
       });
     }, 3200);
     return () => clearTimeout(t);
-  }, [tutorOn, tutorOpen, loading, openId, qa, subjectId, section]);
+  }, [tutorOn, tutorOpen, loading, openId, qa, subjectId, section, tab]);
 
   // A nudge is about the unit on screen — moving off it makes the offer stale.
   useEffect(() => { setNudge(null); }, [section, subjectId]);
@@ -276,7 +294,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     setRelatedLoading(false);
   }, [subjectName, section, isUnit, activeTopic, topics]);
 
-  const sectionTitle = section === "syllabus" ? "Syllabus" : section === "pyq" ? "Previous Year Questions" : `Unit ${section}`;
+  const sectionTitle = section === "syllabus" ? "Syllabus" : section === "pyq" ? "Previous Year Questions" : section === "imp" ? "Important Questions" : `Unit ${section}`;
 
   if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 rounded-2xl td-surface animate-pulse" />)}</div>;
 
@@ -291,6 +309,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
   const qaFree = (id: string) => !preview || freeQaIds.has(id);
   // How many answers the tutor can actually read — the RPC withholds the rest.
   const tutorReadable = qa.filter(hasUsableAnswer).length;
+  // materials whose link this student can open — the same files Rex reads
+  const readableMaterial = resources.filter((r) => !!r.url).length;
   // The server decides which material is unlocked (it withholds the url), so
   // trust that rather than guessing client-side.
   const resFree = (r: ResourceRow) => !!r.url;
@@ -350,14 +370,19 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     const open = openMaterial === r.id;
     const free = preview && !!r.is_free;
     return (
-      <div key={r.id} className="td-surface rounded-2xl overflow-hidden">
+      <div key={r.id} id={`res-${r.id}`} className={`td-surface td-bento overflow-hidden scroll-mt-24 ${open ? "sm:col-span-2" : ""}`}>
         <div className="flex items-center gap-3 p-4">
-          <div className="w-10 h-10 rounded-xl td-surface-2 flex items-center justify-center shrink-0"><Icon className="w-4.5 h-4.5 text-zinc-300" /></div>
-          <div className="min-w-0 flex-1"><p className="text-white text-sm font-medium truncate flex items-center gap-2">{r.title}{free && <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">FREE</span>}</p><p className="text-zinc-600 text-xs capitalize">{r.type}</p></div>
-          {embed && <button onClick={() => { setOpenMaterial(open ? null : r.id); markStudied(subjectId, readinessKey); }} className="td-btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"><Eye className="w-3.5 h-3.5" /> {open ? "Hide" : "View"}</button>}
-          <a href={r.url!} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open"><ExternalLink className="w-4 h-4" /></a>
+          <div className="w-11 h-11 rounded-2xl td-accent-bg flex items-center justify-center shrink-0"><Icon className="w-5 h-5" /></div>
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-[14px] font-semibold leading-snug line-clamp-2">{r.title}</p>
+            <p className="text-zinc-500 text-[11px] mt-0.5 flex items-center gap-1.5 uppercase tracking-wider font-semibold">
+              {r.type}{free && <span className="td-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full normal-case tracking-normal">Free</span>}
+            </p>
+          </div>
+          {embed && <button onClick={() => { setOpenMaterial(open ? null : r.id); markStudied(subjectId, readinessKey); }} className={`${open ? "td-btn-ghost" : "td-btn-primary"} h-9 px-3.5 rounded-full text-[12px] font-semibold flex items-center gap-1.5 shrink-0`}><Eye className="w-3.5 h-3.5" /> {open ? "Close" : "Open"}</button>}
+          <a href={r.url!} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full td-btn-ghost flex items-center justify-center shrink-0" aria-label="Open in new tab"><ExternalLink className="w-4 h-4" /></a>
         </div>
-        {open && embed && <div className="border-t border-white/5 bg-black/40"><iframe src={embed} title={r.title} className="w-full h-[70vh]" allow="autoplay" allowFullScreen /></div>}
+        {open && embed && <div className="border-t border-white/5 bg-black/40"><iframe src={embed} title={r.title} className="w-full h-[75vh]" allow="autoplay" allowFullScreen /></div>}
       </div>
     );
   };
@@ -367,7 +392,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
       return <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No materials uploaded yet.</div>;
     }
     if (!isUnit || topics.length === 0) {
-      return <div className="space-y-3">{resources.map(renderResource)}</div>;
+      return <div className="grid sm:grid-cols-2 gap-3">{resources.map(renderResource)}</div>;
     }
     return (
       <div className="space-y-5">
@@ -383,8 +408,8 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
                 <span className="w-1.5 h-1.5 rounded-full td-accent-solid inline-block" /> {group.title}
               </p>
               {items.length === 0
-                ? <div className="td-surface rounded-2xl p-4 text-center text-zinc-600 text-xs">Materials for this topic are coming soon.</div>
-                : items.map(renderResource)}
+                ? <div className="td-surface td-bento p-4 text-center text-zinc-600 text-xs">Materials for this topic are coming soon.</div>
+                : <div className="grid sm:grid-cols-2 gap-3">{items.map(renderResource)}</div>}
             </div>
           );
         })}
@@ -405,9 +430,9 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
     // `brand: true` marks a PNG icon rather than a lucide one. Lucide icons draw
     // in currentColor and are fine on the white active pill; the brand PNGs are
     // white artwork and disappear into it.
-    { id: "ai", label: "Study With AI", icon: AiIcon, brand: true },
-    { id: "videos", label: "Videos", icon: Clapperboard, badge: "Free" },
     { id: "resources", label: "Resources", icon: Layers },
+    { id: "videos", label: "Videos", icon: Clapperboard, badge: "Free" },
+    { id: "ai", label: "Study with AI", icon: AiIcon, brand: true },
   ];
 
   return (
@@ -472,6 +497,10 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
               className="td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
               <FileText className="w-3.5 h-3.5" /> Syllabus
             </button>
+            <button onClick={() => onSection("imp")}
+              className="td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+              <Star className="w-3.5 h-3.5" /> Important Qs
+            </button>
             <button onClick={() => onSection("pyq")}
               className="td-btn-ghost px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
               <FileQuestion className="w-3.5 h-3.5" /> PYQs
@@ -482,52 +511,38 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
 
       {/* Study With AI — grouped topic-wise (topics always visible as structure) */}
       {tab === "ai" && (
-        qa.length === 0 && topics.length === 0 ? (
-          <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">No Q&amp;A added for this unit yet.</div>
+        qa.length === 0 && topics.length === 0 && !(tutorOn && resources.length > 0) ? (
+          <div className="td-surface rounded-2xl p-6 text-center text-zinc-500 text-sm">Nothing here yet — check Resources for this unit's material.</div>
         ) : (
           <div className="space-y-5">
             {/* ── The tutor — the unit's answers, but conversational ──
                 Sits above the list because talking a unit through, being
                 drilled on it and writing it out are what turn reading into
                 marks; the accordion below is the reference it works from. */}
+            {/* Rex, kept quiet: one plain row with the three ways in, no glow.
+                The answers below are the reference he works from. */}
             {tutorOn && (
-              <div className="td-hero rounded-3xl p-5 sm:p-6 relative overflow-hidden">
-                <div className="td-aurora" aria-hidden><i /><i /><i /></div>
-                <div className="relative z-10">
-                  <div className="flex items-start gap-4">
-                    <TutorOrb size={52} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500">Study with AI</p>
-                      <p className="text-white font-bold text-lg leading-tight mt-1">Talk this unit through with Rex</p>
-                      <p className="text-zinc-400 text-[13px] mt-1.5 leading-relaxed max-w-[46ch]">
-                        {tutorReadable > 0 ? (
-                          <>He&apos;s read <span className="text-white font-semibold">{tutorReadable}</span> of this unit&apos;s answers and explains from them — not from the internet.</>
-                        ) : (
-                          <>Unlock this subject and Rex will read every answer in it with you.</>
-                        )}
-                      </p>
-                    </div>
+              <div className="td-surface td-bento p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <TutorOrb size={36} />
+                  <div className="min-w-0">
+                    <p className="text-white text-[14px] font-semibold leading-tight">Ask Rex about this unit</p>
+                    <p className="text-zinc-500 text-[12px] mt-0.5 truncate">
+                      {readableMaterial > 0 || tutorReadable > 0 ? "Explains from this unit's uploaded material — not the internet." : "Unlock this subject to study it with Rex."}
+                    </p>
                   </div>
-
-                  <div className="grid grid-cols-3 gap-2 mt-5">
-                    {([
-                      { m: "chat" as const, icon: MessageSquare, label: "Explain", sub: "Ask anything" },
-                      { m: "drill" as const, icon: Target, label: "Drill", sub: "Quiz me" },
-                      { m: "recall" as const, icon: PenLine, label: "Recall", sub: "Mark my answer" },
-                    ]).map((b) => (
-                      <button
-                        key={b.m}
-                        onClick={() => openTutor(b.m)}
-                        className="td-surface td-card-click rounded-2xl px-2 py-3.5 flex flex-col items-center gap-1.5 text-center"
-                      >
-                        <span className="w-8 h-8 rounded-xl td-accent-bg flex items-center justify-center">
-                          <b.icon className="w-4 h-4" />
-                        </span>
-                        <span className="text-[12.5px] font-bold text-white leading-none">{b.label}</span>
-                        <span className="text-[10.5px] text-zinc-500 leading-none">{b.sub}</span>
-                      </button>
-                    ))}
-                  </div>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  {([
+                    { m: "chat" as const, icon: MessageSquare, label: "Explain" },
+                    { m: "drill" as const, icon: Target, label: "Drill" },
+                    { m: "recall" as const, icon: PenLine, label: "Recall" },
+                  ]).map((b) => (
+                    <button key={b.m} onClick={() => openTutor(b.m)}
+                      className="td-btn-ghost h-9 px-3 rounded-full text-[12px] font-semibold flex items-center gap-1.5">
+                      <b.icon className="w-3.5 h-3.5" /> {b.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -766,7 +781,7 @@ export default function UnitView({ subjectId, subjectName, section, onSection, h
       {tab === "resources" && <Materials />}
 
       {/* Tutor launcher — draggable, and the surface Rex makes offers from. */}
-      {tutorOn && !tutorOpen && qa.length > 0 && (
+      {tutorOn && !tutorOpen && (qa.length > 0 || readableMaterial > 0) && tab === "ai" && (
         <TutorLauncher nudge={nudge} onOpen={openTutor} onDismissNudge={dismissNudge} />
       )}
 

@@ -109,7 +109,7 @@ export const FEATURES: Feature[] = [
   // ── Make it yours ──
   { category: "Make it yours", roles: ["student", "contributor", "admin"], isNew: true,
     name: "Accent themes",
-    desc: "Recolour the whole app — violet, teal, sapphire, gold or rose — in light or dark mode.",
+    desc: "Recolour the whole app — cobalt, violet, teal, sapphire, rose or lime — in light or dark mode.",
     how: "Header → palette icon → pick your accent. Toggle light/dark too." },
   { category: "Make it yours", roles: ["student", "contributor", "admin"], isNew: true,
     name: "Collapsible side rail",

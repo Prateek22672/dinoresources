@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { tbl, notExpiredFilter, SubjectRow, YearRow } from "@/integrations/supabase/revamp";
 import { useCart } from "@/context/CartContext";
@@ -7,13 +7,17 @@ import { formatPaise } from "@/lib/money";
 import { matchProfileYear } from "@/lib/year";
 import AppShell from "@/components/layout/AppShell";
 import PageHero from "@/components/layout/PageHero";
-import { Check, Plus, Sparkles, BookOpen, Package, Search, X, ChevronRight, ArrowRight, Zap, Eye, GraduationCap } from "lucide-react";
+import SubjectFolderCard, { tone as subjectTone } from "@/components/stacks/SubjectFolderCard";
+import SearchBox, { type SearchItem } from "@/components/ui/SearchBox";
+import { useBundleOffer } from "@/hooks/useBundleOffer";
+import { Check, Plus, Sparkles, BookOpen, Package, ArrowRight, Zap, GraduationCap } from "lucide-react";
 
 interface YearGroup { year: YearRow; subjects: SubjectRow[] }
 
 export default function Store() {
   const navigate = useNavigate();
-  const { addSubject, addCombo, isInCart } = useCart();
+  const { addSubject, addCombo, isInCart, items: cartItems } = useCart();
+  const bundle = useBundleOffer();
   const [groups, setGroups] = useState<YearGroup[]>([]);
   const [ownedSubjects, setOwnedSubjects] = useState<Set<string>>(new Set());
   const [ownedYears, setOwnedYears] = useState<Set<string>>(new Set());
@@ -23,8 +27,6 @@ export default function Store() {
   // matching years row is missing/inactive" — very different messages to show.
   const [profileYearLabel, setProfileYearLabel] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [searchFocus, setSearchFocus] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,11 +88,28 @@ export default function Store() {
       .filter((g) => g.subjects.length > 0);
   }, [groups, studentYear, query]);
 
-  const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return groups.flatMap((g) => g.subjects).filter((s) => s.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [groups, query]);
+  // Matches among the subjects this page actually shows. The old dropdown
+  // searched every year (suggesting subjects the page then hid) and hung
+  // over the very cards it duplicated — the grid already filters live.
+  const matches = useMemo(() => visibleGroups.flatMap((g) => g.subjects), [visibleGroups]);
+  // what the box suggests before anything is typed: this year's subjects
+  const myYearSubjects = useMemo(
+    () => groups.filter((g) => g.year.id === "__none__" || g.year.id === studentYear?.id).flatMap((g) => g.subjects),
+    [groups, studentYear],
+  );
+  const toItem = (s: SubjectRow): SearchItem => {
+    const [from, to] = subjectTone(s.name);
+    const owned = ownedSubjects.has(s.id) || (!!s.year_id && ownedYears.has(s.year_id));
+    return {
+      id: s.id,
+      label: s.name,
+      sub: owned ? "Unlocked · notes, PYQs, Study with AI" : "Free preview inside",
+      meta: owned ? <span className="td-accent-text">Owned</span> : formatPaise(s.price_paise),
+      lead: <span className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-white text-[13px] font-extrabold"
+        style={{ background: `linear-gradient(160deg, ${from}, ${to})`, textShadow: "0 1px 2px rgba(0,0,0,.35)" }}>{s.name.trim().charAt(0).toUpperCase()}</span>,
+      onSelect: () => navigate(`/subject/${s.slug ?? s.id}`),
+    };
+  };
 
   // Stats describe what this student can actually see. Counting every year's
   // subjects here would read "19 Subjects" above a page showing 4.
@@ -99,9 +118,14 @@ export default function Store() {
   const heroStats = studentYear
     ? [
         { label: `Subjects in ${studentYear.name}`, value: myYearCount, icon: BookOpen },
-        ...(studentYear.combo_price_paise > 0
-          ? [{ label: "Full-year pack", value: formatPaise(studentYear.combo_price_paise), icon: Package }]
-          : []),
+        // Owning the pack replaces its price — a price for something already
+        // bought reads like an upsell. This also stands in for the old
+        // "you own the full combo" strip that sat under the search.
+        ...(ownedYears.has(studentYear.id)
+          ? [{ label: "Full-year pack", value: <span className="inline-flex items-center gap-2"><Check className="w-6 h-6" /> Owned</span>, icon: Package }]
+          : studentYear.combo_price_paise > 0
+            ? [{ label: "Full-year pack", value: formatPaise(studentYear.combo_price_paise), icon: Package }]
+            : []),
       ]
     // No matched year: every subject on the page is hidden, so a total here
     // would advertise a count the student cannot reach ("4 Subjects" above an
@@ -113,7 +137,7 @@ export default function Store() {
   return (
     <AppShell>
       <PageHero
-        eyebrow="Subjects"
+        eyebrow="Store"
         eyebrowIcon={Sparkles}
         book={{ cover: "#0F9D9A", spine: "#0B7A78", title: "COA" }}
         title={studentYear ? <>Everything for <span className="td-accent-text">{studentYear.name}</span>.</> : "Unlock exactly what you need."}
@@ -135,43 +159,52 @@ export default function Store() {
             </>
           )
         }
-      />
-
-      {/* Search */}
-      <div className="relative mb-6 max-w-xl">
-        <div className="td-surface rounded-2xl flex items-center px-3 h-12">
-          <Search className="w-4 h-4 text-zinc-500 shrink-0" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setSearchFocus(true)}
-            onBlur={() => setTimeout(() => setSearchFocus(false), 150)}
-            placeholder="Search subjects…"
-            className="flex-1 bg-transparent border-none outline-none text-sm px-3 text-white placeholder:text-zinc-500"
-          />
-          {query && (
-            <button onMouseDown={(e) => e.preventDefault()} onClick={() => { setQuery(""); inputRef.current?.focus(); }}
-              className="w-7 h-7 rounded-full td-surface-2 flex items-center justify-center text-zinc-400">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-        {searchFocus && suggestions.length > 0 && (
-          <div className="absolute top-[calc(100%+8px)] left-0 right-0 td-surface rounded-2xl overflow-hidden z-30 shadow-2xl">
-            {suggestions.map((s) => (
-              <button key={s.id} onMouseDown={(e) => e.preventDefault()} onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/5 text-left border-b border-white/5 last:border-0">
-                <span className="flex items-center gap-2.5 min-w-0">
-                  <BookOpen className="w-4 h-4 text-zinc-500 shrink-0" />
-                  <span className="text-white text-sm font-medium truncate">{s.name}</span>
-                </span>
-                <span className="text-zinc-400 text-xs shrink-0">{formatPaise(s.price_paise)}</span>
-              </button>
-            ))}
-          </div>
+      >
+        {/* Search sits in the header — it is how most students use this page */}
+        <SearchBox
+          className="mt-6 max-w-xl"
+          variant="accent"
+          value={query}
+          onChange={setQuery}
+          placeholder="Search subjects…"
+          items={matches.map(toItem)}
+          idleItems={myYearSubjects.map(toItem)}
+          idleTitle={studentYear ? `${studentYear.name} subjects` : "Subjects"}
+          emptyText="No subject matches"
+        />
+        {/* the grid below filters live too — say so, so the list and the grid agree */}
+        {query.trim() && (
+          <p className="text-[12px] font-semibold mt-2.5 pl-4 opacity-75" aria-live="polite">
+            {matches.length === 0 ? "No subjects match — try another word." : `${matches.length} subject${matches.length === 1 ? "" : "s"} shown below`}
+          </p>
         )}
-      </div>
+      </PageHero>
+
+      {/* Bundle offer — the tiers, and how close this cart already is */}
+      {bundle.enabled && !loading && (() => {
+        const inCart = cartItems.filter((i) => i.item_type === "subject").length;
+        const next = bundle.nextTier(inCart);
+        const now = bundle.tierFor(inCart);
+        return (
+          <div className="td-bento td-bento-ink td-force-dark p-4 sm:p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-60">Bundle offer</p>
+              <p className="text-[15px] font-bold mt-0.5">
+                {now && !next ? `You're getting the top ${now.percent}% off — nice.`
+                  : next ? `Add ${next.min_subjects - inCart} more subject${next.min_subjects - inCart === 1 ? "" : "s"} to save ${next.percent}%`
+                  : "Buy more, save more"}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {bundle.tiers.map((t, i) => (
+                <span key={t.id} className={`rounded-full px-3 py-1.5 text-[12px] font-bold ${now?.id === t.id ? "td-bento-accent" : "td-bento-inkpill"}`}>
+                  {t.min_subjects}{i === bundle.tiers.length - 1 ? "+" : ""} subjects · {t.percent}% off
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* The student's year lives in the hero now — this page only ever shows
           that one year, so there are no chips to browse others. */}
@@ -220,10 +253,12 @@ export default function Store() {
 
             return (
               <section key={year.id} className="td-in">
-                <div className="mb-5">
+                {/* The student's own year is named in the hero; only extra groups
+                    ("Other Subjects") need a heading here. */}
+                {year.id !== studentYear?.id && <div className="mb-5">
                   <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">{year.name}</h2>
                   <p className="text-zinc-500 text-sm mt-0.5">{subjects.length} subjects</p>
-                </div>
+                </div>}
 
                 {/* ── Prominent combo highlight — only for the student's own opted year ── */}
                 {isMyYearCombo && !comboOwned && (
@@ -258,7 +293,7 @@ export default function Store() {
                     </div>
                   </div>
                 )}
-                {hasCombo && comboOwned && (
+                {hasCombo && comboOwned && year.id !== studentYear?.id && (
                   <div className="td-surface rounded-2xl px-5 py-3 mb-5 flex items-center gap-2 text-sm text-emerald-400">
                     <Check className="w-4 h-4" /> You own the full {year.name} combo — every subject below is unlocked.
                   </div>
@@ -266,64 +301,16 @@ export default function Store() {
 
                 {/* Subjects grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {subjects.map((s) => {
-                    const owned = ownedSubjects.has(s.id) || comboOwned;
-                    const inCart = isInCart("subject", s.id);
-                    return (
-                      /* Whole card opens the subject — it already looks clickable
-                         (td-card-click), so only the CTAs responding was a trap. */
-                      <div
-                        key={s.id}
-                        role="link"
-                        tabIndex={0}
-                        onClick={() => navigate(`/subject/${s.slug ?? s.id}`)}
-                        onKeyDown={(e) => { if (e.key === "Enter") navigate(`/subject/${s.slug ?? s.id}`); }}
-                        className="td-surface td-card-click rounded-3xl p-5 flex flex-col justify-between cursor-pointer"
-                      >
-                        <div>
-                          <div className="flex items-start justify-between">
-                            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center mb-3">
-                              <BookOpen className="w-4.5 h-4.5 text-black" />
-                            </div>
-                            <span className="text-white font-bold">{formatPaise(s.price_paise)}</span>
-                          </div>
-                          <Link to={`/subject/${s.slug ?? s.id}`} className="block">
-                            <h3 className="text-white font-semibold leading-snug line-clamp-2 hover:underline">{s.name}</h3>
-                          </Link>
-                          {s.description
-                            ? <p className="text-zinc-500 text-xs mt-1.5 line-clamp-2">{s.description}</p>
-                            : !owned && <p className="text-zinc-500 text-xs mt-1.5">Syllabus, 5 units, PYQs &amp; Study-With-AI.</p>}
-                          {!owned && (
-                            <span className="inline-flex items-center gap-1.5 mt-2.5 td-accent-bg text-[10px] font-bold px-2 py-1 rounded-full">
-                              <Eye className="w-3 h-3" /> Free preview inside
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="mt-4 space-y-2">
-                          {owned ? (
-                            <Link to={`/subject/${s.slug ?? s.id}`} className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5">
-                              <Check className="w-3.5 h-3.5" /> Open <ChevronRight className="w-3.5 h-3.5" />
-                            </Link>
-                          ) : (
-                            <>
-                              {/* Preview is the discovery action — read the free content before buying */}
-                              <Link to={`/subject/${s.slug ?? s.id}`} className="w-full td-btn-ghost py-2.5 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1.5">
-                                <Eye className="w-3.5 h-3.5" /> Preview free
-                              </Link>
-                              <button
-                                disabled={inCart}
-                                onClick={(e) => { e.stopPropagation(); addSubject(s.id, s.name); }}
-                                className="w-full td-btn-primary py-2.5 rounded-full text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-60"
-                              >
-                                {inCart ? <><Check className="w-3.5 h-3.5" /> In cart</> : <><Plus className="w-3.5 h-3.5" /> Add · {formatPaise(s.price_paise)}</>}
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {subjects.map((s, i) => (
+                    <SubjectFolderCard
+                      key={s.id}
+                      subject={s}
+                      index={i}
+                      owned={ownedSubjects.has(s.id) || comboOwned}
+                      inCart={isInCart("subject", s.id)}
+                      onAdd={() => addSubject(s.id, s.name)}
+                    />
+                  ))}
                 </div>
               </section>
             );
