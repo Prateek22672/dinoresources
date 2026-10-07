@@ -377,8 +377,8 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
 
         {/* one book on the desk, right of centre. Its width follows the screen
             HEIGHT (24svh) so its top always stays below the wordmark. */}
-        <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[8%] sm:right-[24%] bottom-[14%] z-[5] will-change-transform"
-          style={{ width: "max(118px, min(18vw, 24svh))" }}>
+        <div ref={(el) => (frameRefs.current[0] = el)} className="absolute inset-x-0 bottom-[16%] flex justify-center sm:block sm:inset-x-auto sm:right-[24%] sm:bottom-[14%] z-[5] will-change-transform">
+          <div className="relative w-[min(40vw,22svh)] sm:w-[max(118px,min(18vw,24svh))]">
           <div ref={(el) => (mouseEls.current[0] = el)} className="will-change-transform">
             <div style={{ ...settle(0.5), ["--rot" as any]: "-7deg" }} className="ld-book">
               <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
@@ -386,6 +386,7 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
             {/* soft contact shadow right under the book */}
             <div aria-hidden className="absolute left-[8%] right-[2%] -bottom-[6%] h-[12%] -z-10 rounded-[50%]"
               style={{ background: "radial-gradient(closest-side, rgba(0,0,0,0.6), transparent)", filter: "blur(6px)" }} />
+          </div>
           </div>
         </div>
 
@@ -420,23 +421,24 @@ function HeroSection({ goAuth }: { goAuth: () => void }) {
             ))}
             <span className="sr-only"> — study kit for GITAM students</span>
           </h1>
-          <div className="ld-in-3 mt-3 sm:mt-5 flex items-baseline justify-between gap-4 px-1">
+          <div className="ld-in-3 mt-3 sm:mt-5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-4 px-1">
             <p className="font-semibold tracking-tight leading-none text-[#d4e4ec] text-[clamp(1.6rem,4.2vw,4.25rem)]"
               style={{ letterSpacing: "-0.04em", paddingLeft: "calc(clamp(3.3rem, 20.9vw, 24.7rem) * 0.23)" }}>
               Make exams easy.
             </p>
-            <p className="shrink-0 text-[#d4e4ec]/80 font-medium tracking-tight uppercase text-[11px] sm:text-[clamp(13px,1.3vw,20px)]">
+            <p className="shrink-0 text-[#d4e4ec]/60 sm:text-[#d4e4ec]/80 font-medium tracking-tight uppercase text-[11px] sm:text-[clamp(13px,1.3vw,20px)]"
+              style={{ paddingLeft: "calc(clamp(3.3rem, 20.9vw, 24.7rem) * 0.23)" }}>
               (Study kit · GITAM)
             </p>
           </div>
           {/* line and buttons start under the T's stem, not its crossbar */}
-          <div className="ld-in-3 mt-5 sm:mt-7 flex flex-wrap items-center gap-2.5 px-1"
+          <div className="ld-in-3 mt-6 sm:mt-7 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 px-1 pr-4 sm:pr-1"
             style={{ paddingLeft: "calc(clamp(3.3rem, 20.9vw, 24.7rem) * 0.23)" }}>
-            <button onClick={goAuth} className="rounded-full bg-[#d4e4ec] hover:bg-white text-[#0e1211] h-12 pl-6 pr-1.5 text-[14px] font-bold flex items-center gap-3 transition-colors">
+            <button onClick={goAuth} className="rounded-full bg-[#d4e4ec] hover:bg-white text-[#0e1211] h-12 pl-6 pr-1.5 text-[14px] font-bold flex items-center justify-between sm:justify-start gap-3 transition-colors w-full sm:w-auto">
               Start studying free
               <span className="w-9 h-9 rounded-full bg-[#0e1211] text-[#d4e4ec] flex items-center justify-center"><ArrowRight className="w-4 h-4" /></span>
             </button>
-            <button onClick={() => navigate("/sgpa-calc")} className="rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white h-12 px-6 text-[14px] font-semibold transition-colors">
+            <button onClick={() => navigate("/sgpa-calc")} className="rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white h-12 px-6 text-[14px] font-semibold transition-colors w-full sm:w-auto">
               Free SGPA calculator
             </button>
           </div>
