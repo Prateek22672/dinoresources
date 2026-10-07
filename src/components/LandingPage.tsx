@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowUpRight, ChevronDown, Check, Quote } from "lucide-react";
 import Footer from "./Footer";
 import CurvedGallery from "@/components/stacks/CurvedGallery";
+import BookMock, { BOOK_TONES } from "@/components/brand/BookMock";
 import dinoLogo from "@/assets/dinosaurWhite.png";
 import dinoBlack from "@/assets/dinosaurBlack.png";
 import fyxLogo from "@/assets/fyx.png";
@@ -52,6 +53,7 @@ function useMouseFloat(strengths: { x: number; y: number; r: number }[]) {
 function useHeroParallax(depths: number[]) {
   const contentRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
   const frameRefs = useRef<(HTMLDivElement | null)[]>([]);
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -68,6 +70,7 @@ function useHeroParallax(depths: number[]) {
           if (el) el.style.transform = `translateY(${y * depths[i]}px)`;
         });
         if (cueRef.current) cueRef.current.style.opacity = String(Math.max(0, 1 - y / 160));
+        if (dimRef.current) dimRef.current.style.opacity = String(Math.min(0.55, (y / window.innerHeight) * 0.55));
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -75,7 +78,7 @@ function useHeroParallax(depths: number[]) {
     return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { contentRef, cueRef, frameRefs };
+  return { contentRef, cueRef, frameRefs, dimRef };
 }
 
 /* ─── Scroll reveal ──────────────────────────────────────────── */
@@ -134,17 +137,6 @@ const QUOTES = [
 ];
 
 
-/* Cover tones for the curved subject wall — muted, dusk-lit, never neon */
-const SHELF = [
-  { from: "#8b7fd8", to: "#2c2363" }, // monsoon
-  { from: "#a6d8c6", to: "#22463f" }, // neon bay
-  { from: "#e0896a", to: "#5a1f17" }, // ashline
-  { from: "#d9dbe3", to: "#2f3138" }, // granite
-  { from: "#efcf6e", to: "#6b4a12" }, // amberlight
-  { from: "#b8cbe8", to: "#30477a" }, // northwind
-  { from: "#e0a874", to: "#4e2a22" }, // skyline
-  { from: "#6f8fe0", to: "#1b2350" }, // undertow
-];
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -157,6 +149,14 @@ export default function LandingPage() {
   const counts = [c0, c1, c2, c3];
 
   const goAuth = () => navigate("/auth");
+  // the hero carries its own nav; the floating pill takes over once it's covered
+  const [pastHero, setPastHero] = useState(false);
+  useEffect(() => {
+    const on = () => setPastHero(window.scrollY > window.innerHeight * 0.75);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
 
   return (
     <div className="td-force-dark min-h-screen bg-[#0b0b0e] text-zinc-100 font-sans overflow-x-clip relative">
@@ -176,14 +176,18 @@ export default function LandingPage() {
         }
         @keyframes ld-float1 { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-14px) rotate(1.3deg); } }
         @keyframes ld-float2 { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-9px) rotate(-1.6deg); } }
+        @keyframes ld-settle { from { opacity:0; transform:translateY(-60px) rotate(var(--rot)); } to { opacity:1; transform:rotate(var(--rot)); } }
+        .ld-book { transform: rotate(var(--rot)); filter: brightness(.86) saturate(.85); }
+        @keyframes ld-beam { 0%,100% { opacity:.85; translate: 0 0; } 50% { opacity:1; translate: 3% 0; } }
+        .ld-beam { animation: ld-beam 14s ease-in-out infinite; }
         @keyframes ld-cue { 0%,100% { transform:translateY(0); } 50% { transform:translateY(6px); } }
         .ld-reveal { opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
         .ld-reveal.on { opacity:1; transform:none; }
-        @media (prefers-reduced-motion: reduce) { .ld-in,.ld-in-2,.ld-in-3 { animation:none; } .ld-reveal { opacity:1; transform:none; transition:none; } }
+        @media (prefers-reduced-motion: reduce) { .ld-in,.ld-in-2,.ld-in-3,.ld-beam { animation:none; } .ld-reveal { opacity:1; transform:none; transition:none; } }
       `}</style>
 
       {/* ── Nav — floating dark pill (unchanged) ── */}
-      <header className="sticky top-4 z-50 px-4">
+      <header className={`fixed inset-x-0 top-4 z-50 px-4 transition-all duration-500 ${pastHero ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}>
         <div className="max-w-2xl mx-auto bg-[#131316]/95 backdrop-blur-xl border border-white/10 rounded-full pl-2.5 pr-2 h-14 flex items-center justify-between shadow-[0_16px_50px_-16px_rgba(0,0,0,0.8)]">
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2.5">
             <span className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center">
@@ -192,6 +196,7 @@ export default function LandingPage() {
             <span className="font-bold tracking-tight">Team Dino</span>
           </button>
           <nav className="flex items-center gap-1">
+            <button onClick={() => navigate("/showcase")} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-300 hover:text-white transition-colors hidden md:block">Showcase</button>
             <button onClick={() => navigate("/about")} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-300 hover:text-white transition-colors hidden sm:block">About</button>
             <button onClick={goAuth} className="px-3 py-2 rounded-full text-[13px] font-medium text-zinc-300 hover:text-white transition-colors">Sign in</button>
             <button onClick={goAuth} className="td-btn-primary h-10 px-4 text-[13px] font-bold flex items-center gap-1.5">
@@ -203,6 +208,10 @@ export default function LandingPage() {
 
       {/* ── Hero — cinematic photo: Ken Burns + parallax + masked headline ── */}
       <HeroSection goAuth={goAuth} />
+
+      {/* ── The curtain: everything after the hero is one opaque layer that
+          scrolls up over the pinned hero. ── */}
+      <div className="relative z-10 bg-[#0b0b0e] rounded-t-[40px] sm:rounded-t-[48px] shadow-[0_-40px_80px_-30px_rgba(0,0,0,0.7)]">
 
       {/* ── Social proof — one giant number (Fluently-style) ── */}
       <section ref={statsReveal.ref} className={`relative z-10 max-w-5xl mx-auto px-5 pt-14 sm:pt-24 pb-14 text-center ld-reveal ${statsReveal.visible ? "on" : ""}`}>
@@ -236,7 +245,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-5 text-center mb-2">
           <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-zinc-500">Every subject, one shelf</p>
         </div>
-        <CurvedGallery items={[...MARQUEE, ...MARQUEE].map((m, i) => ({ title: m, sub: "5 units · PYQs", ...SHELF[i % SHELF.length] }))} onPick={() => goAuth()} />
+        <CurvedGallery items={[...MARQUEE, ...MARQUEE].map((m, i) => ({ title: m, ...BOOK_TONES[i % BOOK_TONES.length] }))} onPick={() => goAuth()} />
       </section>
 
       {/* ── What's inside — horizontal 3D card tour ── */}
@@ -330,118 +339,123 @@ export default function LandingPage() {
       <div className="relative z-10 max-w-6xl mx-auto px-5 pb-8">
         <Footer />
       </div>
+      </div>
     </div>
   );
 }
 
 /* A tilted SVG hardcover "subject book" — spine, page stack, badge, depth. */
-function BookMock({ cover, spine, title }: { cover: string; spine: string; title: string }) {
-  return (
-    <svg viewBox="0 0 300 400" className="w-full h-auto" style={{ filter: "drop-shadow(0 45px 45px rgba(0,0,0,0.35))" }} aria-hidden>
-      {/* page block peeking right + bottom */}
-      <rect x="24" y="10" width="270" height="384" rx="14" fill="#F4EFE3" />
-      <g stroke="#DCD3BC" strokeWidth="2">
-        <line x1="284" y1="22" x2="284" y2="382" />
-        <line x1="289" y1="28" x2="289" y2="376" />
-      </g>
-      <g stroke="#DCD3BC" strokeWidth="2">
-        <line x1="40" y1="388" x2="270" y2="388" />
-      </g>
-      {/* front cover */}
-      <rect x="6" y="0" width="274" height="382" rx="16" fill={cover} />
-      {/* cover depth edge */}
-      <rect x="262" y="4" width="18" height="374" rx="9" fill="rgba(0,0,0,0.14)" />
-      {/* spine */}
-      <path d="M6 16 A16 16 0 0 1 22 0 H52 V382 H22 A16 16 0 0 1 6 366 Z" fill={spine} />
-      <rect x="52" y="0" width="9" height="382" fill="rgba(0,0,0,0.16)" />
-      {/* hinge highlight */}
-      <rect x="66" y="10" width="4" height="362" rx="2" fill="rgba(255,255,255,0.55)" />
-      {/* dino badge */}
-      <circle cx="234" cy="48" r="26" fill="#ffffff" />
-      <image href={dinoBlack} x="218" y="32" width="32" height="32" />
-      {/* title */}
-      <text x="86" y="316" fill="#ffffff" fontWeight="800" fontSize="44" fontFamily="'Baloo 2', sans-serif">{title}</text>
-      <text x="86" y="344" fill="rgba(255,255,255,0.75)" fontWeight="700" fontSize="14" fontFamily="Inter, sans-serif">5 units · PYQs · AI</text>
-    </svg>
-  );
-}
 
 /* ─── Hero: exact Aardvark mimic — yellow blobs, chunky black type, books ─── */
 function HeroSection({ goAuth }: { goAuth: () => void }) {
-  const { contentRef, cueRef, frameRefs } = useHeroParallax([0.1, -0.06, 0.16]);
-  // cursor drift strengths: [big DBMS, corner COA (moves opposite = depth), note]
-  const mouseEls = useMouseFloat([
-    { x: 34, y: 24, r: 0.09 },
-    { x: -26, y: -18, r: -0.07 },
-    { x: 16, y: 12, r: 0.14 },
-  ]);
-  const pop = (rot: string, delay: number) => ({ ["--rot" as any]: rot, animation: `ld-pop 1s cubic-bezier(.16,1,.3,1) ${delay}s both` });
+  const navigate = useNavigate();
+  const { contentRef, frameRefs, dimRef } = useHeroParallax([0.1]);
+  // cursor drift for the book on the desk
+  const mouseEls = useMouseFloat([{ x: 20, y: 12, r: 0.06 }]);
+  const settle = (delay: number) => ({ animation: `ld-settle 1.3s cubic-bezier(.16,1,.3,1) ${delay}s both` });
+  const WORD = "TeamDino";
 
   return (
-    <section className="relative -mt-[4.75rem] min-h-[100svh] overflow-hidden rounded-b-[44px]" style={{ background: "#FFB61E" }}>
-      {/* organic blobs */}
-      <div aria-hidden className="absolute -top-24 left-[18%] w-[520px] h-[420px]" style={{ background: "#FCD34D", borderRadius: "48% 52% 62% 38% / 55% 45% 58% 42%" }} />
-      <div aria-hidden className="absolute top-[34%] right-[22%] w-[460px] h-[520px]" style={{ background: "#FDE68A", borderRadius: "56% 44% 40% 60% / 46% 60% 40% 54%" }} />
-      <div aria-hidden className="absolute -bottom-32 left-[6%] w-[420px] h-[380px]" style={{ background: "#F59E0B", borderRadius: "52% 48% 58% 42% / 50% 55% 45% 50%", opacity: 0.55 }} />
-      <div aria-hidden className="absolute bottom-[10%] right-[2%] w-[300px] h-[280px]" style={{ background: "#FCD34D", borderRadius: "44% 56% 50% 50% / 60% 42% 58% 40%" }} />
+    /* Editorial hero: a dim study, one beam of window light, the subject
+       books on the desk, and the name set huge across the top. The frame is
+       inset with rounded corners; it stays pinned while the page curtains
+       over it (see the wrapper in LandingPage). */
+    <section className="sticky top-0 z-0 h-[100svh] p-2.5 sm:p-3" style={{ background: "#0b0b0e" }}>
+      <div className="relative h-full w-full overflow-hidden rounded-[22px] sm:rounded-[28px]"
+        style={{ background: "radial-gradient(120% 90% at 30% 20%, #26302c 0%, #161c1a 45%, #0e1211 100%)" }}>
 
-      {/* corner book peeking top-left — smaller on phones, full at lg */}
-      <div ref={(el) => (frameRefs.current[1] = el)} className="absolute -top-14 -left-10 w-[135px] sm:w-[170px] lg:-top-24 lg:left-[16%] lg:w-[240px] rotate-[28deg] z-[5] will-change-transform">
-        <div ref={(el) => (mouseEls.current[1] = el)} className="will-change-transform">
-          <div style={pop("28deg", 0.35)}>
-            <div style={{ animation: "ld-float2 6.5s ease-in-out 1.4s infinite" }}>
-              <BookMock cover="#0F9D9A" spine="#0B7A78" title="COA" />
-            </div>
-          </div>
-        </div>
-      </div>
+        {/* window light: a soft diagonal shaft that drifts, and the patch it throws */}
+        <div aria-hidden className="ld-beam absolute -top-[20%] left-[18%] w-[38%] h-[140%] pointer-events-none"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(220,235,230,0.13) 45%, rgba(220,235,230,0.05) 70%, transparent)", transform: "skewX(-24deg)", filter: "blur(18px)" }} />
+        <div aria-hidden className="ld-beam absolute bottom-[14%] left-[30%] w-[46%] h-[22%] pointer-events-none"
+          style={{ background: "radial-gradient(closest-side, rgba(220,235,230,0.16), transparent)", transform: "skewX(-30deg)", filter: "blur(10px)", animationDelay: "-4s" }} />
 
-      {/* big book right — drops below the headline on phones so text stays clean */}
-      <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[4%] top-[13%] w-[185px] sm:right-[7%] sm:top-[20%] sm:w-[280px] xl:w-[340px] rotate-[10deg] z-[5] will-change-transform">
-        <div ref={(el) => (mouseEls.current[0] = el)} className="will-change-transform">
-          <div style={pop("10deg", 0.2)}>
-            <div style={{ animation: "ld-float1 5.2s ease-in-out 1.3s infinite" }}>
+        {/* the desk — a low, soft rise in light at the very bottom that blends
+            into the room, so the area behind the copy and buttons stays one tone */}
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-[20%] pointer-events-none"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.035) 55%, rgba(255,255,255,0.05) 100%)" }} />
+
+        {/* one book on the desk, right of centre. Its width follows the screen
+            HEIGHT (24svh) so its top always stays below the wordmark. */}
+        <div ref={(el) => (frameRefs.current[0] = el)} className="absolute right-[8%] sm:right-[24%] bottom-[14%] z-[5] will-change-transform"
+          style={{ width: "max(118px, min(18vw, 24svh))" }}>
+          <div ref={(el) => (mouseEls.current[0] = el)} className="will-change-transform">
+            <div style={{ ...settle(0.5), ["--rot" as any]: "-7deg" }} className="ld-book">
               <BookMock cover="#1E2B7A" spine="#E0559B" title="DBMS" />
             </div>
+            {/* soft contact shadow right under the book */}
+            <div aria-hidden className="absolute left-[8%] right-[2%] -bottom-[6%] h-[12%] -z-10 rounded-[50%]"
+              style={{ background: "radial-gradient(closest-side, rgba(0,0,0,0.6), transparent)", filter: "blur(6px)" }} />
           </div>
         </div>
-      </div>
 
-      {/* handwritten note — on phones it sits above the big book */}
-      <div ref={(el) => (frameRefs.current[2] = el)} className="absolute right-[7%] top-[47%] md:top-auto md:right-[3%] md:bottom-[20%] rotate-[-10deg] z-[6] will-change-transform">
-        <div ref={(el) => (mouseEls.current[2] = el)} className="will-change-transform">
-          <p className="ld-hand text-[#6D5BD0] text-xl sm:text-2xl md:text-3xl font-bold leading-tight text-center" style={pop("-10deg", 0.6)}>
-            made for<br />GITAM students
-          </p>
-        </div>
-      </div>
-
-      {/* content — old-style headline + CTA on the new stage */}
-      <div ref={contentRef} className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 min-h-[100svh] flex flex-col justify-end pb-[6.5rem] pt-10 sm:min-h-0 sm:block sm:pt-40 sm:pb-24 will-change-transform">
-        <h1 className="text-black font-extrabold tracking-tight leading-[0.95] text-[clamp(3.5rem,10vw,8rem)]">
-          {["Make", "Exams", "Easy."].map((w, i) => (
-            <span key={w} className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
-              <span className="block" style={{ animation: `ld-line .9s cubic-bezier(.22,1,.36,1) ${0.15 + i * 0.13}s both` }}>{w}</span>
-            </span>
-          ))}
-        </h1>
-        <div className="ld-in-3 flex flex-wrap items-center gap-5 mt-8">
-          <button onClick={goAuth} className="bg-white text-black rounded-full h-14 px-8 text-[15px] font-bold flex items-center gap-2 hover:scale-[1.03] active:scale-[0.99] transition-transform shadow-[0_18px_40px_-14px_rgba(0,0,0,0.35)]">
-            Start studying<ArrowRight className="w-4 h-4" />
+        {/* nav, inside the frame */}
+        <nav className="relative z-20 flex items-center justify-between px-5 sm:px-8 pt-5 sm:pt-6">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2" aria-label="Team Dino">
+            <img src={dinoLogo} alt="" className="w-7 h-7" />
           </button>
-          <p className="text-black/80 font-semibold text-[15px]">Study with AI · Notes · PYQs</p>
+          <div className="flex items-center gap-1 sm:gap-2 text-[13px] text-white/80">
+            <button onClick={() => navigate("/showcase")} className="hidden md:block px-3 py-2 hover:text-white transition-colors">Showcase</button>
+            <button onClick={() => navigate("/sgpa-calc")} className="hidden md:block px-3 py-2 hover:text-white transition-colors">SGPA calculator</button>
+            <button onClick={() => navigate("/about")} className="hidden sm:block px-3 py-2 hover:text-white transition-colors">About</button>
+            <button onClick={goAuth} className="px-3 py-2 hover:text-white transition-colors">Sign in</button>
+            <button onClick={goAuth} className="ml-1 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/15 text-white pl-4 pr-1 h-10 flex items-center gap-3 transition-colors">
+              <span className="font-semibold">Get started</span>
+              <span className="w-8 h-8 rounded-full bg-white/25 flex items-center justify-center"><ArrowRight className="w-4 h-4" /></span>
+            </button>
+          </div>
+        </nav>
+
+        {/* the wordmark, edge to edge, letters rising in */}
+        <div ref={contentRef} className="relative z-10 px-4 sm:px-6 mt-[2vh] will-change-transform">
+          <h1 className="relative leading-[0.8] font-semibold whitespace-nowrap select-none"
+            style={{ color: "#d4e4ec", fontSize: "clamp(3.3rem, 20.9vw, 24.7rem)", letterSpacing: "-0.075em" }}>
+            {WORD.split("").map((ch, i) => (
+              /* clip only the bottom edge (where the letter rises from); the
+                 sides and top stay open, so tight tracking doesn't slice the
+                 curves of e, a, m, D, i, n, o */
+              <span key={i} className="inline-block align-bottom pb-[0.1em] -mb-[0.1em]" style={{ clipPath: "inset(-0.5em -0.5em 0 -0.5em)" }}>
+                <span className="inline-block" style={{ animation: `ld-line 1.1s cubic-bezier(.16,1,.3,1) ${0.08 + i * 0.05}s both` }}>{ch}</span>
+              </span>
+            ))}
+            <span className="sr-only"> — study kit for GITAM students</span>
+          </h1>
+          <div className="ld-in-3 mt-3 sm:mt-5 flex items-baseline justify-between gap-4 px-1">
+            <p className="font-semibold tracking-tight leading-none text-[#d4e4ec] text-[clamp(1.6rem,4.2vw,4.25rem)]"
+              style={{ letterSpacing: "-0.04em", paddingLeft: "calc(clamp(3.3rem, 20.9vw, 24.7rem) * 0.23)" }}>
+              Make exams easy.
+            </p>
+            <p className="shrink-0 text-[#d4e4ec]/80 font-medium tracking-tight uppercase text-[11px] sm:text-[clamp(13px,1.3vw,20px)]">
+              (Study kit · GITAM)
+            </p>
+          </div>
+          {/* line and buttons start under the T's stem, not its crossbar */}
+          <div className="ld-in-3 mt-5 sm:mt-7 flex flex-wrap items-center gap-2.5 px-1"
+            style={{ paddingLeft: "calc(clamp(3.3rem, 20.9vw, 24.7rem) * 0.23)" }}>
+            <button onClick={goAuth} className="rounded-full bg-[#d4e4ec] hover:bg-white text-[#0e1211] h-12 pl-6 pr-1.5 text-[14px] font-bold flex items-center gap-3 transition-colors">
+              Start studying free
+              <span className="w-9 h-9 rounded-full bg-[#0e1211] text-[#d4e4ec] flex items-center justify-center"><ArrowRight className="w-4 h-4" /></span>
+            </button>
+            <button onClick={() => navigate("/sgpa-calc")} className="rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white h-12 px-6 text-[14px] font-semibold transition-colors">
+              Free SGPA calculator
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* white dino stamp bottom-right (Aardvark badge spot) */}
-      <div className="absolute bottom-6 right-5 sm:bottom-8 sm:right-8 z-10 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white flex items-center justify-center shadow-[0_16px_40px_-12px_rgba(0,0,0,0.4)]">
-        <img src={dinoBlack} alt="" className="w-6 h-6 sm:w-8 sm:h-8" draggable={false} />
-      </div>
+        {/* frosted bar: what we do · the details */}
+        <div className="absolute inset-x-2.5 sm:inset-x-4 bottom-2.5 sm:bottom-4 z-20 ld-in-3">
+          <div className="rounded-[16px] sm:rounded-[20px] bg-white/[0.08] backdrop-blur-xl border border-white/10 px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-white">
+            <p className="text-[13px] sm:text-[14px] leading-snug text-white/85 flex-1 min-w-0 max-w-[40rem]">
+              Notes, important questions, PYQs and an AI tutor that explains from your own syllabus — so the night before the exam is for revising, not searching.
+            </p>
+            <p className="hidden md:block sm:ml-auto text-right text-[12.5px] font-semibold leading-tight text-white/90 shrink-0 pl-2">
+              1500+ students<br /><span className="text-white/60 font-medium">Every GITAM subject</span>
+            </p>
+          </div>
+        </div>
 
-      {/* scroll cue */}
-      <div ref={cueRef} className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 text-black/60">
-        <span className="text-[10px] font-black tracking-[0.28em] uppercase">Scroll to explore</span>
-        <ChevronDown className="w-4 h-4" style={{ animation: "ld-cue 1.6s ease-in-out infinite" }} />
+        {/* the dim layer the curtain brings */}
+        <div ref={dimRef} aria-hidden className="absolute inset-0 z-30 bg-black pointer-events-none" style={{ opacity: 0 }} />
       </div>
     </section>
   );
